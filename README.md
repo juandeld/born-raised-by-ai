@@ -20,10 +20,14 @@ CLAUDE.md                  reglas del repo (se carga en cada sesión)
 docs/reglas-de-decision.md umbrales de probar / escalar / apagar y qué aprueba Juan
 docs/productos/<slug>.md   ficha corta + enlace al capítulo del Manual
 docs/investigacion/*.md    4 informes con ~300 fuentes (santa, b2c, micronichos, pagos)
-docs/briefs/ docs/reportes/  los crean los agentes
+docs/briefs/ docs/reportes/ docs/planes/  los crean los agentes
 ```
 
 ## Orden de arranque (fase 1)
-oct 19: santa (build) · nov 2: colorear (build) · nov 23: dot · dic 1: seguros-tx + prueba de humo de cancion · ene 6: rex · feb 1: ciudadania · mar 15: memorias.
+El plan es por hitos, no por semanas: ver [docs/planes/portafolio-hitos.md](docs/planes/portafolio-hitos.md).
+Orden: santa → colorear → dot → seguros-tx + prueba de humo de cancion → rex → ciudadania → memorias. Un producto nuevo entra a build solo cuando el anterior ya vende.
+
+## Estado actual
+Último reporte: [docs/reportes/2026-10-18-arranque.md](docs/reportes/2026-10-18-arranque.md). Planes: [santa](docs/planes/santa-hitos.md) · [colorear](docs/planes/colorear-hitos.md).
 
 Manual Operativo completo: https://claude.ai/code/artifact/4f9fdb03-5f05-4e05-854b-da646dcbdf2a
