@@ -17,9 +17,15 @@ Un hito se cumple cuando su criterio verificable se cumple, no cuando llega una 
 Si el gate de un producto no se cumple a tiempo para su fecha límite dura, el producto pierde esa temporada. No se salta el gate.
 
 ## Gate de entrada a build
-**Un producto nuevo entra a build solo cuando el anterior ya vende.** Definición operativa propuesta de "ya vende" (pendiente de confirmar por Juan, ver reporte #0): checkout real abierto y al menos una venta real de un cliente (no del equipo) entregada de punta a punta sin intervención humana. Excepción única ya escrita en las reglas: noviembre, Santa + Colorear en paralelo.
+**Un producto nuevo entra a build solo cuando el anterior ya vende.** Definición de "ya vende" (aprobada por Juan, D4, 18-oct): una venta real de un cliente, entregada de punta a punta sin humano. Excepción única ya escrita en las reglas: noviembre, Santa + Colorear en paralelo.
 
-Orden de arranque: **santa → colorear → dot → seguros-tx + prueba de humo de cancion → rex → ciudadania → memorias.**
+Orden de arranque (D1/D2, 18-oct): **santa → colorear → dot → seguros-tx → cancion (prueba de humo) → rex → ciudadania → memorias.** Dot es tercero por decisión de Juan (mayor probabilidad: dolor regulatorio, pago probado, reutiliza el motor de voz).
+
+## Presupuesto (regla del 18-oct)
+- Cada producto puede gastar hasta $500 antes de su primera venta real.
+- Después, el presupuesto de la semana siguiente se financia con el retorno de la anterior: ROAS de la semana ≥ 2.0, reinvertir hasta 2× lo gastado; entre 1.2 y 2.0, lo mismo; < 1.2, congelar y revisar.
+- Techo absoluto de capital propio: $8,000 (tope $10,000). Exposición comprometida inicial ~$1,500 (3 productos × $500) + infraestructura ~$300. Los $3,800 de Santa son referencia, no tope.
+- Reemplaza la asignación fija por producto del reporte #0.
 
 ## Hitos del portafolio
 
@@ -32,8 +38,9 @@ Orden de arranque: **santa → colorear → dot → seguros-tx + prueba de humo 
 | P4 | Corte de Santa (10-dic) | Reporte con CAC, margen, reembolsos y reseñas por país; veredicto escalar / mantener / pausar / apagar aplicado por reglas | `director-portafolio`, `metricas` | P2 | Presupuesto liberable a Reyes (26-dic) |
 | P5 | Dot entra a build | P2 y P3 cumplidos. Brief H1 de arquitectura firmado | `lider-proyecto` dot | Gate | P6 |
 | P6 | Dot vende | Primera venta real entregada (voz web + línea Twilio). Roadcheck 12-14 may como fecha límite dura de campaña | `lider-proyecto` dot | P5, legal de voz | Gate de seguros-tx y cancion |
-| P7 | Seguros-tx vende + prueba de humo de cancion | Seguros-tx: primera venta real entregada. Cancion: prueba de humo de $300 ejecutada (referencia 1-15 dic); **se construye solo si conversión > 3 % y CAC < $10** | `lider-proyecto` seguros-tx / cancion | P6 | Gate de rex |
-| P8 | Rex vende | Primera venta real entregada (clon del motor de Santa). Prueba MX/ES $400 | `lider-proyecto` rex | P7; build referencia 6-20 ene | Gate de ciudadania |
+| P7 | Seguros-tx vende | Primera venta real entregada | `lider-proyecto` seguros-tx | P6 | Gate de cancion |
+| P7b | Cancion: prueba de humo | Prueba de humo ejecutada (máx. $500 antes de la primera venta); **se construye solo si conversión > 3 % y CAC < $10** | `lider-proyecto` cancion | P7 | Gate de rex |
+| P8 | Rex vende | Primera venta real entregada (clon del motor de Santa). Prueba MX/ES $400 | `lider-proyecto` rex | P7b; build referencia 6-20 ene | Gate de ciudadania |
 | P9 | Ciudadania vende | Primera venta real entregada (pase 30 días). Play + SEO + $300 de ads | `lider-proyecto` ciudadania | P8; build referencia 1-14 feb | Gate de memorias |
 | P10 | Memorias vende | Primera venta real entregada; venta 16 abr - **10 may** (fecha dura) | `lider-proyecto` memorias | P9; build referencia 15 mar-15 abr | Cierre de fase 1 |
 
@@ -43,15 +50,15 @@ Los 3 próximos hitos: **P0 → P1 → P2.** Colorear (P3) arranca en paralelo s
 
 | Situación | Regla | Quién decide |
 |---|---|---|
-| Prueba por producto | $300-500; nada más antes de 30 ventas reales (Santa: tope $3,800) | Director dentro del tope |
+| Presupuesto antes de la primera venta | Hasta $500 por producto (Santa: $3,800 es referencia) | Director dentro de la regla |
 | Escalar país | Tras $150 gastados: CAC ≤ 60 % del ticket y reembolsos < 5 % | Director reasigna; subir tope lo aprueba Juan |
 | Pausar país | CAC > 80 % del ticket tras $150, o reembolsos > 8 % | Director solo |
 | Apagar producto | 2 semanas sin cumplir CAC, o reseñas < 4.0, o contribución < 20 % | Director recomienda; apagar lo aprueba Juan |
-| Subir presupuesto | Nunca más de 2x por semana; máximo 40 % del portafolio en un producto | Director dentro de reglas |
+| Reinversión semanal | ROAS ≥ 2.0: hasta 2× lo gastado; 1.2 a 2.0: lo mismo; < 1.2: congelar y revisar. Máx. 40 % del portafolio por producto en la reinversión semanal | Director dentro de reglas |
 | Santa | Corte 10-dic; 26-dic todo a Reyes Magos | Director |
-| Capital | Plan $8,000; tope $10,000 | Juan |
+| Capital | Techo absoluto $8,000; tope $10,000 | Juan |
 
-Nota de aplicación: el tope de Santa ($3,800) supera el 40 % de $8,000 ($3,200). Se aplica el menor hasta que Juan libere el resto (decisión D2 del reporte #0).
+Nota: la nota previa sobre el tope de Santa queda sin efecto (D2, 18-oct).
 
 ## Cadencia
 Lunes 07:00 reporte del director; Juan responde en el día; ejecución martes a domingo. Los hitos se marcan en `docs/planes/*.md` cuando el responsable adjunta la evidencia del criterio.

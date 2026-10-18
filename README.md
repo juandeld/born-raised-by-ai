@@ -20,12 +20,13 @@ CLAUDE.md                  reglas del repo (se carga en cada sesión)
 docs/reglas-de-decision.md umbrales de probar / escalar / apagar y qué aprueba Juan
 docs/productos/<slug>.md   ficha corta + enlace al capítulo del Manual
 docs/investigacion/*.md    4 informes con ~300 fuentes (santa, b2c, micronichos, pagos)
-docs/briefs/ docs/reportes/ docs/planes/  los crean los agentes
+docs/briefs/ docs/reportes/ docs/planes/ docs/legal/  los crean los agentes
+docs/decisiones.md         registro de decisiones de Juan
 ```
 
 ## Orden de arranque (fase 1)
 El plan es por hitos, no por semanas: ver [docs/planes/portafolio-hitos.md](docs/planes/portafolio-hitos.md).
-Orden: santa → colorear → dot → seguros-tx + prueba de humo de cancion → rex → ciudadania → memorias. Un producto nuevo entra a build solo cuando el anterior ya vende.
+Orden: santa → colorear → dot → seguros-tx → cancion (prueba de humo) → rex → ciudadania → memorias. Un producto nuevo entra a build solo cuando el anterior ya vende (una venta real, entregada sin humano). Presupuesto: hasta $500 por producto antes de su primera venta; luego reinversión por ROAS (ver reglas).
 
 ## Estado actual
 Último reporte: [docs/reportes/2026-10-18-arranque.md](docs/reportes/2026-10-18-arranque.md). Planes: [santa](docs/planes/santa-hitos.md) · [colorear](docs/planes/colorear-hitos.md).

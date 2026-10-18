@@ -2,7 +2,7 @@
 
 `lider-proyecto` (santa) · v0 · 18-oct-2026 · Capítulo: `docs/productos/santa.md` · Investigación: `docs/investigacion/santa.md`
 Producto: motor calls · $14.99 / bundle $24.99 · ES, UK, MX primero; US solo con bundle y CTR ≥ 3 %.
-Tope de presupuesto: $3,800 (regla); asignación inicial propuesta $3,200 (regla del 40 %). Kill-switch: 10-dic.
+Presupuesto: hasta $500 antes de la primera venta real; después reinversión por ROAS (regla del 18-oct). Los $3,800 son referencia, no tope. Kill-switch: 10-dic.
 
 **Fechas límite duras:** vendiendo antes del **20-nov** · corte **10-dic** · Reyes **26-dic a 5-ene**.
 Las fechas de las ventanas son referencia; un hito arranca cuando el anterior cumple su criterio.
