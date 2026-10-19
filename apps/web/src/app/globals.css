@@ -100,6 +100,14 @@ body {
   .c-marker-sm { @apply rounded-2xl border-[2.5px] border-lapiz-ink bg-white; box-shadow: 4px 4px 0 0 #23303b; }
   /* Stamp: yellow pill with ink outline (hero eyebrow and a few seals) */
   .c-stamp { @apply inline-block rounded-full border-[2.5px] border-lapiz-ink bg-lapiz-gold px-3.5 py-1 text-sm font-bold text-lapiz-ink; }
+  /* Hero "marker" accents: heavier ink strokes, same palette. Only the first screen uses them. */
+  .c-hero-h { font-weight: 800; letter-spacing: -0.025em; line-height: 1.04; }
+  .c-stamp-hero { @apply border-[3px] px-4 py-1.5 text-[0.95rem] font-extrabold; }
+  .c-btn-hero { @apply min-h-[60px] border-[3px] px-9 text-xl font-extrabold; box-shadow: 0 6px 0 0 #23303b; }
+  .c-btn-hero:active { box-shadow: 0 3px 0 0 #23303b; }
+  .c-pill { @apply inline-flex items-center rounded-full border-[2.5px] border-lapiz-ink bg-white px-3.5 py-1 text-sm font-bold text-lapiz-ink; }
+  .c-marker-hero { border-radius: 28px; box-shadow: 9px 9px 0 0 #23303b; }
+  .c-lang { @apply inline-flex min-h-[48px] items-center justify-center rounded-full border-[3px] border-lapiz-ink bg-white px-5 text-sm font-extrabold text-lapiz-ink transition-colors hover:bg-lapiz-gold-tint focus:outline-none focus-visible:ring-4 focus-visible:ring-lapiz-gold/70; }
   .c-theme { -webkit-tap-highlight-color: transparent; }
   .c-theme:has(input:checked) { border-color: #23303b; border-width: 2.5px; background: #e4f0ee; box-shadow: 3px 3px 0 0 #1b6b67; }
   .c-theme:has(input:focus-visible) { outline: 3px solid #f0b43c; outline-offset: 2px; }

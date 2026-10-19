@@ -50,26 +50,24 @@ export default async function Landing({ params, searchParams }: { params: Promis
     <>
       <CHeader lang={lang} />
       <main>
-        <section className="mx-auto grid max-w-5xl items-center gap-10 px-4 pb-12 pt-4 md:grid-cols-[1.1fr_0.9fr]">
+        <section className="mx-auto grid max-w-5xl items-center gap-8 px-4 pb-12 pt-2 md:grid-cols-[1.1fr_0.9fr] md:gap-10 md:pt-4">
           <div>
-            <p className="c-stamp -rotate-1">{c.hero.kicker}</p>
-            <h1 className="c-h mt-4 text-[2.5rem] md:text-6xl">{c.hero.title}</h1>
-            <p className="mt-5 max-w-[34rem] text-lg leading-relaxed text-lapiz-ink/90">{c.hero.text}</p>
-            <a href="#crear" className="c-btn mt-7">{c.hero.cta}</a>
-            <p className="mt-3 font-semibold">{c.hero.price(price)}</p>
-            <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm text-lapiz-muted">
+            <p className="c-stamp c-stamp-hero -rotate-1">{c.hero.kicker}</p>
+            <h1 className="c-h c-hero-h mt-4 text-[2.75rem] md:text-[4rem]">{c.hero.title}</h1>
+            <p className="mt-5 max-w-[34rem] text-lg leading-relaxed text-lapiz-ink">{c.hero.text}</p>
+            <a href="#crear" className="c-btn c-btn-hero mt-7">{c.hero.cta}</a>
+            <p className="mt-4 text-lg font-bold">{c.hero.price(price)}</p>
+            <ul className="mt-4 flex flex-wrap gap-2">
               {c.hero.badges.map((b) => (
-                <li key={b} className="flex items-center gap-1.5">
-                  <svg aria-hidden viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#1b6b67" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 8.500l3.200 3L13 4.500" /></svg>
-                  {b}
-                </li>
+                <li key={b} className="c-pill">{b}</li>
               ))}
             </ul>
           </div>
-          <div className="c-marker relative mx-auto w-full max-w-sm rotate-[1.5deg] p-3">
-            <Image src="/colorear/sample-2.webp" alt={c.samples.alts[1]!} width={480} height={720} priority className="h-auto w-full rounded-lg" />
+          <div className="c-marker c-marker-hero relative mx-auto w-[calc(100%-14px)] max-w-sm rotate-2 p-3 md:w-full">
+            <Image src="/colorear/sample-2.webp" alt={c.samples.alts[1]!} width={480} height={720} priority className="h-auto w-full rounded-xl" />
           </div>
         </section>
+        <div aria-hidden className="mx-auto h-[3px] max-w-5xl rounded-full bg-lapiz-ink/90" style={{ width: "calc(100% - 2rem)" }} />
 
         <section className="mx-auto max-w-5xl px-4 py-10">
           <h2 className="c-h c-rule text-3xl">{c.steps.title}</h2>

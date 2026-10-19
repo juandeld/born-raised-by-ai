@@ -41,7 +41,7 @@ export interface ColorearCopy {
 
 const ES: ColorearCopy = {
   htmlLang: "es",
-  siteTitle: "Colorfam: tu familia para colorear",
+  siteTitle: "Pintoria: tu familia para colorear",
   siteDescription: "Sube fotos de tu familia y recibe un libro para colorear de 24 páginas donde ellos son los protagonistas. Pago único.",
   nav: { privacy: "Privacidad", terms: "Términos", support: "Soporte", other: "English" },
   hero: {
@@ -170,7 +170,7 @@ const ES: ColorearCopy = {
 
 const EN: ColorearCopy = {
   htmlLang: "en",
-  siteTitle: "Colorfam: your family to color",
+  siteTitle: "Pintoria: your family to color",
   siteDescription: "Upload photos of your family and get a 24-page coloring book where they are the heroes. One-time payment.",
   nav: { privacy: "Privacy", terms: "Terms", support: "Support", other: "Español" },
   hero: {

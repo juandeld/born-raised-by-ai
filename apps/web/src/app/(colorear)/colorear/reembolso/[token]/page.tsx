@@ -5,7 +5,7 @@ import { getColorear } from "@/lib/colorear";
 import { COLOREAR_COPY } from "@/lib/colorear-copy";
 
 export const dynamic = "force-dynamic";
-export const metadata = { robots: { index: false, follow: false }, title: "Colorfam" };
+export const metadata = { robots: { index: false, follow: false }, title: "Pintoria" };
 
 export default async function Reembolso({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;

@@ -43,7 +43,7 @@ export function createColorearEngine(opts: CreateColorearOptions = {}): Colorear
     story: o.story ?? new FallbackStoryProvider(AnthropicStoryProvider.fromEnv(env)),
     env,
     now: o.now ?? (() => new Date()),
-    brand: o.brand ?? { ...brandConfig(env), brand: env.COLOREAR_BRAND_NAME ?? "Colorfam" },
+    brand: o.brand ?? { ...brandConfig(env), brand: env.COLOREAR_BRAND_NAME ?? "Pintoria" },
     continueRun: o.continueRun,
   };
   return new ColorearEngine(deps);

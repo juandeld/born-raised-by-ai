@@ -4,7 +4,7 @@ import { StatusView, type StatusDto } from "@/components/colorear/StatusView";
 import { getColorear } from "@/lib/colorear";
 
 export const dynamic = "force-dynamic";
-export const metadata = { robots: { index: false, follow: false }, title: "Colorfam" };
+export const metadata = { robots: { index: false, follow: false }, title: "Pintoria" };
 
 /** Order page: payment confirmation, live progress, and the download when the book is ready. The token in the URL is the key (128 bits). */
 export default async function Confirmacion({ params }: { params: Promise<{ token: string }> }) {
