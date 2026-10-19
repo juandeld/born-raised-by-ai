@@ -47,6 +47,24 @@ describe("legal texts match docs/legal/textos exactly", () => {
   });
 });
 
+describe("D13 (legal-v1.2)", () => {
+  it("no child-facing first line mentions computer or AI; main notice names Lumen Labs", () => {
+    for (const [locale, t] of Object.entries(PRELUDES.santa!)) {
+      expect(t.firstLine, locale).not.toMatch(/computadora|ordenador|computer|inteligencia|artificial/i);
+      expect(t.main, locale).toMatch(/Lumen Labs/);
+      expect(t.main, locale).not.toContain("{{MARCA}}");
+      expect(t.handoff, locale).toMatch(/inteligencia artificial|artificial intelligence/);
+    }
+    expect(PRELUDES.santa!["es-419"].firstLine).toBe("¡Jo, jo, jo! Hola, {{NOMBRE_NIÑO}}. Soy Santa, ¡y te llamo desde el Polo Norte! ¿Cómo estás?");
+  });
+  it("C3 names Lumen Labs and the in-character notice", () => {
+    for (const lang of ["es-419", "es-ES", "en"] as const) {
+      expect(RAW_CHECKBOXES.C3[lang].id).toMatch(/legal-v1\.2$/);
+      expect(RAW_CHECKBOXES.C3[lang].text).toContain("Lumen Labs");
+    }
+  });
+});
+
 describe("placeholders", () => {
   const vars = { MARCA: "Lumen Labs", TITULAR: "Titular SA", EMAIL_PRIVACIDAD: "p@x.co", EMAIL_SOPORTE: "s@x.co", DOMINIO: "https://x.co" };
 

@@ -1,7 +1,7 @@
 import { fill, sha256 } from "./fill";
 
 /**
- * Consent checkboxes. Exact texts from docs/legal/textos (01 and 02), version legal-v1.
+ * Consent checkboxes. Exact texts from docs/legal/textos (01 and 02), version legal-v1 (C3 in legal-v1.2, D13).
  * The server recomputes text, id and hash itself; it never trusts the browser.
  * A test (legal.test.ts) fails if any text drifts from the markdown files.
  */
@@ -28,9 +28,9 @@ const C: Record<Exclude<CheckboxId, "C6">, ByLang> = {
     en: { id: "01-C2-en-US-legal-v1", text: "I understand that this information and my child's voice will be used only for this experience, are not sold or used to train artificial intelligence, and are deleted after 30 days, or sooner if I ask." },
   },
   C3: {
-    "es-419": { id: "02-C3-es-419-legal-v1", text: "Entiendo que la voz que hablará en la llamada es una inteligencia artificial, no una persona, y que la llamada se grabará para entregármela y para atender reclamos." },
-    "es-ES": { id: "02-C3-es-ES-legal-v1", text: "Entiendo que la voz que hablará en la llamada es una inteligencia artificial, no una persona, y que la llamada se grabará para entregármela y para atender reclamaciones." },
-    en: { id: "02-C3-en-US-legal-v1", text: "I understand that the voice on the call is artificial intelligence, not a person, and that the call will be recorded to deliver it to me and to handle complaints." },
+    "es-419": { id: "02-C3-es-419-legal-v1.2", text: "Entiendo que la voz que hablará en la llamada es una inteligencia artificial de Lumen Labs, no una persona, y que la llamada se grabará para entregármela y para atender reclamos. Entiendo también que el personaje hablará con mi hijo o hija como el personaje que pedí (por ejemplo, Santa), sin decirle que es una inteligencia artificial, y que yo decido si se lo cuento." },
+    "es-ES": { id: "02-C3-es-ES-legal-v1.2", text: "Entiendo que la voz que hablará en la llamada es una inteligencia artificial de Lumen Labs, no una persona, y que la llamada se grabará para entregármela y para atender reclamaciones. Entiendo también que el personaje hablará con mi hijo o hija como el personaje que he pedido (por ejemplo, Papá Noel), sin decirle que es una inteligencia artificial, y que yo decido si se lo cuento." },
+    en: { id: "02-C3-en-US-legal-v1.2", text: "I understand that the voice on the call is artificial intelligence from Lumen Labs, not a person, and that the call will be recorded to deliver it to me and to handle complaints. I also understand that the character will speak with my child as the character I ordered (for example, Santa) without telling my child that it is artificial intelligence, and that it is my decision whether to tell them." },
   },
   C4: {
     "es-419": { id: "02-C4-es-419-legal-v1", text: "Autorizo expresamente que {{MARCA}} llame al número que indiqué, en la fecha y hora que elegí, con una voz generada por inteligencia artificial. Entiendo que esta autorización no es condición para comprar nada más, que no recibiré llamadas de venta, y que puedo cancelarla en cualquier momento escribiendo a {{EMAIL_SOPORTE}}." },
@@ -60,9 +60,9 @@ export const CHECKBOX_ORDER: CheckboxId[] = ["C1", "C2", "C3", "C4", "C5", "C6"]
 
 /** Info line under the checkboxes (02, "Línea fija bajo las casillas"). */
 export const REMINDER_LINE: Record<keyof ByLang, string> = {
-  "es-419": "Antes de la llamada le enviaremos un recordatorio con la hora. Quien conteste escuchará un aviso de que la voz es de IA y de que se graba, y podrá cancelar con la tecla 2.",
-  "es-ES": "Antes de la llamada le enviaremos un recordatorio con la hora. Quien conteste oirá un aviso de que la voz es de IA y de que se graba, y podrá cancelar con la tecla 2.",
-  en: "Before the call we will email you a reminder with the time. Whoever answers will hear a notice that the voice is AI and that the call is recorded, and can cancel by pressing 2.",
+  "es-419": "Antes de la llamada le enviaremos un recordatorio con la hora. Quien conteste escuchará un aviso de que la voz es de IA y de que se graba, y podrá cancelar con la tecla 2. Con su hijo, el personaje no mencionará que es IA: ustedes deciden si se lo cuentan.",
+  "es-ES": "Antes de la llamada le enviaremos un recordatorio con la hora. Quien conteste oirá un aviso de que la voz es de IA y de que se graba, y podrá cancelar con la tecla 2. Con su hijo, el personaje no mencionará que es IA: ustedes deciden si se lo cuentan.",
+  en: "Before the call we will email you a reminder with the time. Whoever answers will hear a notice that the voice is AI and that the call is recorded, and can cancel by pressing 2. With your child, the character will not mention that it is AI: you decide whether to tell them.",
 };
 
 /** Short refund text under the price (05, section C). */
