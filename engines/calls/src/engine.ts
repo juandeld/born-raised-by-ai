@@ -68,10 +68,10 @@ export class CallsEngine {
   async syncAgents(languages: Language[] = ["es-419", "es-ES", "en"]): Promise<Record<string, string>> {
     for (const language of languages) {
       const prelude = getPreludeTexts(this.deps.product.slug, language === "en" ? "en-US" : (language as TextLocale));
-      // The first message is the character's first line, spoken only after the second key 1. {{child_first_name}} is a dynamic variable.
-      const firstMessage = prelude.firstLine.replace("{{NOMBRE_NIÑO}}", "{{child_first_name}}");
+      // The first message is the character's first line, spoken only after the second key 1. {{child_name}} is a dynamic variable (name used by the live agent).
+      const firstMessage = prelude.firstLine.replace("{{NOMBRE_NIÑO}}", "{{child_name}}");
       const config = buildAgentConfig({ product: this.deps.product, character: this.deps.product.slug, language, firstMessage, brand: this.deps.brand.brand });
-      const { agentId } = await this.deps.voice.syncAgent(config, this.deps.env[`ELEVENLABS_AGENT_ID_${language.replace("-", "_").toUpperCase()}`]);
+      const { agentId } = await this.deps.voice.syncAgent(config, this.deps.agentIds[language] || undefined);
       this.deps.agentIds[language] = agentId;
     }
     return this.deps.agentIds;

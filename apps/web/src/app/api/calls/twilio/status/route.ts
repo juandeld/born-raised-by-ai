@@ -4,6 +4,8 @@ import { twilioParams, twilioPublicUrl } from "@/lib/twilio";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+/** Delivery (recording wait, PDF, email) runs inline after the call ends when Inngest is not configured. */
+export const maxDuration = 60;
 
 /** Twilio status callback (completed, busy, no-answer, failed): closes the attempt and triggers delivery / retry / refund. */
 export async function POST(req: Request) {

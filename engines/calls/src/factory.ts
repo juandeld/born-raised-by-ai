@@ -65,6 +65,20 @@ export interface CreateEngineOptions {
   inlineAfterCall?: boolean;
 }
 
+/**
+ * Agent ids already created in ElevenLabs, read from the environment (no network, no PATCH). Both spellings of the
+ * es-419 variable are accepted (ELEVENLABS_AGENT_ID_ES_419, fallback ELEVENLABS_AGENT_ID_ES419).
+ */
+export function agentIdsFromEnv(env: Env): Record<string, string> {
+  const ids: Record<string, string> = {};
+  const es419 = env.ELEVENLABS_AGENT_ID_ES_419 || env.ELEVENLABS_AGENT_ID_ES419;
+  if (es419) ids["es-419"] = es419;
+  const esEs = env.ELEVENLABS_AGENT_ID_ES_ES || env.ELEVENLABS_AGENT_ID_ESES;
+  if (esEs) ids["es-ES"] = esEs;
+  if (env.ELEVENLABS_AGENT_ID_EN) ids.en = env.ELEVENLABS_AGENT_ID_EN;
+  return ids;
+}
+
 export function createEngine(opts: CreateEngineOptions = {}): CallsEngine {
   const env = opts.env ?? process.env;
   const db = opts.overrides?.db ?? getDb(env);
@@ -83,13 +97,18 @@ export function createEngine(opts: CreateEngineOptions = {}): CallsEngine {
     product: opts.overrides?.product ?? SANTA,
     maxConcurrency: opts.overrides?.maxConcurrency ?? maxConcurrency(env),
     brand: opts.overrides?.brand ?? brandConfig(env),
-    agentIds: opts.overrides?.agentIds ?? {},
+    agentIds: opts.overrides?.agentIds ?? agentIdsFromEnv(env),
     dispatcher: opts.dispatcher ?? opts.overrides?.dispatcher ?? new InlineDispatcher(),
   };
   const engine = new CallsEngine(deps);
   if (deps.dispatcher instanceof InlineDispatcher && opts.inlineAfterCall !== false) {
     deps.dispatcher.handlers["call/ended"] = async (data) => {
-      await engine.afterCall(data.callId as string);
+      let out = await engine.afterCall(data.callId as string);
+      // No Inngest: Twilio finishes the recording a few seconds after hangup, so poll here (webhook has maxDuration 60 s).
+      for (let i = 0; i < 8 && out.kind === "recording_pending" && deps.telephony.name !== "mock"; i++) {
+        await new Promise((r) => setTimeout(r, 5000));
+        out = await engine.afterCall(data.callId as string);
+      }
     };
   }
   return engine;

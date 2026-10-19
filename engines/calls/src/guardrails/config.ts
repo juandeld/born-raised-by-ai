@@ -3,7 +3,8 @@
  * adapter maps it to the vendor's API. Everything marked CODE in file 07 is enforced here or in the engine, not by prompt.
  */
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import type { CallProductConfig } from "@lumen/config";
 import type { Language } from "../types";
 import { AGENT_VARIABLE_NAMES } from "./sanitize";
@@ -132,8 +133,13 @@ const CHARACTER_LABEL: Record<string, Record<Language, string>> = {
  * source of truth and is sent byte for byte: the engine sends the agent-side variable names (child_name, age, pet, siblings,
  * gift_wish, good_deed, avoid_topic, details), see buildAgentVariables (A-05).
  */
-export const SANTA_ES419_PROMPT_FILE = fileURLToPath(new URL("../../../../products/santa/prompts/es-419.v3.txt", import.meta.url));
-export function loadSantaEs419Prompt(file = SANTA_ES419_PROMPT_FILE): string {
+// Resolved lazily from process.cwd(): bundlers (Next/webpack) rewrite `new URL(..., import.meta.url)` and break the build.
+export function santaEs419PromptFile(): string {
+  const rel = join("products", "santa", "prompts", "es-419.v3.txt");
+  const roots = [process.cwd(), join(process.cwd(), ".."), join(process.cwd(), "..", "..")];
+  return join(roots.find((r) => existsSync(join(r, rel))) ?? process.cwd(), rel);
+}
+export function loadSantaEs419Prompt(file = santaEs419PromptFile()): string {
   return readFileSync(file, "utf8").trimEnd();
 }
 

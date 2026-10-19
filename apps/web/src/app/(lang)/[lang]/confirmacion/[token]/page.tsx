@@ -40,7 +40,8 @@ export default async function Confirmacion({ params }: { params: Promise<{ lang:
   const fmt = new Intl.DateTimeFormat(country.priceFormatLocale, { timeZone: order.timezone, dateStyle: "full", timeStyle: "short" });
   const fmtEnd = new Intl.DateTimeFormat(country.priceFormatLocale, { timeZone: order.timezone, timeStyle: "short" });
   const when = `${fmt.format(new Date(order.window_start))} - ${fmtEnd.format(new Date(order.window_end))}`;
-  const showDev = order.test_mode && order.status === "scheduled" && mockPaymentsAllowed() && engine.deps.telephony.name === "mock";
+  const showDev = order.test_mode && order.status === "scheduled" && mockPaymentsAllowed() && engine.deps.payments.name === "mock";
+  const realCalls = engine.deps.telephony.name !== "mock";
 
   return shell(
     <>
@@ -59,7 +60,7 @@ export default async function Confirmacion({ params }: { params: Promise<{ lang:
       </ol>
       <p className="mt-4 text-sm text-night-900/70">{copy.confirm.queued}</p>
       {order.test_mode && <p className="mt-4 rounded-xl bg-gold-300/40 p-3 text-sm font-semibold">{copy.confirm.testNote}</p>}
-      {showDev && <DevRunCall token={token} />}
+      {showDev && <DevRunCall token={token} real={realCalls} />}
       <p className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm">
         <Link href={`/${slug}/reembolso/${token}`} className="underline underline-offset-2">{copy.confirm.refund}</Link>
         <Link href={`/${slug}/baja/${token}`} className="underline underline-offset-2">{copy.confirm.optOut}</Link>

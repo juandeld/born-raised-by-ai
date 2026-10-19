@@ -14,6 +14,13 @@ export interface ElevenLabsConfig {
   /** Voice id by language key (es-419, es-ES, en). Catalog or designed voice only: never a clone (A-09). */
   voiceIds: Record<string, string>;
   llm: string;
+  /** TTS + LLM settings of the live agent. syncAgent resends them so a PATCH never changes the voice. */
+  ttsModel: string;
+  stability: number;
+  similarityBoost: number;
+  speed: number;
+  temperature: number;
+  maxTokens: number;
   publicBaseUrl: string;
   toolSecret: string;
 }
@@ -35,7 +42,13 @@ export class ElevenLabsVoiceProvider implements VoiceProvider {
         "es-ES": env.ELEVENLABS_VOICE_ID_ES_ES ?? env.ELEVENLABS_VOICE_ID_ES_419 ?? "",
         en: env.ELEVENLABS_VOICE_ID_EN ?? "",
       },
-      llm: env.ELEVENLABS_LLM ?? "claude-haiku-4-5",
+      llm: env.ELEVENLABS_LLM ?? "claude-haiku-5-5",
+      ttsModel: env.ELEVENLABS_TTS_MODEL ?? "eleven_v3_conversational",
+      stability: Number(env.ELEVENLABS_TTS_STABILITY ?? 0.6),
+      similarityBoost: Number(env.ELEVENLABS_TTS_SIMILARITY ?? 0.9),
+      speed: Number(env.ELEVENLABS_TTS_SPEED ?? 0.95),
+      temperature: Number(env.ELEVENLABS_LLM_TEMPERATURE ?? 0.6),
+      maxTokens: Number(env.ELEVENLABS_LLM_MAX_TOKENS ?? 120),
       publicBaseUrl: env.PUBLIC_BASE_URL ?? "http://localhost:3000",
       toolSecret: env.AGENT_TOOL_SECRET ?? "",
     });
@@ -76,9 +89,9 @@ export class ElevenLabsVoiceProvider implements VoiceProvider {
         agent: {
           first_message: config.firstMessage,
           language: config.language.startsWith("es") ? "es" : "en",
-          prompt: { prompt: config.prompt, llm: this.cfg.llm, tools: this.toolDefs(config) },
+          prompt: { prompt: config.prompt, llm: this.cfg.llm, temperature: this.cfg.temperature, max_tokens: this.cfg.maxTokens, tools: this.toolDefs(config) },
         },
-        tts: { voice_id: voiceId },
+        tts: { voice_id: voiceId, model_id: this.cfg.ttsModel, stability: this.cfg.stability, similarity_boost: this.cfg.similarityBoost, speed: this.cfg.speed },
         conversation: { max_duration_seconds: config.maxCallSeconds },
         turn: { silence_end_call_timeout: config.silence.closeAfterSeconds },
       },
