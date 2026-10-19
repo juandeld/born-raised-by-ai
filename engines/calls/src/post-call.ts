@@ -23,14 +23,23 @@ export class PostCall {
     this.certificate = new Certificate(d.pdf);
   }
 
-  async run(call: CallRow): Promise<PostCallOutcome> {
+  async run(initial: CallRow): Promise<PostCallOutcome> {
     const d = this.d;
+    let call = initial;
     const order = (await d.db.orders.get(call.order_id))!;
     if (order.status === "delivered" || order.status === "refunded") return { kind: "delivered" };
     if (!call.recording_id) throw new Error(`Call ${call.id} completed without a recording id`);
 
     const rec = await this.recorder.collect({ orderId: order.id, callId: call.id, recordingId: call.recording_id });
     if (!rec.ready) return { kind: "recording_pending", retryAt: addMinutes(d.now(), 2) };
+
+    // The conversation can be unknown (register-call does not return it and ElevenLabs may not have listed it yet when the call row closed).
+    if (!call.conversation_id && call.provider_call_id && d.voice.findConversationByCallSid) {
+      const found = await d.voice
+        .findConversationByCallSid(call.provider_call_id, { after: call.key2_at ? new Date(call.key2_at) : new Date(call.started_at) })
+        .catch(() => null);
+      if (found) call = await d.db.calls.update(call.id, { conversation_id: found });
+    }
 
     const now = d.now();
     const language = order.language as Language;
@@ -48,6 +57,8 @@ export class PostCall {
 
     const linkExpires = addDays(now, RETENTION_DAYS.recording);
     const deliveryLink = `${d.brand.domain}/${LOCALE_SLUG[language]}/entrega/${order.access_token}`;
+    // Keep our private copy registered before the email, so a failed email never loses the recording (the retry reuses it).
+    await d.db.calls.update(call.id, { recording_path: rec.path, recording_purge_at: iso(linkExpires) });
     const res = await d.delivery.send(
       composeMessage("delivery", language, order.email!, {
         childName: order.child_first_name!,
@@ -59,7 +70,7 @@ export class PostCall {
         brand: d.brand.brand,
       }),
     );
-    if (res.status === "failed") throw new Error(`Delivery email failed for order ${order.id}`); // Inngest retries the step
+    if (res.status === "failed") throw new Error(`Delivery email failed for order ${order.id}: ${res.error ?? "unknown"}`); // Inngest retries the step
     await d.db.deliveries.insert({
       order_id: order.id, kind: "delivery", channel: res.channel, status: res.status, provider: res.provider, provider_id: res.providerId,
       mp3_path: rec.path, pdf_path: pdfPath, link_expires_at: iso(linkExpires), survey_answer: null, survey_at: null,
@@ -70,7 +81,7 @@ export class PostCall {
     await d.tracker.track("delivered", { ...baseProps(order), channel: res.channel === "whatsapp" ? "whatsapp" : "email" });
 
     // A-10: delete the vendor copies right after delivery. Our private copy lives 30 days.
-    await d.telephony.deleteRecording(call.recording_id);
+    await d.telephony.deleteRecording(call.recording_id!);
     if (call.conversation_id) await d.voice.deleteConversation(call.conversation_id);
     await d.db.calls.update(call.id, { recording_id: null, conversation_id: null });
 

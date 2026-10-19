@@ -218,15 +218,31 @@ export class ElevenLabsVoiceProvider implements VoiceProvider {
     });
     if (!res.ok) throw new Error(`ElevenLabs registerCall ${res.status}: ${await res.text()}`);
     // The endpoint answers with TwiML (<Connect><Stream>) to hand to Twilio.
-    return { twiml: await res.text(), conversationId: null };
+    const twiml = await res.text();
+    // If the TwiML carries the conversation id as a stream <Parameter>, keep it; otherwise the post-call looks it up by call_sid.
+    const m = /<Parameter[^>]*name="conversation_id"[^>]*value="([^"]+)"/i.exec(twiml) ?? /<Parameter[^>]*value="([^"]+)"[^>]*name="conversation_id"/i.exec(twiml);
+    return { twiml, conversationId: m?.[1] ?? null };
   }
 
-  async findConversationByCallSid(callSid: string): Promise<string | null> {
-    const res = await this.fetchFn(`${this.base}/v1/convai/conversations?page_size=30`, { headers: this.headers() });
+  async findConversationByCallSid(callSid: string, opts: { agentId?: string; after?: Date } = {}): Promise<string | null> {
+    // The list endpoint does NOT carry call_sid (seen on the real call of 19-oct-2026); only the detail has metadata.phone_call.call_sid.
+    // So: list the recent conversations of the agent (narrow time window), then read each detail, newest first, until one matches.
+    const q = new URLSearchParams({ page_size: "15" });
+    if (opts.agentId) q.set("agent_id", opts.agentId);
+    if (opts.after) q.set("call_start_time_after_unix", String(Math.floor(opts.after.getTime() / 1000) - 120));
+    const res = await this.fetchFn(`${this.base}/v1/convai/conversations?${q}`, { headers: this.headers() });
     if (!res.ok) return null;
     const j = (await res.json()) as { conversations?: Array<{ conversation_id: string; call_sid?: string; metadata?: { phone_call?: { call_sid?: string } } }> };
-    const hit = j.conversations?.find((c) => c.call_sid === callSid || c.metadata?.phone_call?.call_sid === callSid);
-    return hit?.conversation_id ?? null;
+    const list = j.conversations ?? [];
+    const direct = list.find((c) => c.call_sid === callSid || c.metadata?.phone_call?.call_sid === callSid);
+    if (direct) return direct.conversation_id;
+    for (const c of list.slice(0, 10)) {
+      const d = await this.fetchFn(`${this.base}/v1/convai/conversations/${c.conversation_id}`, { headers: this.headers() });
+      if (!d.ok) continue;
+      const dj = (await d.json()) as { metadata?: { phone_call?: { call_sid?: string } } };
+      if (dj.metadata?.phone_call?.call_sid === callSid) return c.conversation_id;
+    }
+    return null;
   }
 
   async getConversation(conversationId: string): Promise<ConversationInfo | null> {

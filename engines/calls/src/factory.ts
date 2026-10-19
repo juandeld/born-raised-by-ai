@@ -105,11 +105,17 @@ export function createEngine(opts: CreateEngineOptions = {}): CallsEngine {
   const engine = new CallsEngine(deps);
   if (deps.dispatcher instanceof InlineDispatcher && opts.inlineAfterCall !== false) {
     deps.dispatcher.handlers["call/ended"] = async (data) => {
-      let out = await engine.afterCall(data.callId as string);
-      // No Inngest: Twilio finishes the recording a few seconds after hangup, so poll here (webhook has maxDuration 60 s).
-      for (let i = 0; i < 8 && out.kind === "recording_pending" && deps.telephony.name !== "mock"; i++) {
-        await new Promise((r) => setTimeout(r, 5000));
-        out = await engine.afterCall(data.callId as string);
+      // A post-call failure must never reach the Twilio webhook as a 500: log it and let the minute tick retry it
+      // (the call keeps recording_id until delivery succeeds, which is what the tick's "recover" pass looks for).
+      try {
+        let out = await engine.afterCall(data.callId as string);
+        // No Inngest: Twilio finishes the recording a few seconds after hangup, so poll here (webhook has maxDuration 60 s).
+        for (let i = 0; i < 8 && out.kind === "recording_pending" && deps.telephony.name !== "mock"; i++) {
+          await new Promise((r) => setTimeout(r, 5000));
+          out = await engine.afterCall(data.callId as string);
+        }
+      } catch (err) {
+        await engine.recordPostCallFailure(data.callId as string, err);
       }
     };
   }

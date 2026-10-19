@@ -164,6 +164,18 @@ export class CallsEngine {
     return this.scheduler.attempt(orderId);
   }
 
+  /** Logs a post-call failure as an ops event (no PII) so the minute tick / ops can see and retry it. Never throws. */
+  async recordPostCallFailure(callId: string, err: unknown): Promise<void> {
+    try {
+      const call = await this.deps.db.calls.get(callId);
+      const order = call ? await this.deps.db.orders.get(call.order_id) : null;
+      const error = (err instanceof Error ? err.message : String(err)).replace(/[^\s@"]+@[^\s@"]+/g, "<email>").replace(/\+\d{6,}/g, "<phone>").slice(0, 300);
+      await this.deps.tracker.track("post_call_failed", { ...(order ? baseProps(order) : { product: this.deps.product.slug, country: "", language: "", creative: "", device: "unknown" as const }), call_id: callId, error });
+    } catch {
+      /* logging must not break the webhook */
+    }
+  }
+
   /** After an attempt ends: deliver, retry later inside the window, or refund. */
   async afterCall(callId: string): Promise<AfterCallOutcome> {
     const call = await this.deps.db.calls.get(callId);
@@ -209,8 +221,13 @@ export class CallsEngine {
     await guard("recover", async () => {
       const pending = await d.db.calls.find({ status: "ended", result: "completed", recording_id: { notNull: true } }, { limit: 20 });
       for (const call of pending) {
-        const out = await this.afterCall(call.id);
-        if (out.kind === "delivered") report.recovered += 1;
+        try {
+          const out = await this.afterCall(call.id);
+          if (out.kind === "delivered") report.recovered += 1;
+        } catch (err) {
+          await this.recordPostCallFailure(call.id, err);
+          report.errors.push(`recover ${call.id}: ${err instanceof Error ? err.message.slice(0, 200) : "failed"}`);
+        }
       }
     });
     // Scheduled orders whose window has opened (closed windows too: attempt() refunds them automatically).

@@ -18,6 +18,13 @@ export async function POST(req: Request) {
   const callId = url.searchParams.get("call");
   if (!callId) return new Response("Bad request", { status: 400 });
   const event = tel.parseStatusWebhook(params);
-  if (event) await engine.controller.handleEvent(callId, event, { providerCallId: params.CallSid });
+  if (event) {
+    try {
+      await engine.controller.handleEvent(callId, event, { providerCallId: params.CallSid });
+    } catch (err) {
+      // Never answer 5xx to Twilio (it would retry the callback and add noise): log it; the minute tick sweeps and recovers.
+      await engine.recordPostCallFailure(callId, err);
+    }
+  }
   return new Response(null, { status: 204 });
 }

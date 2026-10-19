@@ -14,6 +14,8 @@ export interface SendResult {
   status: "sent" | "failed" | "stub";
   provider: string;
   providerId: string | null;
+  /** Vendor error body when status is "failed" (never contains secrets). */
+  error?: string;
 }
 
 export interface DeliveryProvider {
@@ -49,7 +51,7 @@ export class ResendDeliveryProvider implements DeliveryProvider {
       headers: { authorization: `Bearer ${this.apiKey}`, "content-type": "application/json" },
       body: JSON.stringify({ from: this.from, to: [msg.to], subject: msg.subject, text: msg.text, ...(msg.html ? { html: msg.html } : {}) }),
     });
-    if (!res.ok) return { channel: "email", status: "failed", provider: this.name, providerId: null };
+    if (!res.ok) return { channel: "email", status: "failed", provider: this.name, providerId: null, error: `${res.status} ${(await res.text().catch(() => "")).slice(0, 300)}` };
     const j = (await res.json()) as { id?: string };
     return { channel: "email", status: "sent", provider: this.name, providerId: j.id ?? null };
   }

@@ -24,6 +24,7 @@ export const OPS_EVENTS = [
   "refunded",
   "opted_out",
   "incident_flagged",
+  "post_call_failed",
   // generate engine (colorear), docs/briefs/colorear-H1b-metricas.md
   "generation_started",
   "generation_page_retried",
@@ -75,6 +76,8 @@ export interface EventPropsMap {
   refunded: BaseProps & { reason: string; amount_usd_cents: number; automatic: boolean };
   opted_out: BaseProps & { source: string };
   incident_flagged: BaseProps & { incident_type: string };
+  /** Post-call delivery step failed (recording, certificate, email). `error` is truncated and has emails/numbers redacted. */
+  post_call_failed: BaseProps & { call_id: string; error: string };
   /** Colorear: one book generation run. `theme` is a catalog id, "custom" or "none"; never the buyer's text. */
   generation_started: BaseProps & { pages_total: number; provider: string; model: string; quality: string; age_band: string; persons: number; theme: string };
   generation_page_retried: BaseProps & { page_index: number; attempt: number; reason: string };

@@ -30,7 +30,7 @@ export interface VoiceProvider {
   /** Metadata only (duration, who ended). Never transcripts. */
   getConversation(conversationId: string): Promise<ConversationInfo | null>;
   /** Looks up the conversation of a Twilio call, when the vendor does not hand the id back at connect time. */
-  findConversationByCallSid?(callSid: string): Promise<string | null>;
+  findConversationByCallSid?(callSid: string, opts?: { agentId?: string; after?: Date }): Promise<string | null>;
   /** Deletes audio and transcript at the vendor (A-10), called after delivery. */
   deleteConversation(conversationId: string): Promise<void>;
   /** WebRTC / browser sessions (España "videollamada" option). */

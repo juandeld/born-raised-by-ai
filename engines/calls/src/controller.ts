@@ -105,7 +105,10 @@ export class CallController {
     if (call.key2_at) {
       let conversationId = call.conversation_id;
       if (!conversationId && call.provider_call_id && this.d.voice.findConversationByCallSid) {
-        conversationId = await this.d.voice.findConversationByCallSid(call.provider_call_id);
+        conversationId = await this.d.voice.findConversationByCallSid(call.provider_call_id, {
+          agentId: pickAgentId(this.d.agentIds, order.locale, order.language as Language) || undefined,
+          after: new Date(call.key2_at),
+        });
       }
       const conv = conversationId ? await this.d.voice.getConversation(conversationId) : null;
       const wall = Math.max(0, Math.round((now.getTime() - new Date(call.key2_at).getTime()) / 1000));

@@ -88,3 +88,19 @@ describe("ElevenLabs syncAgent", () => {
     expect(parseBackupLlm("a, b")).toEqual(["a", "b"]);
   });
 });
+
+describe("findConversationByCallSid (list has no call_sid)", () => {
+  it("matches through the conversation detail", async () => {
+    
+    const calls: string[] = [];
+    const fetchFn = (async (url: string) => {
+      calls.push(url);
+      if (url.includes("/conversations?")) return new Response(JSON.stringify({ conversations: [{ conversation_id: "conv_a" }, { conversation_id: "conv_b" }] }));
+      return new Response(JSON.stringify({ metadata: { phone_call: { call_sid: url.endsWith("conv_b") ? "CAx" : "CAy" } } }));
+    }) as unknown as typeof fetch;
+    const p = new ElevenLabsVoiceProvider(cfg as any, fetchFn);
+    expect(await p.findConversationByCallSid("CAx", { agentId: "agent_1", after: new Date(1_000_000) })).toBe("conv_b");
+    expect(calls[0]).toContain("agent_id=agent_1");
+    expect(calls[0]).toContain("call_start_time_after_unix=");
+  });
+});
