@@ -64,9 +64,9 @@ export class TwilioTelephonyProvider implements TelephonyProvider {
       StatusCallback: `${base}/api/calls/twilio/status?call=${t.callId}`,
       StatusCallbackEvent: "completed",
       StatusCallbackMethod: "POST",
-      // Synchronous answering-machine detection: the first webhook carries AnsweredBy.
-      MachineDetection: "Enable",
-      MachineDetectionTimeout: "8",
+      // No answering-machine detection: synchronous AMD kept the adult in up to 8 s of silence before the prelude
+      // (real call 19-oct-2026: the adult answered without speaking, heard nothing and hung up). A voicemail cannot
+      // reach the character anyway, because the prelude requires the DTMF key 1 twice.
       Timeout: "25",
       TimeLimit: String(t.hardLimitSeconds ?? this.cfg.defaultHardLimitSeconds ?? t.maxCallSeconds + 150),
     });
