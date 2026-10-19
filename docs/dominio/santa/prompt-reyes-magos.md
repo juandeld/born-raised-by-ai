@@ -1,6 +1,6 @@
 # Prompt del agente de ElevenLabs: Reyes Magos (Melchor, Gaspar y Baltasar)
 
-Versión `dominio-v1.1` (D13 aplicada por analogía; Juan confirma la extensión a Reyes antes de lanzar) · 18-oct-2026 · Experto en desarrollo infantil + experto de dominio de Santa.
+Versión `dominio-v1.1` (D13 aplicada; confirmada para todos los personajes, D13b) · 18-oct-2026 · Experto en desarrollo infantil + experto de dominio de Santa.
 Para: `arquitecto`, `qa-redteam`, `legal-compliance`.
 Producto: add-on de santa (`docs/productos/santa.md`, "Reyes 26-dic→5-ene"; investigación 7: pico 2 al 5 de enero, sin competidor de IA a demanda).
 Base: `prompt-agente.md` (módulos comunes y reglas de 07). Este archivo solo trae lo que **cambia**.
@@ -216,6 +216,6 @@ Valores iniciales de voz: `speed` 0,88 a 0,98; `stability` 0,45 a 0,60; `style` 
 
 1. **Religión.** Los Reyes son inseparables de una tradición religiosa; 07 cierra el tema. La solución de dominio es la versión folclórica, pero conviene que `legal-compliance` confirme que el relato "tres Reyes, estrella, camellos" no cuenta como religión, o fije una frase de redirección.
 2. **Una voz o tres.** Ver 1.2.
-3. **E-01 en Reyes** (D13 por analogía): ya no dice "la magia de la Navidad"; confirmar con Juan que D13 aplica a Reyes Magos y que E-01 y E-02 de Melchor (07 sección E, "Otros personajes") son los deseados.
+3. **E-01 en Reyes** (D13): ya no dice "la magia de la Navidad". Resuelto: Juan confirmó el 18-oct-2026 que D13 aplica a todos los personajes (D13b); E-01 y E-02 de Melchor son los de 07 sección E.
 4. **Variantes derivadas** (E-02 es-ES, D-01 con "día de Reyes", frases en inglés): visto bueno de `legal-compliance`.
 5. **Nombres de camellos** ("Dátil, Arena y Luna"): ejemplo de juego libre inocuo; no hay IP conocida, pero `qa-redteam` puede cambiarlos.

@@ -87,7 +87,7 @@ Regla de nombre: el nombre del personaje debe ser el mismo en el checkout, el pr
 
 ### B2. Preludio, Reyes Magos
 
-Igual que B1 con estos cambios (incluida la revelación de IA al adulto con "Lumen Labs" y la frase del paso al niño con el nombre del personaje). Por analogía con D13, la primera frase al niño ya no menciona la computadora; Juan confirma la extensión antes de lanzar Reyes Magos.
+Igual que B1 con estos cambios (incluida la revelación de IA al adulto con "Lumen Labs" y la frase del paso al niño con el nombre del personaje). Por D13 (confirmado para todos los personajes, D13b), la primera frase al niño ya no menciona la computadora.
 
 - es-419: "pidió una llamada de los Reyes Magos"; primera frase al niño: "¡Hola, {{NOMBRE_NIÑO}}! Soy Melchor, uno de los Reyes Magos, ¡y te llamo desde muy lejos! ¿Cómo estás?" Paso al niño: "Los Reyes Magos no le pedirán datos ni le venderán nada".
 - es-ES: "ha pedido una llamada de los Reyes Magos"; "¡Hola, {{NOMBRE_NIÑO}}! Soy Melchor, uno de los Reyes Magos, ¡y te llamo desde muy lejos! ¿Cómo estás?" Paso al niño: "Los Reyes Magos no le pedirán datos ni le venderán nada".
@@ -106,7 +106,7 @@ Igual que B1 con estos cambios.
 - Ratoncito Pérez es-ES: igual, con "ha pedido".
 - Tooth Fairy en: "requested a call from the Tooth Fairy"; "Hello, {{NOMBRE_NIÑO}}! I'm the Tooth Fairy, and I'm calling you from Fairyland! How are you?"
 
-Por analogía con D13 (Juan confirma la extensión a Rex, Pérez y Tooth Fairy antes de lanzarlos): ninguna primera frase menciona la computadora. Rex conserva "un dinosaurio de mentira" porque declara que es un personaje de fantasía, no una persona.
+Por D13 (confirmado para todos los personajes, D13b): ninguna primera frase menciona la computadora. Rex conserva "un dinosaurio de mentira" porque declara que es un personaje de fantasía, no una persona.
 
 Ids: `03-REX-<idioma>-legal-v1.2`, `03-PEREZ-<idioma>-legal-v1.2`, `03-TOOTH-en-legal-v1.2`.
 
@@ -193,7 +193,7 @@ Pendiente para producción (no bloquea esta aprobación): un hablante nativo de 
 | Texto | Id | Estado | Fecha | Aprobó |
 |---|---|---|---|---|
 | Preludio, paso al niño y primera frase: Santa en es-419, es-ES, en-US y en-GB | `03-SANTA-<idioma>-legal-v1.2` | Aprobado tal como está en B1 | 18-oct-2026 | `legal-compliance` |
-| Reyes Magos, Rex, Ratoncito Pérez y Tooth Fairy (extensión por analogía) | `03-REYES-`, `03-REX-`, `03-PEREZ-`, `03-TOOTH-<idioma>-legal-v1.2` | Aprobado para pruebas; no se lanza sin confirmación de Juan de que D13 aplica a estos personajes | 18-oct-2026 | `legal-compliance` |
+| Reyes Magos, Rex, Ratoncito Pérez y Tooth Fairy (extensión por analogía) | `03-REYES-`, `03-REX-`, `03-PEREZ-`, `03-TOOTH-<idioma>-legal-v1.2` | Aprobado (D13 confirmado para todos los personajes, D13b) | 18-oct-2026 | `legal-compliance` |
 | Memorias y avisos de dot y ciudadania | `03-MEMORIAS-`, sección F | Sin cambios (`legal-v1`) | 18-oct-2026 | n/a |
 
 Pendiente para `arquitecto`: cargar estos textos en el agente de llamadas, en `packages/legal` y en `engines/calls`, y confirmar que el `first_message` del agente de ElevenLabs coincide palabra por palabra con la primera frase de B1 (el agente es-419 ya fue actualizado por Juan).
