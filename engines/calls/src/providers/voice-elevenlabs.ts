@@ -29,10 +29,17 @@ export interface ElevenLabsConfig {
    */
   backupLlm: "default" | "disabled" | string[];
   cascadeTimeoutSeconds: number;
+  /**
+   * Native hang-up on silence (seconds since the user last spoke; -1 disables). Default: config.silence.closeAfterSeconds (15, D16).
+   * D17 proposes -1 with the agent counting the silences itself, because the native timer also runs while the agent speaks and cuts the goodbye.
+   */
+  silenceEndCallTimeoutSeconds?: number;
+  /** Seconds of user silence before the agent speaks again ("¿Sigues ahí?"). The live agent uses 5. Not sent when unset. */
+  turnTimeoutSeconds?: number;
 }
 
 export function parseBackupLlm(raw: string | undefined): "default" | "disabled" | string[] {
-  const v = (raw ?? "claude-sonnet-5-5").trim();
+  const v = (raw ?? "default").trim();
   if (v === "default" || v === "disabled") return v;
   return v.split(",").map((x) => x.trim()).filter(Boolean);
 }
@@ -55,18 +62,22 @@ export class ElevenLabsVoiceProvider implements VoiceProvider {
         "es-419": env.ELEVENLABS_VOICE_ID_ES_419 ?? "",
         "es-ES": env.ELEVENLABS_VOICE_ID_ES_ES ?? env.ELEVENLABS_VOICE_ID_ES_419 ?? "",
         en: env.ELEVENLABS_VOICE_ID_EN ?? "",
+        "en-US": env.ELEVENLABS_VOICE_ID_EN_US ?? env.ELEVENLABS_VOICE_ID_EN ?? "",
+        "en-GB": env.ELEVENLABS_VOICE_ID_EN_GB ?? env.ELEVENLABS_VOICE_ID_EN_US ?? env.ELEVENLABS_VOICE_ID_EN ?? "",
       },
-      llm: env.ELEVENLABS_LLM ?? "claude-haiku-5-5",
+      llm: env.ELEVENLABS_LLM ?? "gemini-2.5-flash",
       ttsModel: env.ELEVENLABS_TTS_MODEL ?? "eleven_v3_conversational",
       stability: Number(env.ELEVENLABS_TTS_STABILITY ?? 0.6),
       similarityBoost: Number(env.ELEVENLABS_TTS_SIMILARITY ?? 0.9),
       speed: Number(env.ELEVENLABS_TTS_SPEED ?? 0.95),
       temperature: Number(env.ELEVENLABS_LLM_TEMPERATURE ?? 0.6),
-      maxTokens: Number(env.ELEVENLABS_LLM_MAX_TOKENS ?? 120),
+      maxTokens: Number(env.ELEVENLABS_LLM_MAX_TOKENS ?? 400),
       publicBaseUrl: env.PUBLIC_BASE_URL ?? "http://localhost:3000",
       toolSecret: env.AGENT_TOOL_SECRET ?? "",
       backupLlm: parseBackupLlm(env.ELEVENLABS_BACKUP_LLM),
-      cascadeTimeoutSeconds: Number(env.ELEVENLABS_CASCADE_TIMEOUT ?? 6),
+      cascadeTimeoutSeconds: Number(env.ELEVENLABS_CASCADE_TIMEOUT ?? 4),
+      silenceEndCallTimeoutSeconds: env.ELEVENLABS_SILENCE_END_CALL_TIMEOUT ? Number(env.ELEVENLABS_SILENCE_END_CALL_TIMEOUT) : undefined,
+      turnTimeoutSeconds: env.ELEVENLABS_TURN_TIMEOUT ? Number(env.ELEVENLABS_TURN_TIMEOUT) : undefined,
     });
   }
 
@@ -172,7 +183,10 @@ export class ElevenLabsVoiceProvider implements VoiceProvider {
       },
       conversation: { max_duration_seconds: config.maxCallSeconds },
       // Without this a stuck call ran to the 600 s cap (seen on the first real call, 18-oct-2026).
-      turn: { silence_end_call_timeout: config.silence.closeAfterSeconds },
+      turn: {
+        silence_end_call_timeout: this.cfg.silenceEndCallTimeoutSeconds ?? config.silence.closeAfterSeconds,
+        ...(this.cfg.turnTimeoutSeconds !== undefined ? { turn_timeout: this.cfg.turnTimeoutSeconds } : {}),
+      },
     };
     // The voice is sent ONLY when the agent is created. An update never touches tts, so a PATCH can never change the voice.
     if (create) {
@@ -191,8 +205,8 @@ export class ElevenLabsVoiceProvider implements VoiceProvider {
   }
 
   async syncAgent(config: AgentConfig, existingAgentId?: string): Promise<{ agentId: string }> {
-    const voiceId = this.cfg.voiceIds[config.language] ?? "";
-    if (!existingAgentId && !voiceId) throw new Error(`No ElevenLabs voice id configured for ${config.language} (needed to create the agent)`);
+    const voiceId = this.cfg.voiceIds[config.locale] || this.cfg.voiceIds[config.language] || "";
+    if (!existingAgentId && !voiceId) throw new Error(`No ElevenLabs voice id configured for ${config.locale} (needed to create the agent)`);
     const toolIds: string[] = [];
     for (const [name, body] of Object.entries(this.toolBodies(config))) toolIds.push(await this.upsertTool(name, body));
     const body = this.agentBody(config, toolIds, existingAgentId ? null : { voiceId });

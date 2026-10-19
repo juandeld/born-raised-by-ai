@@ -3,7 +3,7 @@ import { getPreludeTexts, type TextLocale } from "@lumen/legal";
 import type { PaymentEvent } from "@lumen/payments";
 import { CallController } from "./controller";
 import type { Dispatcher, EngineDeps } from "./deps";
-import { buildAgentConfig } from "./guardrails/config";
+import { buildAgentConfig, type AgentLocale } from "./guardrails/config";
 import { OrderService } from "./orders";
 import { PostCall } from "./post-call";
 import { RefundService } from "./refunds";
@@ -72,14 +72,15 @@ export class CallsEngine {
   }
 
   /** Creates or updates the voice agents so the vendor always matches the guardrails in this repository. */
-  async syncAgents(languages: Language[] = ["es-419", "es-ES", "en"]): Promise<Record<string, string>> {
-    for (const language of languages) {
-      const prelude = getPreludeTexts(this.deps.product.slug, language === "en" ? "en-US" : (language as TextLocale));
+  async syncAgents(locales: AgentLocale[] = ["es-419", "es-ES", "en-US", "en-GB"]): Promise<Record<string, string>> {
+    for (const locale of locales) {
+      const language: Language = locale === "es-419" || locale === "es-ES" ? locale : "en";
+      const prelude = getPreludeTexts(this.deps.product.slug, locale as TextLocale);
       // The first message is the character's first line, spoken only after the second key 1. {{child_name}} is a dynamic variable (name used by the live agent).
       const firstMessage = prelude.firstLine.replace("{{NOMBRE_NIÑO}}", "{{child_name}}");
-      const config = buildAgentConfig({ product: this.deps.product, character: this.deps.product.slug, language, firstMessage, brand: this.deps.brand.brand });
-      const { agentId } = await this.deps.voice.syncAgent(config, this.deps.agentIds[language] || undefined);
-      this.deps.agentIds[language] = agentId;
+      const config = buildAgentConfig({ product: this.deps.product, character: this.deps.product.slug, language, locale, firstMessage, brand: this.deps.brand.brand });
+      const { agentId } = await this.deps.voice.syncAgent(config, this.deps.agentIds[locale] || undefined);
+      this.deps.agentIds[locale] = agentId;
     }
     return this.deps.agentIds;
   }

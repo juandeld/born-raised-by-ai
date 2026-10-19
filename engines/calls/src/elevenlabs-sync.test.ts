@@ -58,6 +58,13 @@ describe("ElevenLabs syncAgent", () => {
     expect(patch.body.conversation_config.conversation.max_duration_seconds).toBe(config.maxCallSeconds);
   });
 
+  it("D17 is a config switch: silence_end_call_timeout -1 and turn_timeout 5 only when asked, default stays the D16 15 s", async () => {
+    const def = new ElevenLabsVoiceProvider(cfg, fakeFetch().f).agentBody(config, [], null) as any;
+    expect(def.conversation_config.turn).toEqual({ silence_end_call_timeout: 15 });
+    const d17 = new ElevenLabsVoiceProvider({ ...cfg, silenceEndCallTimeoutSeconds: -1, turnTimeoutSeconds: 5 }, fakeFetch().f).agentBody(config, [], null) as any;
+    expect(d17.conversation_config.turn).toEqual({ silence_end_call_timeout: -1, turn_timeout: 5 });
+  });
+
   it("webhook tools identify the call by the platform call sid and carry the secret header; existing tools are patched", async () => {
     const { f, calls } = fakeFetch();
     await new ElevenLabsVoiceProvider(cfg, f).syncAgent(config, "agent_live");
@@ -82,7 +89,8 @@ describe("ElevenLabs syncAgent", () => {
   });
 
   it("parses the backup LLM env", () => {
-    expect(parseBackupLlm(undefined)).toEqual(["claude-sonnet-5-5"]);
+    expect(parseBackupLlm(undefined)).toBe("default"); // same as the live agent (19-oct)
+    expect(parseBackupLlm("claude-sonnet-5-5")).toEqual(["claude-sonnet-5-5"]);
     expect(parseBackupLlm("default")).toBe("default");
     expect(parseBackupLlm("disabled")).toBe("disabled");
     expect(parseBackupLlm("a, b")).toEqual(["a", "b"]);
