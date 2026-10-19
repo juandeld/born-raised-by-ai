@@ -37,6 +37,15 @@ describe("Twilio adapter", () => {
     expect(xmlEscape(`a"b'c`)).toBe("a&quot;b&apos;c");
   });
 
+  it("D14: the locked prefix is a plain <Say> before the <Gather>; only the key instructions are inside it", () => {
+    const text = "Hola. Esta es una llamada con voz de inteligencia artificial de Lumen Labs. Si usted es adulto, pulse 1.";
+    const xml = tw.renderTwiml([{ type: "say", text, lockedChars: text.indexOf("Si usted") }, { type: "gather", timeoutSeconds: 8 }], { callId: "c1", locale: "es-419" });
+    const gather = xml.indexOf("<Gather");
+    expect(xml.indexOf("inteligencia artificial")).toBeLessThan(gather);
+    expect(xml.indexOf("Si usted es adulto")).toBeGreaterThan(gather);
+    expect(xml).toMatch(/<Say[^>]*>Hola\. Esta es[^<]*Lumen Labs\.<\/Say><Gather[^>]*><Say[^>]*>Si usted es adulto, pulse 1\.<\/Say><\/Gather><Redirect/);
+  });
+
   it("connect_agent returns the vendor TwiML verbatim", () => {
     const xml = tw.renderTwiml([{ type: "connect_agent", twiml: "<Response><Connect/></Response>", conversationId: null }], { callId: "c1", locale: "en-US" });
     expect(xml).toBe("<Response><Connect/></Response>");

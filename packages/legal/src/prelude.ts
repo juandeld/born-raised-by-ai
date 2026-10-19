@@ -11,8 +11,16 @@ export interface PreludeTexts {
   id: string;
   /** Step 3: main notice. Max 35 s. */
   main: string;
+  /**
+   * D14: where the interruptible part of `main` starts. Everything before this marker (who calls, that it is an AI voice,
+   * why, that it is not a person, that the call will be recorded) is played without barge-in; the key instructions after it
+   * accept a key pressed while they play. Must occur exactly once in `main`.
+   */
+  mainOpenFrom: string;
   /** Step 4: repeat, only the last sentence. */
   repeat: string;
+  /** D14: same as `mainOpenFrom` for `handoff` ("Gracias. La grabación empieza ahora." is locked). */
+  handoffOpenFrom: string;
   /** Step 5, key 1: hand-off to the child. */
   handoff: string;
   /** Step 7: repeated once after 30 s without the second key. */
@@ -35,6 +43,8 @@ export const PRELUDE_VERSION = "legal-v1.2";
 const SANTA: Record<TextLocale, PreludeTexts> = {
   "es-419": {
     id: "03-SANTA-es-419-legal-v1.2",
+    mainOpenFrom: "Si usted es la persona adulta responsable",
+    handoffOpenFrom: "Cuando",
     main: "Hola. Esta es una llamada automatizada con voz de inteligencia artificial de Lumen Labs. Llamamos porque la madre, el padre o el tutor de {{NOMBRE_NIÑO}} pidió una llamada de Santa. Esta voz no es una persona. Si continúa, la llamada se grabará para entregársela a la familia. Si usted es la persona adulta responsable, pulse 1 para continuar. Si prefiere no recibir esta llamada, pulse 2 y no volveremos a llamar a este número.",
     repeat: "Pulse 1 para continuar o 2 para cancelar.",
     handoffRepeat: "Cuando {{NOMBRE_NIÑO}} tenga el teléfono, pulse 1 otra vez.",
@@ -47,6 +57,8 @@ const SANTA: Record<TextLocale, PreludeTexts> = {
   },
   "es-ES": {
     id: "03-SANTA-es-ES-legal-v1.2",
+    mainOpenFrom: "Si usted es la persona adulta responsable",
+    handoffOpenFrom: "Cuando",
     main: "Hola. Esta es una llamada automatizada con voz de inteligencia artificial de Lumen Labs. Llamamos porque la madre, el padre o el tutor de {{NOMBRE_NIÑO}} ha pedido una llamada de Papá Noel. Esta voz no es una persona. Si continúa, la llamada se grabará para entregársela a la familia. Si usted es la persona adulta responsable, pulse 1 para continuar. Si prefiere no recibir esta llamada, pulse 2 y no volveremos a llamar a este número.",
     repeat: "Pulse 1 para continuar o 2 para cancelar.",
     handoffRepeat: "Cuando {{NOMBRE_NIÑO}} tenga el móvil, pulse 1 otra vez.",
@@ -59,6 +71,8 @@ const SANTA: Record<TextLocale, PreludeTexts> = {
   },
   "en-US": {
     id: "03-SANTA-en-US-legal-v1.2",
+    mainOpenFrom: "If you are the responsible adult",
+    handoffOpenFrom: "When",
     main: "Hello. This is an automated call with an artificial intelligence voice from Lumen Labs. We are calling because the parent or guardian of {{NOMBRE_NIÑO}} requested a call from Santa. This voice is not a person. If you continue, the call will be recorded and given to the family. If you are the responsible adult, press 1 to continue. If you prefer not to receive this call, press 2 and we will not call this number again.",
     repeat: "Press 1 to continue or 2 to cancel.",
     handoffRepeat: "When {{NOMBRE_NIÑO}} has the phone, press 1 again.",
@@ -74,6 +88,8 @@ const SANTA: Record<TextLocale, PreludeTexts> = {
   // the GB country config points to the en-US block ("Santa"), as the name rule allows (see packages/config/src/pricing.ts).
   "en-GB": {
     id: "03-SANTA-en-GB-legal-v1.2",
+    mainOpenFrom: "If you are the responsible adult",
+    handoffOpenFrom: "When",
     main: "Hello. This is an automated call with an artificial intelligence voice from Lumen Labs. We are calling because the parent or guardian of {{NOMBRE_NIÑO}} requested a call from Father Christmas. This voice is not a person. If you continue, the call will be recorded and given to the family. If you are the responsible adult, press 1 to continue. If you prefer not to receive this call, press 2 and we will not call this number again.",
     repeat: "Press 1 to continue or 2 to cancel.",
     handoffRepeat: "When {{NOMBRE_NIÑO}} has the mobile, press 1 again.",
@@ -100,6 +116,8 @@ export function renderPrelude(texts: PreludeTexts, vars: { brand: string; childN
   const v = { MARCA: vars.brand, "NOMBRE_NIÑO": vars.childName };
   return {
     id: texts.id,
+    mainOpenFrom: texts.mainOpenFrom,
+    handoffOpenFrom: texts.handoffOpenFrom,
     main: fill(texts.main, v),
     repeat: fill(texts.repeat, v),
     handoffRepeat: fill(texts.handoffRepeat, v),
@@ -110,4 +128,16 @@ export function renderPrelude(texts: PreludeTexts, vars: { brand: string; childN
     firstLine: fill(texts.firstLine, v),
     closing: fill(texts.closing, v),
   };
+}
+
+/**
+ * D14: number of leading characters of `text` that must be played without barge-in (everything before `openFrom`).
+ * Throws if the marker is missing or ambiguous, so a text edit can never silently make the whole notice interruptible.
+ */
+export function lockedPrefixLength(text: string, openFrom: string): number {
+  const first = text.indexOf(openFrom);
+  if (first <= 0 || text.indexOf(openFrom, first + 1) !== -1) {
+    throw new Error(`D14: marker "${openFrom}" must occur exactly once and not at the start of the text`);
+  }
+  return first;
 }

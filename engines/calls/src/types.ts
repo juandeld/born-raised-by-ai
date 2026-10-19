@@ -15,7 +15,8 @@ export type CallEvent =
 
 /** What the telephony adapter must do next. The adapter renders these (TwiML for Twilio, direct for the mock). */
 export type Action =
-  | { type: "say"; text: string }
+  /** `lockedChars` (D14): the first N characters are played without barge-in; the rest accepts a key press. */
+  | { type: "say"; text: string; lockedChars?: number }
   | { type: "gather"; timeoutSeconds: number }
   | { type: "hangup"; result: CallResult }
   | { type: "connect_agent"; twiml: string | null; conversationId: string | null };

@@ -1,4 +1,4 @@
-import type { PreludeTexts } from "@lumen/legal";
+import { lockedPrefixLength, type PreludeTexts } from "@lumen/legal";
 import type { Action, CallEvent, CallResult } from "./types";
 
 /**
@@ -68,7 +68,7 @@ export function stepPrelude(state: PreludeState, event: CallEvent, t: PreludeTex
       return out(
         { step: "await_key1" },
         [
-          { type: "say", text: t.main },
+          { type: "say", text: t.main, lockedChars: lockedPrefixLength(t.main, t.mainOpenFrom) },
           { type: "gather", timeoutSeconds: cfg.dtmfTimeoutSeconds },
         ],
       );
@@ -79,7 +79,7 @@ export function stepPrelude(state: PreludeState, event: CallEvent, t: PreludeTex
           return out(
             { step: "await_key2", repeated: false, invalidKeys: 0 },
             [
-              { type: "say", text: t.handoff },
+              { type: "say", text: t.handoff, lockedChars: lockedPrefixLength(t.handoff, t.handoffOpenFrom) },
               { type: "gather", timeoutSeconds: cfg.handoffTimeoutSeconds },
             ],
             // Recording starts here and not before (guardrail A-02).

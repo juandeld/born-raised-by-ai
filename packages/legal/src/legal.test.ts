@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { lockedPrefixLength } from "./prelude";
 import { AVISO, EN_GB_RIGHTS_SUFFIX, PRELUDES, RAW_CHECKBOXES, fill, hasUnfilledPlaceholders, renderAviso, renderPrelude, resolveAllCheckboxes } from "./index";
 
 const dir = resolve(__dirname, "../../../docs/legal/textos");
@@ -44,6 +45,26 @@ describe("legal texts match docs/legal/textos exactly", () => {
     }
     expect(f03).toContain(PRELUDES.santa!["es-419"].pressOne);
     expect(f03).toContain(PRELUDES.santa!["es-419"].closing);
+  });
+});
+
+describe("D14 (non-interruptible notice)", () => {
+  it("every locale locks the identity/AI/recording notice and leaves only the key instructions interruptible", () => {
+    for (const [locale, t] of Object.entries(PRELUDES.santa!)) {
+      const locked = t.main.slice(0, lockedPrefixLength(t.main, t.mainOpenFrom));
+      const open = t.main.slice(lockedPrefixLength(t.main, t.mainOpenFrom));
+      expect(locked, locale).toMatch(/Lumen Labs/);
+      expect(locked, locale).toMatch(/inteligencia artificial|artificial intelligence/);
+      expect(locked, locale).toMatch(/grab|record/);
+      expect(open, locale).toMatch(/1/);
+      expect(open, locale).not.toMatch(/inteligencia artificial|artificial intelligence|grab|record/);
+      expect(t.handoff.slice(0, lockedPrefixLength(t.handoff, t.handoffOpenFrom)), locale).toMatch(/grab|Recording/);
+    }
+  });
+  it("throws if the marker is missing or ambiguous", () => {
+    expect(() => lockedPrefixLength("uno dos", "tres")).toThrow();
+    expect(() => lockedPrefixLength("uno dos uno", "uno")).toThrow();
+    expect(() => lockedPrefixLength("tres cuatro", "tres")).toThrow();
   });
 });
 

@@ -137,7 +137,8 @@ export class TwilioTelephonyProvider implements TelephonyProvider {
 
   /**
    * Renders controller actions as TwiML. The <Say> prompts that precede a <Gather> are nested INSIDE it, so a key pressed
-   * while the prompt is still playing counts (barge-in). With <Say> outside, Twilio discards digits pressed during the
+   * while the prompt is still playing counts (barge-in), except the locked prefix of a prompt (D14: the identity, AI and
+   * recording notice), which is a plain <Say> before the <Gather> and cannot be skipped by a key press. With <Say> outside, Twilio discards digits pressed during the
    * prompt and the adult hears the prompt again (seen on the first real call, 18-oct-2026). <Redirect> handles no input.
    */
   renderTwiml(actions: Action[], ctx: { callId: string; locale: TextLocale }): string {
@@ -146,10 +147,19 @@ export class TwilioTelephonyProvider implements TelephonyProvider {
     const say = (text: string) => `<Say language="${v.language}" voice="${v.voice}">${xmlEscape(text)}</Say>`;
     const parts: string[] = [];
     let pending: string[] = []; // <Say> elements waiting for the next action
-    const flush = () => { parts.push(...pending); pending = []; };
+    let locked: string[] = []; // D14: <Say> elements played before the <Gather>, so a key pressed during them is ignored
+    const flush = () => { parts.push(...locked, ...pending); locked = []; pending = []; };
     for (const a of actions) {
-      if (a.type === "say") pending.push(say(a.text));
-      else if (a.type === "gather") {
+      if (a.type === "say") {
+        const n = a.lockedChars ?? 0;
+        if (n > 0 && n < a.text.length) {
+          locked.push(say(a.text.slice(0, n).trimEnd()));
+          pending.push(say(a.text.slice(n).trimStart()));
+        } else if (n >= a.text.length && n > 0) locked.push(say(a.text));
+        else pending.push(say(a.text));
+      } else if (a.type === "gather") {
+        parts.push(...locked);
+        locked = [];
         parts.push(`<Gather input="dtmf" numDigits="1" timeout="${a.timeoutSeconds}" actionOnEmptyResult="false" action="${url("digit")}" method="POST">${pending.join("")}</Gather>`);
         pending = [];
         parts.push(`<Redirect method="POST">${url("no_input")}</Redirect>`);
