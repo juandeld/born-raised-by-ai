@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { parseExperiment, tagCreative } from "@lumen/analytics";
 import { COUNTRIES, SEASON, formatPrice, priceFor, type CountryCode } from "@lumen/config";
 import { Landing } from "@/components/jinglo/Landing";
 import { getLandingCopy, longDate } from "@/lib/landing-copy";
+import { expVariant } from "@/lib/landing-experiments";
 import { bundleEnabled, countriesFor, pickCountry, resolveSlug } from "@/lib/slugs";
 
 type SP = Record<string, string | string[] | undefined>;
@@ -30,13 +32,28 @@ export default async function LandingPage({ params, searchParams }: { params: Pr
   const sp = await searchParams;
   const country = pickCountry(locale, one(sp.c));
   const countries = countriesFor(locale);
-  const creative = one(sp.cr) ?? one(sp.utm_content) ?? "none";
+  // ?exp=e1|e2|e3|f0 (D22): the experiment is folded into the creative id, so every event and the order carry it.
+  const exp = parseExperiment(one(sp.exp));
+  const creative = tagCreative(exp, one(sp.cr) ?? one(sp.utm_content));
   const cfg = COUNTRIES[country];
-  const copy = getLandingCopy(slug, country);
+  const baseCopy = getLandingCopy(slug, country);
   const price = (v: "single" | "bundle") => {
     const p = priceFor(country, v);
     return formatPrice(p.amountMinor, p.currency, cfg.priceFormatLocale);
   };
+  const single = priceFor(country, "single");
+  const bundle = priceFor(country, "bundle");
+  const variant = slug === "es" && country === "MX"
+    ? expVariant(exp, {
+        bundle: bundleEnabled(),
+        price: price("single"),
+        price2: price("bundle"),
+        twoSingles: formatPrice(single.amountMinor * 2, single.currency, cfg.priceFormatLocale),
+        save: formatPrice(single.amountMinor * 2 - bundle.amountMinor, single.currency, cfg.priceFormatLocale),
+      }, baseCopy)
+    : null;
+  const copy = variant ? { ...baseCopy, ...variant.copy } : baseCopy;
+  const heroBundle = !!variant?.heroBundle && bundleEnabled();
   const cr = creative !== "none" ? `&cr=${encodeURIComponent(creative)}` : "";
   const buy = (v: "single" | "bundle") => `/${slug}/comprar?c=${country}&v=${v}${cr}`;
   const deadline = zonedToUtc(SEASON.lastBookingDate, "23:59:59", cfg.defaultTimezone);
@@ -57,6 +74,8 @@ export default async function LandingPage({ params, searchParams }: { params: Pr
       price2={price("bundle")}
       buyHref={buy("single")}
       bundleHref={bundleEnabled() ? buy("bundle") : null}
+      heroBundle={heroBundle}
+      heroImg={variant?.hero ?? null}
       deadlineIso={deadline.toISOString()}
       deadlineLabel={longDate(SEASON.lastBookingDate, cfg.priceFormatLocale)}
       langs={langs}

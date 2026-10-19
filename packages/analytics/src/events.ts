@@ -2,6 +2,7 @@
  * Standard funnel events (docs/briefs/santa-H1-metricas.md). Every event carries
  * product, country, language, creative and device. No personal data: no email, phone,
  * child name, IP or free text. `order_id` is a random UUID and is the only identifier.
+ * `creative` also carries the marketing experiment as `<exp>.<ad>` (e1, e2, e3, f0): see experiments.ts, D24.
  */
 export const FUNNEL = [
   "ad_impression",

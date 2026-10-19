@@ -21,6 +21,10 @@ export interface LandingProps {
   langs: Array<{ slug: string; label: string; href: string }>;
   countries: Array<{ code: string; href: string; current: boolean }>;
   initialName: string;
+  /** Experiment variant (D22): the primary buttons buy the two-call package. */
+  heroBundle?: boolean;
+  /** Experiment variant (D22): replaces the hero illustration. */
+  heroImg?: { src: string; alt: string; position?: string } | null;
 }
 
 /** Peaks of docs/audio jinglo-santa-es.mp3 (56 buckets, 21 s), computed once at build time so the page never decodes audio. */
@@ -106,12 +110,13 @@ export function Landing(p: LandingProps) {
     return () => clearTimeout(id);
   }, [n, track]);
 
-  const buy = (placement: string) => {
-    const href = n ? `${p.buyHref}${p.buyHref.includes("?") ? "&" : "?"}n=${encodeURIComponent(n)}` : p.buyHref;
+  const primaryHref = p.heroBundle && p.bundleHref ? p.bundleHref : p.buyHref;
+  const buy = (placement: string, href0: string = primaryHref) => {
+    const href = n ? `${href0}${href0.includes("?") ? "&" : "?"}n=${encodeURIComponent(n)}` : href0;
     return { href, onClick: () => track("cta_click", { placement, personalized: !!n }) };
   };
 
-  const vars = { n, price: p.price, price2: p.price2, date: p.deadlineLabel };
+  const vars = { n, price: p.heroBundle && p.bundleHref ? p.price2 : p.price, price2: p.price2, date: p.deadlineLabel };
   const ctaHero = fill(n ? t.cta_n : t.cta_0, vars);
   const ctaShort = fill(t.ctaS, vars);
 
@@ -160,7 +165,7 @@ export function Landing(p: LandingProps) {
         <section className="hero">
           <div className="plate">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/jinglo/hero.webp" alt={t.heroAlt} width={900} height={1350} fetchPriority="high" decoding="async" />
+            <img src={p.heroImg?.src ?? "/jinglo/hero.webp"} alt={p.heroImg?.alt ?? t.heroAlt} width={900} height={1350} fetchPriority="high" decoding="async" style={p.heroImg?.position ? { objectPosition: p.heroImg.position } : undefined} />
             <EdgeV seed={2} fill="#13233f" />
             <Edge seed={1} fill="#13233f" cls="h" />
           </div>
@@ -340,7 +345,7 @@ export function Landing(p: LandingProps) {
                 <h3>{t.p1n}</h3>
                 <div className="amt">{p.price}</div>
                 <p>{t.p1d}</p>
-                <a className="cta wide" id="cta2" {...buy("price")}>{ctaShort}</a>
+                <a className="cta wide" id="cta2" {...buy("price", p.buyHref)}>{t.ctaS.replace("{price}", p.price)}</a>
               </article>
               <article className="ticket soon">
                 <h3>{t.p2n}</h3>
