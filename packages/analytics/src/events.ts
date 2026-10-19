@@ -18,6 +18,9 @@ export const FUNNEL = [
   "survey_answered",
 ] as const;
 
+/** Landing interactions sent from the browser (never with the child's name or any free text). */
+export const LANDING_EVENTS = ["cta_click", "name_personalized", "audio_play"] as const;
+
 /** Operational events (not funnel steps) needed for refunds, voicemail/failure and costs. */
 export const OPS_EVENTS = [
   "call_attempt_ended",
@@ -37,7 +40,8 @@ export const OPS_EVENTS = [
 
 export type FunnelEventName = (typeof FUNNEL)[number];
 export type OpsEventName = (typeof OPS_EVENTS)[number];
-export type EventName = FunnelEventName | OpsEventName;
+export type LandingEventName = (typeof LANDING_EVENTS)[number];
+export type EventName = FunnelEventName | OpsEventName | LandingEventName;
 
 export type Device = "mobile" | "desktop" | "tablet" | "unknown";
 
@@ -58,6 +62,12 @@ export interface EventPropsMap {
   click: BaseProps & { utm_source?: string; utm_campaign?: string };
   landing_view: BaseProps;
   form_started: BaseProps;
+  /** Landing: a purchase button was pressed. placement = hero | price | sticky. */
+  cta_click: BaseProps & { placement: string; personalized: boolean };
+  /** Landing: the visitor typed a name in the hero field (the name itself is never sent). */
+  name_personalized: BaseProps;
+  /** Landing: the sample call was played for the first time in this visit. */
+  audio_play: BaseProps;
   consent_given: BaseProps & { checkbox_ids: string[]; text_version_ids: string[] };
   checkout_started: BaseProps & { variant: "single" | "bundle"; amount_usd_cents: number; currency: string; payment_provider: string };
   paid: BaseProps & { variant: "single" | "bundle"; amount_usd_cents: number; currency: string; payment_provider: string };

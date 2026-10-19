@@ -165,7 +165,7 @@ export function santaPromptFile(locale: AgentLocale, version: "v3" | "v4"): stri
   return join(roots.find((r) => existsSync(join(r, rel))) ?? process.cwd(), rel);
 }
 
-export function buildAgentPrompt(language: Language, character: string, product: CallProductConfig, brand = "Lumen Labs", locale: AgentLocale = defaultLocale(language), useFile = true): string {
+export function buildAgentPrompt(language: Language, character: string, product: CallProductConfig, brand = "Jinglo", locale: AgentLocale = defaultLocale(language), useFile = true): string {
   if (character === "santa" && useFile) {
     const file = santaPromptFile(locale, santaPromptVersion(locale));
     if (existsSync(file)) return readFileSync(file, "utf8").trimEnd();

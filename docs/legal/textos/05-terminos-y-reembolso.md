@@ -12,7 +12,7 @@ Decisiones de diseño que sostienen el texto: pago único, sin suscripción ni r
 
 Vigentes desde {{FECHA_VIGENCIA}}.
 
-**1. Quiénes somos.** {{MARCA}} la opera {{TITULAR}}, persona individual, {{DOMICILIO}}, {{EMAIL_SOPORTE}}. El pago lo procesa Polar, que actúa como comerciante de registro, o Recurrente, según lo que usted vea al pagar `[no verificado: confirmar el nombre legal de Polar y que sus condiciones de comprador no contradigan estos términos]`.
+**1. Quiénes somos.** {{MARCA}}, un producto de Lumen Labs, la opera {{TITULAR}}, persona individual, {{DOMICILIO}}, {{EMAIL_SOPORTE}}. El pago lo procesa Polar, que actúa como comerciante de registro, o Recurrente, según lo que usted vea al pagar `[no verificado: confirmar el nombre legal de Polar y que sus condiciones de comprador no contradigan estos términos]`.
 
 **2. Quién puede comprar.** Solo personas mayores de 18 años. En los productos para niños, solo la madre, el padre o el tutor legal del niño, que marca las casillas de consentimiento del checkout.
 
@@ -59,7 +59,7 @@ Vigentes desde {{FECHA_VIGENCIA}}.
 
 Effective {{FECHA_VIGENCIA}}.
 
-**1. Who we are.** {{MARCA}} is operated by {{TITULAR}}, an individual, {{DOMICILIO}}, {{EMAIL_SOPORTE}}. Payment is processed by Polar, acting as merchant of record, or by Recurrente, depending on what you see at checkout `[not verified: confirm Polar's legal name and that its buyer terms do not contradict these terms]`.
+**1. Who we are.** {{MARCA}}, a Lumen Labs product, is operated by {{TITULAR}}, an individual, {{DOMICILIO}}, {{EMAIL_SOPORTE}}. Payment is processed by Polar, acting as merchant of record, or by Recurrente, depending on what you see at checkout `[not verified: confirm Polar's legal name and that its buyer terms do not contradict these terms]`.
 
 **2. Who can buy.** Only people aged 18 or older. For children's products, only the child's parent or legal guardian, who ticks the consent boxes at checkout.
 

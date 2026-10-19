@@ -4,7 +4,7 @@ import type { Copy } from "@/lib/copy";
 export function SampleAudio({ copy }: { copy: Copy }) {
   return (
     <section aria-labelledby="sample" className="container-narrow pt-10">
-      <div className="rounded-3xl border border-night-700/15 bg-white p-5">
+      <div className="rounded-3xl border border-night-700/15 bg-paper p-5">
         <h2 id="sample" className="font-display text-2xl font-bold">{copy.sample.title}</h2>
         <div className="mt-3 flex items-center gap-4">
           <button type="button" disabled aria-label={copy.sample.play} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-night-900 text-gold-400 disabled:opacity-60">

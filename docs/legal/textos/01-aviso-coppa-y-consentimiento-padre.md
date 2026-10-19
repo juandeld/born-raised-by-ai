@@ -18,7 +18,7 @@ Versión `legal-v1` · 18-oct-2026 · Aplica a: santa, rex (llamadas a niños) y
 
 **Aviso para madres, padres y tutores**
 
-{{MARCA}} la opera {{TITULAR}} ({{EMAIL_PRIVACIDAD}}). Esta llamada es para un niño o una niña, y usted es quien la compra y la autoriza.
+{{MARCA}}, un producto de Lumen Labs, la opera {{TITULAR}} ({{EMAIL_PRIVACIDAD}}). Esta llamada es para un niño o una niña, y usted es quien la compra y la autoriza.
 
 **Qué recogemos del niño o la niña:** su primer nombre, los datos opcionales que usted escriba aquí (por ejemplo, edad, una afición o un logro) y su voz durante la llamada, que se graba.
 
@@ -38,7 +38,7 @@ Política de privacidad completa: {{DOMINIO}}/privacidad
 
 **Aviso para madres, padres y tutores**
 
-{{MARCA}} la opera {{TITULAR}} ({{EMAIL_PRIVACIDAD}}), responsable del tratamiento. Esta llamada es para un niño o una niña, y usted es quien la compra y la autoriza.
+{{MARCA}}, un producto de Lumen Labs, la opera {{TITULAR}} ({{EMAIL_PRIVACIDAD}}), responsable del tratamiento. Esta llamada es para un niño o una niña, y usted es quien la compra y la autoriza.
 
 **Qué datos recogemos del menor:** su nombre de pila, los datos opcionales que usted escriba (por ejemplo, edad, una afición o un logro) y su voz durante la llamada, que se graba.
 
@@ -58,7 +58,7 @@ Política de privacidad completa: {{DOMINIO}}/privacidad
 
 **Notice to parents and guardians**
 
-{{MARCA}} is operated by {{TITULAR}} ({{EMAIL_PRIVACIDAD}}). This call is for a child, and you are the person buying and authorizing it.
+{{MARCA}}, a Lumen Labs product, is operated by {{TITULAR}} ({{EMAIL_PRIVACIDAD}}). This call is for a child, and you are the person buying and authorizing it.
 
 **What we collect from the child:** their first name, any optional details you type here (for example, age, a hobby or an achievement), and their voice during the call, which is recorded.
 

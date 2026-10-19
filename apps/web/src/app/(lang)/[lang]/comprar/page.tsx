@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { COUNTRIES, formatPrice, priceFor } from "@lumen/config";
+import { COUNTRIES, SEASON, formatPrice, priceFor } from "@lumen/config";
 import { REFUND_LINE, REMINDER_LINE, languageOf, renderAviso, resolveAllCheckboxes } from "@lumen/legal";
 import { CheckoutForm } from "@/components/CheckoutForm";
 import { Footer, Header } from "@/components/SiteChrome";
@@ -21,6 +21,7 @@ export default async function Comprar({ params, searchParams }: { params: Promis
   const requested = pickVariant(one(sp.v));
   const variant = requested === "bundle" && !bundleEnabled() ? "single" : requested;
   const creative = one(sp.cr) ?? one(sp.utm_content) ?? "none";
+  const childName = (one(sp.n) ?? "").replace(/[<>&"\\\u0000-\u001f]/g, "").replace(/\s+/g, " ").trim().slice(0, 30);
   const c = COUNTRIES[country];
   const vars = legalVars();
   const lang = languageOf(c.preludeLocale);
@@ -61,6 +62,8 @@ export default async function Comprar({ params, searchParams }: { params: Promis
                 refund={REFUND_LINE[lang]}
                 wallets={wallets}
                 termsHref={`/${slug}/terminos`}
+                defaultChildName={childName}
+                maxDate={SEASON.lastCallDate}
               />
             </div>
             <p className="mt-6 text-center text-sm"><Link href={`/${slug}`} className="underline underline-offset-2">&larr; {copy.refundPage.back}</Link></p>

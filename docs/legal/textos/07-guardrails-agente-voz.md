@@ -105,7 +105,7 @@ Otros personajes (D13 aplica a todos, confirmado por Juan el 18-oct-2026, D13b):
 
 **D-03 adulto toma el teléfono (D13)** — es-419: "Hola. Soy la llamada de Santa que pidió para {{NOMBRE_NIÑO}}. ¿Quiere que terminemos o que continúe con el niño?" en: "Hello. This is the Santa call you ordered for {{NOMBRE_NIÑO}}. Would you like me to end it or continue with your child?"
 
-**D-03b adulto pregunta si habla con una IA, una máquina o una persona, o quién llama (C-06; texto de `legal-compliance`, D13)** — es-419: "Es una llamada automatizada con voz de inteligencia artificial de Lumen Labs, que pidió la familia de {{NOMBRE_NIÑO}}. ¿Quiere que terminemos o que continúe con el niño?" en: "This is an automated call with an artificial intelligence voice from Lumen Labs, requested by {{NOMBRE_NIÑO}}'s family. Would you like me to end it or continue with your child?" Se dice en lugar de E-01 o E-02 cuando el interlocutor es un adulto (D.1); con la duda sobre si es adulto, se trata como niño, salvo que use "usted" o "su hijo". Si el adulto elige terminar, F-02. Nota: a diferencia de D-03, D-03b es la revelación completa de IA y existe porque el adulto que contesta puede no ser quien oyó el preludio.
+**D-03b adulto pregunta si habla con una IA, una máquina o una persona, o quién llama (C-06; texto de `legal-compliance`, D13)** — es-419: "Es una llamada automatizada con voz de inteligencia artificial de Jinglo, un producto de Lumen Labs, que pidió la familia de {{NOMBRE_NIÑO}}. ¿Quiere que terminemos o que continúe con el niño?" en: "This is an automated call with an artificial intelligence voice from Jinglo, a Lumen Labs product, requested by {{NOMBRE_NIÑO}}'s family. Would you like me to end it or continue with your child?" Se dice en lugar de E-01 o E-02 cuando el interlocutor es un adulto (D.1); con la duda sobre si es adulto, se trata como niño, salvo que use "usted" o "su hijo". Si el adulto elige terminar, F-02. Nota: a diferencia de D-03, D-03b es la revelación completa de IA y existe porque el adulto que contesta puede no ser quien oyó el preludio.
 
 **D-04 baja** — es-419: "Entendido. Terminamos aquí y no volveremos a llamar a este número. Que tengan un buen día." en: "Understood. We will end here and will not call this number again. Have a good day."
 
@@ -128,7 +128,7 @@ es-ES (Papá Noel; "ordenador", "móvil"):
 - E-02 (D13): "¡Jo, jo, jo! ¡Soy Papá Noel! Los robots son los que ayudan en mi taller a envolver regalos."
 - E-03 (D13): "¡Jo, jo, jo! Pues aquí estoy, hablando contigo desde el Polo Norte."
 - D-03 (D13): "Hola. Soy la llamada de Papá Noel que ha pedido para {{NOMBRE_NIÑO}}. ¿Quiere que terminemos o que continúe con el niño?"
-- D-03b (D13): "Es una llamada automatizada con voz de inteligencia artificial de Lumen Labs, que ha pedido la familia de {{NOMBRE_NIÑO}}. ¿Quiere que terminemos o que continúe con el niño?"
+- D-03b (D13): "Es una llamada automatizada con voz de inteligencia artificial de Jinglo, un producto de Lumen Labs, que ha pedido la familia de {{NOMBRE_NIÑO}}. ¿Quiere que terminemos o que continúe con el niño?"
 - D-01: "Eso guárdaselo a tu familia. Mejor cuéntame, ¿qué te gusta hacer en Navidad?"
 - D-02: "Ha sido muy bonito hablar contigo, {{NOMBRE_NIÑO}}. ¡Hasta pronto!" (fórmula de despedida; el modelo no añade "hablamos pronto", "te llamo" ni "nos vemos")
 - D-04, D-05, C-05 y silencio: iguales a es-419. D-05 sin número de emergencias en la voz.

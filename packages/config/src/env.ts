@@ -13,7 +13,7 @@ export interface BrandConfig {
 
 export function brandConfig(env: Record<string, string | undefined> = process.env): BrandConfig {
   return {
-    brand: env.BRAND_NAME ?? "Lumen Labs",
+    brand: env.BRAND_NAME ?? "Jinglo",
     holder: env.LEGAL_HOLDER ?? "[TITULAR PENDIENTE]",
     privacyEmail: env.PRIVACY_EMAIL ?? "privacidad@lumen-labs.co",
     supportEmail: env.SUPPORT_EMAIL ?? "soporte@lumen-labs.co",

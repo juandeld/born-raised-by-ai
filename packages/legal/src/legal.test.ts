@@ -105,10 +105,10 @@ describe("D13 (legal-v1.2, kept in v1.3)", () => {
     }
     expect(PRELUDES.santa!["es-419"].firstLine).toBe("¡Jo, jo, jo! Hola, {{NOMBRE_NIÑO}}. Soy Santa, ¡y te llamo desde el Polo Norte! ¿Cómo estás?");
   });
-  it("C3 names Lumen Labs and the in-character notice", () => {
+  it("C3 names Jinglo, a Lumen Labs product, and the in-character notice", () => {
     for (const lang of ["es-419", "es-ES", "en"] as const) {
-      expect(RAW_CHECKBOXES.C3[lang].id).toMatch(/legal-v1\.2$/);
-      expect(RAW_CHECKBOXES.C3[lang].text).toContain("Lumen Labs");
+      expect(RAW_CHECKBOXES.C3[lang].id).toMatch(/legal-v1\.3$/);
+      expect(RAW_CHECKBOXES.C3[lang].text).toMatch(/Jinglo, (un producto de|a) Lumen Labs( product)?/);
     }
   });
 });

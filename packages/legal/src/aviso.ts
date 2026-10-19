@@ -23,7 +23,7 @@ export const AVISO: Record<Language, Aviso> = {
   "es-419": {
     id: "01-AVISO-es-419-legal-v1",
     title: "Aviso para madres, padres y tutores",
-    intro: "{{MARCA}} la opera {{TITULAR}} ({{EMAIL_PRIVACIDAD}}). Esta llamada es para un niño o una niña, y usted es quien la compra y la autoriza.",
+    intro: "{{MARCA}}, un producto de Lumen Labs, la opera {{TITULAR}} ({{EMAIL_PRIVACIDAD}}). Esta llamada es para un niño o una niña, y usted es quien la compra y la autoriza.",
     sections: [
       { heading: "Qué recogemos del niño o la niña:", body: "su primer nombre, los datos opcionales que usted escriba aquí (por ejemplo, edad, una afición o un logro) y su voz durante la llamada, que se graba." },
       { heading: "Para qué lo usamos:", body: "solo para crear y realizar esta llamada y entregarle la grabación a usted. No vendemos estos datos, no los usamos para publicidad, no entrenamos modelos de inteligencia artificial con ellos y no creamos huellas de voz." },
@@ -37,7 +37,7 @@ export const AVISO: Record<Language, Aviso> = {
   "es-ES": {
     id: "01-AVISO-es-ES-legal-v1",
     title: "Aviso para madres, padres y tutores",
-    intro: "{{MARCA}} la opera {{TITULAR}} ({{EMAIL_PRIVACIDAD}}), responsable del tratamiento. Esta llamada es para un niño o una niña, y usted es quien la compra y la autoriza.",
+    intro: "{{MARCA}}, un producto de Lumen Labs, la opera {{TITULAR}} ({{EMAIL_PRIVACIDAD}}), responsable del tratamiento. Esta llamada es para un niño o una niña, y usted es quien la compra y la autoriza.",
     sections: [
       { heading: "Qué datos recogemos del menor:", body: "su nombre de pila, los datos opcionales que usted escriba (por ejemplo, edad, una afición o un logro) y su voz durante la llamada, que se graba." },
       { heading: "Para qué los usamos:", body: "solo para crear y realizar esta llamada y entregarle la grabación a usted. No vendemos estos datos, no los usamos para publicidad, no entrenamos modelos de inteligencia artificial con ellos y no creamos huellas de voz." },
@@ -51,7 +51,7 @@ export const AVISO: Record<Language, Aviso> = {
   en: {
     id: "01-AVISO-en-US-legal-v1",
     title: "Notice to parents and guardians",
-    intro: "{{MARCA}} is operated by {{TITULAR}} ({{EMAIL_PRIVACIDAD}}). This call is for a child, and you are the person buying and authorizing it.",
+    intro: "{{MARCA}}, a Lumen Labs product, is operated by {{TITULAR}} ({{EMAIL_PRIVACIDAD}}). This call is for a child, and you are the person buying and authorizing it.",
     sections: [
       { heading: "What we collect from the child:", body: "their first name, any optional details you type here (for example, age, a hobby or an achievement), and their voice during the call, which is recorded." },
       { heading: "How we use it:", body: "only to create and place this call and to give you the recording. We do not sell this information, use it for advertising, train artificial intelligence models with it, or create voiceprints." },

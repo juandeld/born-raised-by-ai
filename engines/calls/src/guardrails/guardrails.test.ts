@@ -146,10 +146,10 @@ describe("D13: Santa is Santa with the child, AI disclosure goes to the adult", 
     expect(phrase("E-01", "en", "en-GB")).toContain("Father Christmas");
   });
 
-  it("D-03b is the full AI disclosure to the adult and names Lumen Labs", () => {
-    expect(phrase("D-03b", "es-419")).toBe("Es una llamada automatizada con voz de inteligencia artificial de Lumen Labs, que pidió la familia de {{NOMBRE_NIÑO}}. ¿Quiere que terminemos o que continúe con el niño?");
+  it("D-03b is the full AI disclosure to the adult and names Jinglo, a Lumen Labs product", () => {
+    expect(phrase("D-03b", "es-419")).toBe("Es una llamada automatizada con voz de inteligencia artificial de Jinglo, un producto de Lumen Labs, que pidió la familia de {{NOMBRE_NIÑO}}. ¿Quiere que terminemos o que continúe con el niño?");
     expect(phrase("D-03b", "es-ES")).toContain("ha pedido la familia");
-    expect(phrase("D-03b", "en")).toContain("artificial intelligence voice from Lumen Labs");
+    expect(phrase("D-03b", "en")).toContain("artificial intelligence voice from Jinglo, a Lumen Labs product");
     expect(phrase("D-03", "es-419")).toBe("Hola. Soy la llamada de Santa que pidió para {{NOMBRE_NIÑO}}. ¿Quiere que terminemos o que continúe con el niño?");
   });
 

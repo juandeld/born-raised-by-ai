@@ -7,9 +7,9 @@ export function Header({ slug, copy, dark = false }: { slug: Slug; copy: Copy; d
   const names = copy.lang.names;
   return (
     <header className={`container-wide flex items-center justify-between py-3 ${dark ? "text-cream-50" : "text-night-900"}`}>
-      <Link href={`/${slug}`} className="flex items-center gap-2 font-display text-lg font-bold">
-        <span aria-hidden className="inline-block h-6 w-6 rounded-full bg-gold-400 shadow-[0_0_14px_2px_rgba(255,210,94,.6)]" />
-        {brandConfig().brand}
+      <Link href={`/${slug}`} aria-label={brandConfig().brand} className="flex items-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/jinglo/logo.svg" alt={brandConfig().brand} width={357} height={143} className="h-8 w-auto" />
       </Link>
       <nav aria-label={copy.lang.label} className="flex gap-1 text-sm">
         {(Object.keys(names) as Slug[]).map((s) => (
@@ -33,7 +33,7 @@ export function Footer({ slug, copy }: { slug: Slug; copy: Copy }) {
           <a href={`mailto:${b.supportEmail}`} className="underline underline-offset-4">{copy.nav.support}</a>
         </div>
         <p>
-          {copy.footer.operator} {b.brand}. {copy.footer.rights}
+          {b.brand}, {copy.footer.operator}. {copy.footer.rights}
         </p>
       </div>
     </footer>

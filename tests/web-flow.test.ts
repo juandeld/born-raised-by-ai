@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { signStandardWebhook } from "@lumen/payments";
 import { getPreludeTexts, resolveCheckbox } from "@lumen/legal";
+import { getLandingCopy, longDate } from "../apps/web/src/lib/landing-copy";
 
 // Client components call useRouter(); there is no app router in a unit test. notFound/redirect keep throwing like Next does.
 vi.mock("next/navigation", async (orig) => ({ ...(await orig<typeof import("next/navigation")>()), useRouter: () => ({ refresh() {}, push() {}, replace() {} }) }));
@@ -59,25 +60,50 @@ beforeAll(async () => {
 });
 
 describe("landing pages", () => {
-  it("renders the Spanish landing with promise, 3 steps, sample placeholder, local price and the no-subscription FAQ", async () => {
+  it("renders the Jinglo v2 Spanish landing with promise, 3 steps, audio, local prices, countdown, AI notes and the FAQ", async () => {
     const out = await html(M.landing.default({ params: params({ lang: "es" }), searchParams: params({}) }));
-    expect(out).toContain("Santa llama a tu hijo, por su nombre");
-    expect(out).toContain("Así de fácil, en 3 pasos");
-    expect(out).toContain("Escucha cómo suena");
+    expect(out).toContain("Este año, el Polo Norte llama a casa.");
+    expect(out).toContain("Cuéntanos de tu peque");
+    expect(out).toContain("/audio/jinglo-santa-es.mp3");
     expect(out).toContain("MX$199"); // MXN single price from packages/config
     expect(out).toContain("MX$349");
-    expect(out).toContain("pago único, sin app y sin suscripción");
+    expect(out).toContain("Pago único. Sin app. Sin suscripción.");
     expect(out).toContain("/es/comprar?c=MX&amp;v=single");
-    expect(out.match(/<details/g)).toHaveLength(6);
+    expect(out).toContain("Último día para reservar: 22 de diciembre");
+    expect(out).toContain("Jinglo, un producto de Lumen Labs");
+    expect(out).toContain("generada con inteligencia artificial"); // AI notice at the hero, under the audio, in the FAQ and in the footer
+    expect(out.match(/<details/g)).toHaveLength(7);
+    expect(out).toMatch(/id="familias" hidden/); // reviews block stays hidden until real reviews exist
+    expect(out).toContain("/jinglo/hero.webp");
+    expect(out).not.toContain("base64,"); // illustrations are served from /jinglo/*.webp
   });
 
-  it("uses euros and Papá Noel in /es-es and pounds in /en", async () => {
+  it("personalizes the headline and the checkout link with the name typed (?n=)", async () => {
+    const out = await html(M.landing.default({ params: params({ lang: "es" }), searchParams: params({ n: "Sofía", cr: "ig-1" }) }));
+    expect(out).toContain("Hay una llamada del Polo Norte para Sofía.");
+    expect(out).toContain("Reservar la llamada de Sofía · MX$199");
+    expect(out).toContain("/es/comprar?c=MX&amp;v=single&amp;cr=ig-1&amp;n=Sof%C3%ADa");
+  });
+
+  it("uses euros and Papá Noel in /es-es, pounds and Father Christmas in /en", async () => {
     const es = await html(M.landing.default({ params: params({ lang: "es-es" }), searchParams: params({}) }));
-    expect(es).toContain("Papá Noel llama a tu hijo");
+    expect(es).toContain("Papá Noel");
+    expect(es).toContain("móvil");
     expect(es).toMatch(/12,99\s*€/);
     const en = await html(M.landing.default({ params: params({ lang: "en" }), searchParams: params({}) }));
     expect(en).toContain("£11.99");
-    expect(en).toContain("It is a one-time payment, with no app and no subscription");
+    expect(en).toContain("Father Christmas");
+    expect(en).not.toContain("Santa");
+    expect(en).toContain("Last day to book: 22 December");
+    expect(en).toContain("One payment. No app. No subscription.");
+  });
+
+  it("en-US copy says Santa and dates as month first", () => {
+    const us = getLandingCopy("en", "US");
+    expect(us.h1_0).toContain("North Pole");
+    expect(us.santaAlt).toContain("Santa");
+    expect(us.who[0]![0]).toBe("Moms and dads");
+    expect(longDate("2026-12-22", "en-US")).toBe("December 22");
   });
 
   it("404s on an unknown language", async () => {
@@ -90,7 +116,7 @@ describe("form page", () => {
     const out = await html(M.comprar.default({ params: params({ lang: "es" }), searchParams: params({ c: "MX", v: "single" }) }));
     expect(out).toContain("Aviso para madres, padres y tutores");
     expect(out.indexOf("Aviso para madres")).toBeLessThan(out.indexOf('name="C1"')); // notice before the boxes
-    const c4 = resolveCheckbox("C4", "es-419", { MARCA: "Lumen Labs", EMAIL_SOPORTE: "soporte@lumen-labs.co" }).text;
+    const c4 = resolveCheckbox("C4", "es-419", { MARCA: "Jinglo", EMAIL_SOPORTE: "soporte@lumen-labs.co" }).text;
     expect(out).toContain(c4.replace(/'/g, "&#x27;"));
     for (const id of ALL) expect(out).toContain(`name="${id}"`);
     for (const f of ["email", "phone", "childName", "childAge", "details", "date", "window"]) expect(out).toContain(`id="${f}"`);
@@ -162,7 +188,7 @@ describe("checkout, mock payment and confirmation", () => {
     expect(consents.map((c) => c.checkbox_id).sort()).toEqual(ALL);
     const c4 = consents.find((c) => c.checkbox_id === "C4")!;
     expect(c4.ip).toBe("203.0.113.55");
-    expect(c4.text_version_id).toBe("02-C4-es-419-legal-v1");
+    expect(c4.text_version_id).toBe("02-C4-es-419-legal-v1.3");
     expect(c4.text_sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(Date.now() - new Date(c4.accepted_at).getTime()).toBeLessThan(60_000);
   });
@@ -220,7 +246,7 @@ describe("checkout, mock payment and confirmation", () => {
 describe("privacy page", () => {
   it("renders the approved policy with the holder filled and without internal notes", async () => {
     const out = await html(M.priv.default({ params: params({ lang: "es" }) }));
-    expect(out).toContain("Política de privacidad de Lumen Labs");
+    expect(out).toContain("Política de privacidad de Jinglo");
     expect(out).toContain("Test Holder");
     expect(out).not.toContain("no verificado");
   });

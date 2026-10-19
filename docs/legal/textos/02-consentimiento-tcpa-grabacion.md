@@ -15,15 +15,15 @@ Texto exacto, una línea por casilla, sin marcar por defecto, botón de pago des
 
 ### C3. IA y grabación
 
-- es-419 (`02-C3-es-419-legal-v1.2`): [ ] Entiendo que la voz que hablará en la llamada es una inteligencia artificial de Lumen Labs, no una persona, y que la llamada se grabará para entregármela y para atender reclamos. Entiendo también que el personaje hablará con mi hijo o hija como el personaje que pedí (por ejemplo, Santa), sin decirle que es una inteligencia artificial, y que yo decido si se lo cuento.
-- es-ES (`02-C3-es-ES-legal-v1.2`): [ ] Entiendo que la voz que hablará en la llamada es una inteligencia artificial de Lumen Labs, no una persona, y que la llamada se grabará para entregármela y para atender reclamaciones. Entiendo también que el personaje hablará con mi hijo o hija como el personaje que he pedido (por ejemplo, Papá Noel), sin decirle que es una inteligencia artificial, y que yo decido si se lo cuento.
-- en (`02-C3-en-US-legal-v1.2`): [ ] I understand that the voice on the call is artificial intelligence from Lumen Labs, not a person, and that the call will be recorded to deliver it to me and to handle complaints. I also understand that the character will speak with my child as the character I ordered (for example, Santa) without telling my child that it is artificial intelligence, and that it is my decision whether to tell them.
+- es-419 (`02-C3-es-419-legal-v1.3`): [ ] Entiendo que la voz que hablará en la llamada es una inteligencia artificial de Jinglo, un producto de Lumen Labs, no una persona, y que la llamada se grabará para entregármela y para atender reclamos. Entiendo también que el personaje hablará con mi hijo o hija como el personaje que pedí (por ejemplo, Santa), sin decirle que es una inteligencia artificial, y que yo decido si se lo cuento.
+- es-ES (`02-C3-es-ES-legal-v1.3`): [ ] Entiendo que la voz que hablará en la llamada es una inteligencia artificial de Jinglo, un producto de Lumen Labs, no una persona, y que la llamada se grabará para entregármela y para atender reclamaciones. Entiendo también que el personaje hablará con mi hijo o hija como el personaje que he pedido (por ejemplo, Papá Noel), sin decirle que es una inteligencia artificial, y que yo decido si se lo cuento.
+- en (`02-C3-en-US-legal-v1.3`): [ ] I understand that the voice on the call is artificial intelligence from Jinglo, a Lumen Labs product, not a person, and that the call will be recorded to deliver it to me and to handle complaints. I also understand that the character will speak with my child as the character I ordered (for example, Santa) without telling my child that it is artificial intelligence, and that it is my decision whether to tell them.
 
 ### C4. Autorización expresa de la llamada automatizada
 
-- es-419 (`02-C4-es-419-legal-v1`): [ ] Autorizo expresamente que {{MARCA}} llame al número que indiqué, en la fecha y hora que elegí, con una voz generada por inteligencia artificial. Entiendo que esta autorización no es condición para comprar nada más, que no recibiré llamadas de venta, y que puedo cancelarla en cualquier momento escribiendo a {{EMAIL_SOPORTE}}.
-- es-ES (`02-C4-es-ES-legal-v1`): [ ] Autorizo expresamente que {{MARCA}} llame al número de teléfono que he indicado, en la fecha y hora que he elegido, con una voz generada por inteligencia artificial. Entiendo que esta autorización no es condición para comprar ninguna otra cosa, que no recibiré llamadas comerciales, y que puedo revocarla en cualquier momento escribiendo a {{EMAIL_SOPORTE}}.
-- en (`02-C4-en-US-legal-v1`): [ ] I expressly authorize {{MARCA}} to call the phone number I provided, on the date and at the time I chose, using an artificially generated voice. I understand this authorization is not a condition of buying anything else, that I will not receive sales calls, and that I can cancel it at any time by writing to {{EMAIL_SOPORTE}}.
+- es-419 (`02-C4-es-419-legal-v1.3`): [ ] Autorizo expresamente que {{MARCA}}, un producto de Lumen Labs, llame al número que indiqué, en la fecha y hora que elegí, con una voz generada por inteligencia artificial. Entiendo que esta autorización no es condición para comprar nada más, que no recibiré llamadas de venta, y que puedo cancelarla en cualquier momento escribiendo a {{EMAIL_SOPORTE}}.
+- es-ES (`02-C4-es-ES-legal-v1.3`): [ ] Autorizo expresamente que {{MARCA}}, un producto de Lumen Labs, llame al número de teléfono que he indicado, en la fecha y hora que he elegido, con una voz generada por inteligencia artificial. Entiendo que esta autorización no es condición para comprar ninguna otra cosa, que no recibiré llamadas comerciales, y que puedo revocarla en cualquier momento escribiendo a {{EMAIL_SOPORTE}}.
+- en (`02-C4-en-US-legal-v1.3`): [ ] I expressly authorize {{MARCA}}, a Lumen Labs product, to call the phone number I provided, on the date and at the time I chose, using an artificially generated voice. I understand this authorization is not a condition of buying anything else, that I will not receive sales calls, and that I can cancel it at any time by writing to {{EMAIL_SOPORTE}}.
 
 ### C5. El número y el aviso a quien conteste
 
@@ -64,7 +64,7 @@ Tabla `consent_records` (un registro por casilla marcada, creado en el servidor 
 | `consent_id` | Identificador único |
 | `order_id`, `payment_id` | Pedido y cobro de Polar o Recurrente |
 | `checkbox_id` | C1 a C6 |
-| `text_version_id` | Ejemplo `02-C4-es-419-legal-v1` |
+| `text_version_id` | Ejemplo `02-C4-es-419-legal-v1.3` |
 | `text_sha256` | Hash del texto exacto mostrado (idioma y variante incluidos) |
 | `locale` | `es-419`, `es-ES`, `en-US`, `en-GB` |
 | `accepted_at_utc` | Hora del servidor al recibir la aceptación |

@@ -1,10 +1,12 @@
 "use client";
 import { useEffect } from "react";
 
-/** Fires one funnel event from the browser (landing_view, form_started). Never blocks the page, never sends personal data. */
-export function send(event: "landing_view" | "form_started", slug: string, country: string, creative: string) {
+export type BrowserEvent = "landing_view" | "form_started" | "cta_click" | "name_personalized" | "audio_play";
+
+/** Fires one funnel event from the browser. Never blocks the page, never sends personal data (no name, no free text). */
+export function send(event: BrowserEvent, slug: string, country: string, creative: string, extra?: { placement?: string; personalized?: boolean }) {
   try {
-    const body = JSON.stringify({ event, slug, country, creative });
+    const body = JSON.stringify({ event, slug, country, creative, ...extra });
     if (navigator.sendBeacon) navigator.sendBeacon("/api/track", new Blob([body], { type: "application/json" }));
     else void fetch("/api/track", { method: "POST", headers: { "content-type": "application/json" }, body, keepalive: true });
   } catch {
@@ -12,7 +14,7 @@ export function send(event: "landing_view" | "form_started", slug: string, count
   }
 }
 
-export function Track({ event, slug, country, creative }: { event: "landing_view" | "form_started"; slug: string; country: string; creative: string }) {
+export function Track({ event, slug, country, creative }: { event: BrowserEvent; slug: string; country: string; creative: string }) {
   useEffect(() => {
     send(event, slug, country, creative);
   }, [event, slug, country, creative]);

@@ -101,7 +101,7 @@ Wrong key: "To take the call, press 1 on the phone."
 
 First line to the child (D13): "Ho, ho, ho! Hello, {{NOMBRE_NIÑO}}. I'm Father Christmas, and I'm calling you from the North Pole! How are you?"
 
-Regla de emisor (D20): el preludio nombra al emisor con la marca de producto "Jinglo" (D19), la que la familia vio al comprar; "Lumen Labs" (D9) sigue siendo el operador que nombran la casilla C3, el correo y la política de privacidad, que deben decir "Jinglo, de Lumen Labs". `[no verificado: que una marca comercial baste como identificación del emisor bajo 47 CFR 64.1200(b)(1); la llamada no es publicitaria]`
+Regla de emisor (D20): el preludio nombra al emisor con la marca de producto "Jinglo" (D19), la que la familia vio al comprar; "Lumen Labs" (D9) sigue siendo el operador que nombran la casilla C3, el correo y la política de privacidad, que deben decir "Jinglo, un producto de Lumen Labs" (19-oct-2026, unificado). Excepción documentada: los clips pregrabados del preludio dicen solo "Jinglo"; cambiarlos exige regrabar con créditos de ElevenLabs. Mientras tanto, la forma completa "Jinglo, un producto de Lumen Labs" la dicen D-03b y D-10 en cuanto un adulto pregunta, y consta por escrito en C3, C4, aviso, correos, certificado, términos y privacidad. `[no verificado: que una marca comercial baste como identificación del emisor bajo 47 CFR 64.1200(b)(1); la llamada no es publicitaria]`
 
 Regla de nombre del personaje: el preludio no nombra al personaje; el nombre debe ser el mismo en el checkout, la primera frase y E-01.
 

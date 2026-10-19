@@ -22,6 +22,10 @@ export interface FormProps {
   refund: string;
   wallets: boolean;
   termsHref: string;
+  /** First name typed on the landing (?n=), prefilled and still editable. */
+  defaultChildName?: string;
+  /** Last day a call can be scheduled (YYYY-MM-DD), from SEASON.lastCallDate. */
+  maxDate?: string;
 }
 
 const FIRST_HOUR = 8;
@@ -151,7 +155,7 @@ export function CheckoutForm(p: FormProps) {
       <div className="grid grid-cols-[1fr_96px] gap-3">
         <div>
           <label htmlFor="childName" className="label">{L.childName}</label>
-          <input id="childName" name="childName" type="text" autoComplete="off" autoCapitalize="words" maxLength={30} required className="field" aria-invalid={!!err("childName")} />
+          <input id="childName" name="childName" type="text" autoComplete="off" autoCapitalize="words" maxLength={30} required defaultValue={p.defaultChildName ?? ""} className="field" aria-invalid={!!err("childName")} />
         </div>
         <div>
           <label htmlFor="childAge" className="label">{L.childAge}<span className="sr-only">{opt}</span></label>
@@ -169,7 +173,7 @@ export function CheckoutForm(p: FormProps) {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <label htmlFor="date" className="label">{L.date}</label>
-          <input id="date" type="date" required min={today} value={date} onChange={(e) => setDate(e.target.value)} className="field" aria-invalid={!!err("date")} />
+          <input id="date" type="date" required min={today} max={p.maxDate} value={date} onChange={(e) => setDate(e.target.value)} className="field" aria-invalid={!!err("date")} />
         </div>
         <div>
           <label htmlFor="window" className="label">{L.window}</label>
@@ -193,7 +197,7 @@ export function CheckoutForm(p: FormProps) {
         </select>
       )}
 
-      <section aria-labelledby="notice" className="rounded-3xl border-2 border-night-900 bg-white p-5">
+      <section aria-labelledby="notice" className="rounded-3xl border-2 border-night-900 bg-paper p-5">
         <h2 id="notice" className="font-display text-xl font-bold">{p.copy.noticeTitle}</h2>
         <h3 className="mt-2 font-bold">{p.aviso.title}</h3>
         <p className="mt-1 text-sm">{p.aviso.intro}</p>
@@ -211,7 +215,7 @@ export function CheckoutForm(p: FormProps) {
       <fieldset className="space-y-3">
         <legend className="mb-1 font-display text-xl font-bold">{p.copy.consentTitle}</legend>
         {p.checkboxes.map((c) => (
-          <label key={c.id} className="flex cursor-pointer gap-3 rounded-2xl border border-night-700/20 bg-white p-3 text-sm leading-snug">
+          <label key={c.id} className="flex cursor-pointer gap-3 rounded-2xl border border-night-700/20 bg-paper p-3 text-sm leading-snug">
             <input type="checkbox" name={c.id} checked={!!checked[c.id]} onChange={(e) => setChecked((s) => ({ ...s, [c.id]: e.target.checked }))} className="mt-0.5 h-6 w-6 shrink-0 accent-holly-500" />
             <span>
               {c.text}

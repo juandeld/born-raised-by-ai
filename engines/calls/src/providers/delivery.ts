@@ -42,7 +42,7 @@ export class ResendDeliveryProvider implements DeliveryProvider {
 
   static fromEnv(env: Record<string, string | undefined>): ResendDeliveryProvider {
     if (!env.RESEND_API_KEY) throw new Error("RESEND_API_KEY is required for EMAIL_PROVIDER=resend");
-    return new ResendDeliveryProvider(env.RESEND_API_KEY, env.RESEND_FROM ?? "Lumen Labs <hola@lumen-labs.co>");
+    return new ResendDeliveryProvider(env.RESEND_API_KEY, env.RESEND_FROM ?? "Jinglo <hola@lumen-labs.co>");
   }
 
   async send(msg: OutboundMessage): Promise<SendResult> {

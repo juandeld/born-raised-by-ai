@@ -12,7 +12,7 @@ Reglas de mantenimiento: la lista de proveedores y la tabla de retención deben 
 
 Vigente desde {{FECHA_VIGENCIA}}.
 
-**1. Quién es responsable.** {{MARCA}} la opera {{TITULAR}}, persona individual, con domicilio en {{DOMICILIO}}. Para cualquier asunto de privacidad, escriba a {{EMAIL_PRIVACIDAD}}.
+**1. Quién es responsable.** {{MARCA}}, un producto de Lumen Labs, la opera {{TITULAR}}, persona individual, con domicilio en {{DOMICILIO}}. Para cualquier asunto de privacidad, escriba a {{EMAIL_PRIVACIDAD}}.
 
 **2. Qué datos recogemos.**
 - De la persona que compra: correo electrónico, país, idioma, número de teléfono a llamar (si el producto es una llamada), importe y estado del pago. Los datos de su tarjeta los recibe solo Polar o Recurrente; nosotros no los vemos ni los guardamos.
@@ -52,7 +52,7 @@ Vigente desde {{FECHA_VIGENCIA}}.
 
 Effective {{FECHA_VIGENCIA}}.
 
-**1. Who is responsible.** {{MARCA}} is operated by {{TITULAR}}, an individual, located at {{DOMICILIO}}. For any privacy matter, write to {{EMAIL_PRIVACIDAD}}.
+**1. Who is responsible.** {{MARCA}}, a Lumen Labs product, is operated by {{TITULAR}}, an individual, located at {{DOMICILIO}}. For any privacy matter, write to {{EMAIL_PRIVACIDAD}}.
 
 **2. What we collect.**
 - From the buyer: email, country, language, the phone number to call (if the product is a call), and the amount and status of the payment. Your card details are received only by Polar or Recurrente; we never see or store them.

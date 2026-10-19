@@ -42,11 +42,11 @@ export const PHRASES: Record<PhraseId, Variants> = {
     en: "Hello. This is the Santa call you ordered for {{NOMBRE_NIÑO}}. Would you like me to end it or continue with your child?",
     "en-GB": "Hello. This is the Father Christmas call you ordered for {{NOMBRE_NIÑO}}. Would you like me to end it or continue with your child?",
   },
-  // D13: full AI disclosure to an adult who asks. Names "Lumen Labs" literally (file 07, D-03b), not {{MARCA}}.
+  // D13: full AI disclosure to an adult who asks. Names "Jinglo, un producto de Lumen Labs" literally (file 07, D-03b), not {{MARCA}}.
   "D-03b": {
-    "es-419": "Es una llamada automatizada con voz de inteligencia artificial de Lumen Labs, que pidió la familia de {{NOMBRE_NIÑO}}. ¿Quiere que terminemos o que continúe con el niño?",
-    "es-ES": "Es una llamada automatizada con voz de inteligencia artificial de Lumen Labs, que ha pedido la familia de {{NOMBRE_NIÑO}}. ¿Quiere que terminemos o que continúe con el niño?",
-    en: "This is an automated call with an artificial intelligence voice from Lumen Labs, requested by {{NOMBRE_NIÑO}}'s family. Would you like me to end it or continue with your child?",
+    "es-419": "Es una llamada automatizada con voz de inteligencia artificial de Jinglo, un producto de Lumen Labs, que pidió la familia de {{NOMBRE_NIÑO}}. ¿Quiere que terminemos o que continúe con el niño?",
+    "es-ES": "Es una llamada automatizada con voz de inteligencia artificial de Jinglo, un producto de Lumen Labs, que ha pedido la familia de {{NOMBRE_NIÑO}}. ¿Quiere que terminemos o que continúe con el niño?",
+    en: "This is an automated call with an artificial intelligence voice from Jinglo, a Lumen Labs product, requested by {{NOMBRE_NIÑO}}'s family. Would you like me to end it or continue with your child?",
   },
   "D-04": {
     "es-419": "Entendido. Terminamos aquí y no volveremos a llamar a este número. Que tengan un buen día.",

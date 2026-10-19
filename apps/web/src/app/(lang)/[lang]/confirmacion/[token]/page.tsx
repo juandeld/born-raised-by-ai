@@ -47,7 +47,7 @@ export default async function Confirmacion({ params }: { params: Promise<{ lang:
     <>
       <p className="text-5xl" aria-hidden>&#127876;</p>
       <h1 className="mt-2 font-display text-3xl font-bold">{copy.confirm.title(order.child_first_name ?? "")}</h1>
-      <div className="mt-5 rounded-3xl border-2 border-gold-500 bg-white p-5">
+      <div className="mt-5 rounded-3xl border-2 border-gold-500 bg-paper p-5">
         <p className="text-sm font-semibold uppercase tracking-wide text-night-900/60">{copy.confirm.callWindow}</p>
         <p className="mt-1 font-display text-2xl font-bold">{when}</p>
         <p className="mt-1 text-sm text-night-900/70">{order.timezone.replace(/_/g, " ")}</p>

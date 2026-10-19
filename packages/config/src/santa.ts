@@ -41,3 +41,11 @@ export const SANTA: CallProductConfig = {
 };
 
 export const CALL_PRODUCTS: Record<string, CallProductConfig> = { santa: SANTA };
+
+/**
+ * Christmas 2026 season (Jinglo landing, checkout date picker). Confirmed against the scheduler on 19-oct-2026:
+ * a call may start any day until `lastCallDate` (window 19:00-21:00 local is the latest; allowedLocalHours.to = 21), and the
+ * checkout accepts a window as long as it ends 20 minutes ahead or more. `lastBookingDate` is the commercial cut-off shown to
+ * buyers (docs/marketing/santa.md: "ultimo pedido 22-dic"): it leaves 2 days of margin for refunds, retries and ElevenLabs capacity.
+ */
+export const SEASON = { year: 2026, lastBookingDate: "2026-12-22", lastCallDate: "2026-12-24" } as const;

@@ -79,7 +79,7 @@ export interface Copy {
 
 const es419: Copy = {
   htmlLang: "es",
-  siteTitle: "Santa te llama",
+  siteTitle: "Jinglo · Una llamada de Santa",
   siteDescription: "Santa llama por teléfono a tu hijo, por su nombre. Tú eliges el día y la hora y te quedas con la grabación y el certificado. Pago único, sin app y sin suscripción.",
   character: () => "Santa",
   nav: { privacy: "Privacidad", terms: "Términos y reembolso", support: "Soporte" },
@@ -213,13 +213,13 @@ const es419: Copy = {
     unsupported: "Tu navegador no permite usar el micrófono aquí. Ábrelo en Safari o Chrome.",
     notFound: "No encontramos esta llamada.",
   },
-  footer: { operator: "Un producto de", rights: "Todos los derechos reservados." },
+  footer: { operator: "un producto de Lumen Labs", rights: "Todos los derechos reservados." },
 };
 
 const esES: Copy = {
   ...es419,
   htmlLang: "es-ES",
-  siteTitle: "Papá Noel te llama",
+  siteTitle: "Jinglo · Una llamada de Papá Noel",
   siteDescription: "Papá Noel llama por teléfono a tu hijo, por su nombre. Tú eliges el día y la hora y te quedas con la grabación y el certificado. Pago único, sin app y sin suscripción.",
   character: () => "Papá Noel",
   lang: es419.lang,
@@ -264,7 +264,7 @@ const esES: Copy = {
 
 const en: Copy = {
   htmlLang: "en",
-  siteTitle: "Santa calls your child",
+  siteTitle: "Jinglo · A call from Santa",
   siteDescription: "Santa phones your child by name. You pick the day and time and keep the recording and a certificate. One payment, no app, no subscription.",
   character: () => "Santa",
   nav: { privacy: "Privacy", terms: "Terms and refunds", support: "Support" },
@@ -398,7 +398,7 @@ const en: Copy = {
     unsupported: "Your browser cannot use the microphone here. Open this page in Safari or Chrome.",
     notFound: "We could not find this call.",
   },
-  footer: { operator: "A product of", rights: "All rights reserved." },
+  footer: { operator: "a Lumen Labs product", rights: "All rights reserved." },
 };
 
 export const COPY: Record<"es" | "es-es" | "en", Copy> = { es: es419, "es-es": esES, en };

@@ -23,7 +23,7 @@ export default async function Llamada({ params }: { params: Promise<{ lang: stri
           <>
             <h1 className="font-display text-3xl font-bold">{c.title}</h1>
             <p className="mt-2 text-night-900/80">{c.intro}</p>
-            <p className="mb-6 mt-4 rounded-2xl border-2 border-night-900 bg-white p-4 text-sm">{c.notice}</p>
+            <p className="mb-6 mt-4 rounded-2xl border-2 border-night-900 bg-paper p-4 text-sm">{c.notice}</p>
             <WebCall labels={c} />
           </>
         )}

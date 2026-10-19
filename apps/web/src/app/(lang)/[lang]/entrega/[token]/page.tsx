@@ -44,7 +44,7 @@ export default async function Entrega({ params }: { params: Promise<{ lang: stri
       <h1 className="mt-2 font-display text-3xl font-bold">{d.title(view.childFirstName ?? "")}</h1>
 
       {view.hasMp3 && (
-        <section className="mt-6 rounded-3xl border-2 border-gold-500 bg-white p-5" aria-label={d.listen}>
+        <section className="mt-6 rounded-3xl border-2 border-gold-500 bg-paper p-5" aria-label={d.listen}>
           <h2 className="font-bold">{d.listen}</h2>
           <audio controls preload="none" src={`/api/entrega/${token}/mp3`} className="mt-3 w-full" />
           <a href={`/api/entrega/${token}/mp3?download=1`} className="btn btn-gold mt-4">{d.downloadMp3}</a>

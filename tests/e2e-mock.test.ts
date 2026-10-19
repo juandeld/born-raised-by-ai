@@ -26,7 +26,7 @@ describe("end to end in mock mode: order -> consent -> payment -> call with prel
       expect(c.payment_id).toBe(paid.payment_id);
       expect(c.phone_e164_hash).toBe(paid.phone_e164_hash);
     }
-    expect(consents.find((c) => c.checkbox_id === "C4")!.text_version_id).toBe("02-C4-es-419-legal-v1");
+    expect(consents.find((c) => c.checkbox_id === "C4")!.text_version_id).toBe("02-C4-es-419-legal-v1.3");
     // Receipt and reminder were sent; the child's data is not in analytics
     expect(h.delivery.sent.map((m) => m.kind)).toEqual(["receipt", "reminder"]);
 

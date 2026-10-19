@@ -23,7 +23,7 @@ export function SurveyButtons({ token, labels, thanks, title }: { token: string;
       <h2 className="font-display text-xl font-bold">{title}</h2>
       <div className="mt-3 grid grid-cols-3 gap-2">
         {(Object.keys(labels) as Survey[]).map((k) => (
-          <button key={k} type="button" disabled={busy} onClick={() => answer(k)} className="flex min-h-[88px] flex-col items-center justify-center gap-1 rounded-2xl border-2 border-night-700/20 bg-white p-2 text-sm font-semibold active:scale-95">
+          <button key={k} type="button" disabled={busy} onClick={() => answer(k)} className="flex min-h-[88px] flex-col items-center justify-center gap-1 rounded-2xl border-2 border-night-700/20 bg-paper p-2 text-sm font-semibold active:scale-95">
             <span aria-hidden className="text-3xl">{emoji[k]}</span>
             {labels[k]}
           </button>

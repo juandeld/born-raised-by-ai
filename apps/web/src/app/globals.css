@@ -20,21 +20,32 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Jinglo pages (Santa flow): warm paper, ink text, Fraunces. Colorear keeps its own body classes. */
+.jl-body {
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-sans: var(--font-fraunces), Georgia, serif;
+  background: #ece0c3;
+  color: #2b2018;
+  font-family: var(--font-fraunces), "Iowan Old Style", Georgia, serif;
+  font-variation-settings: "SOFT" 60;
+}
+.jl-body h1, .jl-body h2, .jl-body h3 { font-variation-settings: "SOFT" 100, "opsz" 144; }
+
 @layer components {
   .btn {
     @apply inline-flex min-h-[52px] w-full items-center justify-center rounded-full px-6 text-base font-bold transition active:scale-[.98] focus:outline-none focus-visible:ring-4 focus-visible:ring-gold-300;
   }
   .btn-gold {
-    @apply bg-gold-400 text-night-950 shadow-[0_6px_0_0_#d99a12] hover:bg-gold-300 active:translate-y-[2px] active:shadow-[0_4px_0_0_#d99a12];
+    @apply bg-berry-500 text-cream-50 shadow-[0_4px_0_0_#7d1a20] hover:bg-berry-600 active:translate-y-[2px] active:shadow-[0_2px_0_0_#7d1a20];
   }
   .btn-ghost {
-    @apply border-2 border-night-700/30 bg-white text-night-900 hover:bg-cream-100;
+    @apply border-2 border-night-700/30 bg-paper text-night-900 hover:bg-cream-100;
   }
   .btn[disabled] {
     @apply cursor-not-allowed opacity-60;
   }
   .field {
-    @apply block min-h-[52px] w-full rounded-2xl border-2 border-night-700/20 bg-white px-4 text-base text-night-950 placeholder:text-night-700/40 focus:border-gold-500 focus:outline-none focus:ring-4 focus:ring-gold-300/50;
+    @apply block min-h-[52px] w-full rounded-2xl border-2 border-night-700/20 bg-paper px-4 text-base text-night-950 placeholder:text-night-700/40 focus:border-gold-500 focus:outline-none focus:ring-4 focus:ring-gold-300/50;
   }
   .label {
     @apply mb-1 block text-sm font-semibold text-night-900;
