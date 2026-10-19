@@ -29,7 +29,9 @@ describe("Twilio adapter", () => {
     expect(xml).toContain('<Say language="es-ES"');
     expect(xml).toContain("Hola &lt;Leo&gt; &amp; familia");
     expect(xml).toContain('<Gather input="dtmf" numDigits="1" timeout="8"');
-    expect(xml.indexOf("<Say")).toBeLessThan(xml.indexOf("<Gather"));
+    // the prompt is nested inside <Gather> so a key pressed while it plays counts (barge-in)
+    expect(xml.indexOf("<Gather")).toBeLessThan(xml.indexOf("<Say"));
+    expect(xml).toMatch(/<Gather[^>]*>(<Say[^>]*>[^<]*<\/Say>)+<\/Gather><Redirect/);
     expect(xml).toContain("event=no_input");
     expect(xml).not.toContain("speech");
     expect(xmlEscape(`a"b'c`)).toBe("a&quot;b&apos;c");

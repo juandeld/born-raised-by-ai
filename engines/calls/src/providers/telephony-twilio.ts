@@ -135,23 +135,32 @@ export class TwilioTelephonyProvider implements TelephonyProvider {
     }
   }
 
-  /** Renders controller actions as TwiML. Sequence: <Say>... then <Gather> with a <Redirect> fallback for no input. */
+  /**
+   * Renders controller actions as TwiML. The <Say> prompts that precede a <Gather> are nested INSIDE it, so a key pressed
+   * while the prompt is still playing counts (barge-in). With <Say> outside, Twilio discards digits pressed during the
+   * prompt and the adult hears the prompt again (seen on the first real call, 18-oct-2026). <Redirect> handles no input.
+   */
   renderTwiml(actions: Action[], ctx: { callId: string; locale: TextLocale }): string {
     const v = SAY_VOICES[ctx.locale];
     const url = (event: string) => `${this.cfg.publicBaseUrl}/api/calls/twilio/voice?call=${ctx.callId}&amp;event=${event}`;
+    const say = (text: string) => `<Say language="${v.language}" voice="${v.voice}">${xmlEscape(text)}</Say>`;
     const parts: string[] = [];
+    let pending: string[] = []; // <Say> elements waiting for the next action
+    const flush = () => { parts.push(...pending); pending = []; };
     for (const a of actions) {
-      if (a.type === "say") parts.push(`<Say language="${v.language}" voice="${v.voice}">${xmlEscape(a.text)}</Say>`);
+      if (a.type === "say") pending.push(say(a.text));
       else if (a.type === "gather") {
-        parts.push(`<Gather input="dtmf" numDigits="1" timeout="${a.timeoutSeconds}" action="${url("digit")}" method="POST"/>`);
+        parts.push(`<Gather input="dtmf" numDigits="1" timeout="${a.timeoutSeconds}" actionOnEmptyResult="false" action="${url("digit")}" method="POST">${pending.join("")}</Gather>`);
+        pending = [];
         parts.push(`<Redirect method="POST">${url("no_input")}</Redirect>`);
-      } else if (a.type === "hangup") parts.push("<Hangup/>");
+      } else if (a.type === "hangup") { flush(); parts.push("<Hangup/>"); }
       else if (a.type === "connect_agent") {
         // ElevenLabs returns a full <Response> document; reuse it verbatim.
         if (a.twiml) return a.twiml;
-        parts.push("<Hangup/>");
+        flush(); parts.push("<Hangup/>");
       }
     }
+    flush();
     return `<?xml version="1.0" encoding="UTF-8"?><Response>${parts.join("")}</Response>`;
   }
 }
