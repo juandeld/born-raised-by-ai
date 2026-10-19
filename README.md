@@ -1,4 +1,4 @@
-# Born & Raised by AI
+# Born & Raised by AI · Lumen Labs (lumen-labs.co)
 
 Portafolio de 8 productos digitales de pago único operados por 16 agentes de IA. Dinero a Guatemala sin LLC.
 

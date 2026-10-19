@@ -1,4 +1,4 @@
-# Born & Raised by AI — Manual del repositorio
+# Born & Raised by AI · Lumen Labs (lumen-labs.co) — Manual del repositorio
 
 Portafolio de productos digitales de **pago único**, construidos y operados por agentes de IA.
 El dueño (Juan) aprueba presupuesto, países y productos; todo lo demás lo deciden los agentes
