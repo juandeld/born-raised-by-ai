@@ -1,4 +1,4 @@
-import { COUNTRIES, DAY_MS, RETENTION_DAYS, addDays, enabledCountries, formatPrice, priceFor, toUsdCents, type CountryCode, type Variant } from "@lumen/config";
+import { COUNTRIES, DAY_MS, LOCALE_SLUG, RETENTION_DAYS, addDays, enabledCountries, formatPrice, priceFor, toUsdCents, type CountryCode, type Variant } from "@lumen/config";
 import type { Locale } from "@lumen/config";
 import type { OrderRow } from "@lumen/db";
 import { CHECKBOX_ORDER, resolveCheckbox, type CheckboxId } from "@lumen/legal";
@@ -216,7 +216,7 @@ export class OrderService {
   private mailVars(order: OrderRow) {
     const country = COUNTRIES[order.country];
     const base = this.d.brand.domain;
-    const lang = order.language;
+    const lang = LOCALE_SLUG[order.language as Locale] ?? "es";
     const deleteDate = order.purge_at ? new Date(order.purge_at).toISOString().slice(0, 10) : "";
     return {
       childName: order.child_first_name ?? "",

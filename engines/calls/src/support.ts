@@ -1,4 +1,4 @@
-import { COUNTRIES, DAY_MS, addDays } from "@lumen/config";
+import { COUNTRIES, DAY_MS, LOCALE_SLUG, addDays } from "@lumen/config";
 import type { OrderRow } from "@lumen/db";
 import type { EngineDeps } from "./deps";
 import { composeMessage } from "./emails";
@@ -82,7 +82,7 @@ export class SupportAgent {
     const lang = order.language as Language;
     const msg = composeMessage("delivery", lang, order.email, {
       childName: order.child_first_name ?? "",
-      deliveryLink: `${this.d.brand.domain}/${lang}/entrega/${order.access_token}`,
+      deliveryLink: `${this.d.brand.domain}/${LOCALE_SLUG[lang]}/entrega/${order.access_token}`,
       linkExpires: order.purge_at ? order.purge_at.slice(0, 10) : "",
       holder: this.d.brand.holder,
       privacyEmail: this.d.brand.privacyEmail,

@@ -37,6 +37,11 @@ export interface PaymentProvider {
   readonly name: "polar" | "recurrente" | "mock";
   /** Currencies the provider can charge. Others are converted to USD by the checkout service. */
   readonly supportedCurrencies: Currency[] | "any";
+  /**
+   * Wallets the hosted checkout offers on its own (the page only shows badges; the wallet button lives in the provider page).
+   * Apple Pay / Google Pay are placeholders until the account is connected and tested: see docs/arquitectura/pendientes-cuentas.md.
+   */
+  readonly walletMethods: ReadonlyArray<"apple_pay" | "google_pay">;
   createCheckout(req: CheckoutRequest): Promise<CheckoutSession>;
   /** Verifies the signature and returns a normalized event, or null for events we ignore. Throws if the signature is invalid. */
   parseWebhook(rawBody: string, headers: Record<string, string | undefined>): Promise<PaymentEvent | null>;

@@ -13,7 +13,10 @@ export interface CountryConfig {
   currency: Currency;
   /** Default IANA time zone shown in the form (the buyer can change it). */
   defaultTimezone: string;
-  /** Locale used for the prelude and the agent (legal text ids). */
+  /**
+   * Locale used for the prelude and the agent (legal text ids). GB uses the en-US block because the checkout and the agent
+   * say "Santa"; the approved en-GB block (Father Christmas) needs its own agent first (docs/legal/textos/03, B1 name rule).
+   */
   preludeLocale: "es-419" | "es-ES" | "en-US" | "en-GB";
   /** Intl locale used to format prices. */
   priceFormatLocale: string;
@@ -25,11 +28,18 @@ export interface CountryConfig {
 export const COUNTRIES: Record<CountryCode, CountryConfig> = {
   US: { code: "US", currency: "USD", defaultTimezone: "America/New_York", preludeLocale: "en-US", priceFormatLocale: "en-US", prices: { single: 1499, bundle: 2499 }, callingCode: "1" },
   ES: { code: "ES", currency: "EUR", defaultTimezone: "Europe/Madrid", preludeLocale: "es-ES", priceFormatLocale: "es-ES", prices: { single: 1299, bundle: 1999 }, callingCode: "34" },
-  GB: { code: "GB", currency: "GBP", defaultTimezone: "Europe/London", preludeLocale: "en-GB", priceFormatLocale: "en-GB", prices: { single: 1199, bundle: 1999 }, callingCode: "44" },
+  GB: { code: "GB", currency: "GBP", defaultTimezone: "Europe/London", preludeLocale: "en-US", priceFormatLocale: "en-GB", prices: { single: 1199, bundle: 1999 }, callingCode: "44" },
   MX: { code: "MX", currency: "MXN", defaultTimezone: "America/Mexico_City", preludeLocale: "es-419", priceFormatLocale: "es-MX", prices: { single: 19900, bundle: 34900 }, callingCode: "52" },
 };
 
 export const LOCALES: Locale[] = ["es-419", "es-ES", "en"];
+
+/** URL segment of each locale: /es, /es-es, /en. The web app and the emails use the same mapping. */
+export const LOCALE_SLUG: Record<Locale, "es" | "es-es" | "en"> = { "es-419": "es", "es-ES": "es-es", en: "en" };
+export const SLUG_LOCALE: Record<"es" | "es-es" | "en", Locale> = { es: "es-419", "es-es": "es-ES", en: "en" };
+
+/** Countries sold under each route. US appears only when enabledCountries() includes it. */
+export const COUNTRIES_BY_LOCALE: Record<Locale, CountryCode[]> = { "es-419": ["MX"], "es-ES": ["ES"], en: ["GB", "US"] };
 
 /** Default country per route locale. English defaults to GB; US needs ?c=US (US is gated, see enabledCountries). */
 export const DEFAULT_COUNTRY_BY_LOCALE: Record<Locale, CountryCode> = {

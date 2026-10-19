@@ -7,7 +7,10 @@ const checkout = { orderId: "o1", productSlug: "santa", variant: "single" as con
 describe("payment providers", () => {
   it("defaults to mock", () => {
     expect(createPaymentProvider({}).name).toBe("mock");
-    expect(() => createPaymentProvider({ PAYMENT_PROVIDER: "polar" })).toThrow(/POLAR_ACCESS_TOKEN/);
+    // Without keys: mock outside production, hard error in production.
+    expect(createPaymentProvider({ PAYMENT_PROVIDER: "polar" }).name).toBe("mock");
+    expect(() => createPaymentProvider({ PAYMENT_PROVIDER: "polar", VERCEL_ENV: "production" })).toThrow(/POLAR_ACCESS_TOKEN/);
+    expect(() => createPaymentProvider({ PAYMENT_PROVIDER: "recurrente", PAYMENT_STRICT: "1" })).toThrow(/RECURRENTE/);
     expect(createPaymentProvider({ PAYMENT_PROVIDER: "polar", POLAR_ACCESS_TOKEN: "t", POLAR_WEBHOOK_SECRET: "s" }).name).toBe("polar");
   });
 
@@ -40,6 +43,32 @@ describe("payment providers", () => {
     const headers = { "webhook-id": "m1", "webhook-timestamp": ts, "webhook-signature": signStandardWebhook(Buffer.from("whs"), "m1", ts, body) };
     expect(await polar.parseWebhook(body, headers)).toEqual({ type: "payment_succeeded", orderId: "o1", checkoutId: "chk_1", paymentId: "ord_9" });
     await expect(polar.parseWebhook(body, { ...headers, "webhook-signature": "v1,AAAA" })).rejects.toThrow(/signature/);
+  });
+
+  it("Polar: full refund reads the order amount first, partial refund sends the given amount", async () => {
+    const calls: Array<{ url: string; method: string; body?: any }> = [];
+    const fetchFn = (async (url: string, init: RequestInit = {}) => {
+      calls.push({ url, method: init.method ?? "GET", body: init.body ? JSON.parse(String(init.body)) : undefined });
+      if (url.includes("/v1/orders/")) return new Response(JSON.stringify({ net_amount: 1000, tax_amount: 80 }), { status: 200 });
+      return new Response(JSON.stringify({ id: "ref_1" }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const polar = new PolarPaymentProvider({ accessToken: "t", webhookSecret: "whs", productMap: {}, server: "production" }, fetchFn);
+    expect(await polar.refund({ paymentId: "ord_9", currency: "USD", reason: "customer_request" })).toEqual({ refundId: "ref_1" });
+    expect(calls[0]!.url).toBe("https://api.polar.sh/v1/orders/ord_9");
+    expect(calls[1]!.body).toMatchObject({ order_id: "ord_9", amount: 1000, tax_amount: 80, reason: "customer_request" });
+    await polar.refund({ paymentId: "ord_9", currency: "USD", reason: "partial", amountMinor: 300 });
+    expect(calls[2]!.body.amount).toBe(300);
+    expect(calls).toHaveLength(3);
+  });
+
+  it("Polar: refunded webhook is normalized", async () => {
+    const polar = new PolarPaymentProvider({ accessToken: "t", webhookSecret: "whs", productMap: {}, server: "sandbox" });
+    const body = JSON.stringify({ type: "order.refunded", data: { id: "ord_9", checkout_id: "chk_1", metadata: { order_id: "o1" } } });
+    const ts = String(Math.floor(Date.now() / 1000));
+    const headers = { "webhook-id": "m2", "webhook-timestamp": ts, "webhook-signature": signStandardWebhook(Buffer.from("whs"), "m2", ts, body) };
+    expect(await polar.parseWebhook(body, headers)).toEqual({ type: "refunded", orderId: "o1", checkoutId: "chk_1", paymentId: "ord_9" });
+    const other = JSON.stringify({ type: "customer.created", data: { id: "c" } });
+    expect(await polar.parseWebhook(other, { ...headers, "webhook-signature": signStandardWebhook(Buffer.from("whs"), "m2", ts, other) })).toBeNull();
   });
 
   it("Recurrente: charges USD only and verifies Svix signatures", async () => {

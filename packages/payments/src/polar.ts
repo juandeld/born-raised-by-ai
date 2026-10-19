@@ -17,6 +17,8 @@ export interface PolarConfig {
 export class PolarPaymentProvider implements PaymentProvider {
   readonly name = "polar" as const;
   readonly supportedCurrencies = "any" as const;
+  /** Polar's hosted checkout is card based and shows Apple Pay / Google Pay by device. [no verificado] */
+  readonly walletMethods = ["apple_pay", "google_pay"] as const;
 
   constructor(private readonly cfg: PolarConfig, private readonly fetchFn: typeof fetch = fetch) {}
 
@@ -51,6 +53,7 @@ export class PolarPaymentProvider implements PaymentProvider {
         products: [productId],
         success_url: req.successUrl,
         customer_email: req.customerEmail,
+        allow_discount_codes: false,
         // Only the random order id travels to Polar. No child data (Polar never receives it).
         metadata: { order_id: req.orderId },
       }),
@@ -77,15 +80,32 @@ export class PolarPaymentProvider implements PaymentProvider {
     return null;
   }
 
+  /**
+   * Full refund by default. Polar's refund endpoint needs the amount, so without `amountMinor` we read the order first and
+   * refund its whole net amount plus tax. [no verificado: field names net_amount / tax_amount; confirm in sandbox]
+   */
   async refund(req: RefundRequest): Promise<{ refundId: string }> {
+    const headers = { authorization: `Bearer ${this.cfg.accessToken}`, "content-type": "application/json" };
+    let amount = req.amountMinor;
+    let taxAmount: number | undefined;
+    if (amount === undefined) {
+      const o = await this.fetchFn(`${this.base}/v1/orders/${req.paymentId}`, { headers });
+      if (!o.ok) throw new Error(`Polar get order ${o.status}: ${await o.text()}`);
+      const order = (await o.json()) as { net_amount?: number; tax_amount?: number; total_amount?: number; amount?: number };
+      amount = order.net_amount ?? order.amount ?? order.total_amount;
+      taxAmount = order.tax_amount;
+      if (amount === undefined) throw new Error("Polar order has no amount; cannot refund automatically");
+    }
     const res = await this.fetchFn(`${this.base}/v1/refunds/`, {
       method: "POST",
-      headers: { authorization: `Bearer ${this.cfg.accessToken}`, "content-type": "application/json" },
+      headers,
       body: JSON.stringify({
         order_id: req.paymentId,
         reason: "customer_request",
         comment: req.reason.slice(0, 200),
-        ...(req.amountMinor !== undefined ? { amount: req.amountMinor } : {}),
+        amount,
+        ...(taxAmount !== undefined ? { tax_amount: taxAmount } : {}),
+        revoke_benefits: true,
       }),
     });
     if (!res.ok) throw new Error(`Polar refund ${res.status}: ${await res.text()}`);

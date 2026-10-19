@@ -17,6 +17,7 @@ export interface RecurrenteConfig {
 export class RecurrentePaymentProvider implements PaymentProvider {
   readonly name = "recurrente" as const;
   readonly supportedCurrencies = ["USD"] as ("USD")[];
+  readonly walletMethods = [] as const;
   private readonly base = "https://app.recurrente.com/api";
 
   constructor(private readonly cfg: RecurrenteConfig, private readonly fetchFn: typeof fetch = fetch) {}

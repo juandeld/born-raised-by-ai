@@ -1,4 +1,4 @@
-import { RETENTION_DAYS, COUNTRIES, addDays } from "@lumen/config";
+import { RETENTION_DAYS, COUNTRIES, LOCALE_SLUG, addDays } from "@lumen/config";
 import type { CallRow, OrderRow } from "@lumen/db";
 import { Certificate } from "./certificate";
 import type { EngineDeps } from "./deps";
@@ -47,7 +47,7 @@ export class PostCall {
     await d.storage.put(pdfPath, cert.pdf, "application/pdf");
 
     const linkExpires = addDays(now, RETENTION_DAYS.recording);
-    const deliveryLink = `${d.brand.domain}/${language}/entrega/${order.access_token}`;
+    const deliveryLink = `${d.brand.domain}/${LOCALE_SLUG[language]}/entrega/${order.access_token}`;
     const res = await d.delivery.send(
       composeMessage("delivery", language, order.email!, {
         childName: order.child_first_name!,

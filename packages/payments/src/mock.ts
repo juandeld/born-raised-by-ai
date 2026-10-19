@@ -8,6 +8,7 @@ import type { CheckoutRequest, CheckoutSession, PaymentEvent, PaymentProvider, R
 export class MockPaymentProvider implements PaymentProvider {
   readonly name = "mock" as const;
   readonly supportedCurrencies = "any" as const;
+  readonly walletMethods = ["apple_pay", "google_pay"] as const;
   readonly refunds: Array<{ paymentId: string; reason: string; amountMinor?: number }> = [];
 
   constructor(private readonly baseUrl = "http://localhost:3000") {}

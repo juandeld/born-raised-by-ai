@@ -2,7 +2,7 @@ import { toUsdCents, type Currency } from "@lumen/config";
 import { MockPaymentProvider } from "./mock";
 import { PolarPaymentProvider } from "./polar";
 import { RecurrentePaymentProvider } from "./recurrente";
-import type { PaymentProvider } from "./types";
+import { PaymentConfigError, type PaymentProvider } from "./types";
 
 export * from "./types";
 export * from "./standard-webhooks";
@@ -10,16 +10,28 @@ export { MockPaymentProvider } from "./mock";
 export { PolarPaymentProvider } from "./polar";
 export { RecurrentePaymentProvider } from "./recurrente";
 
-/** PAYMENT_PROVIDER=polar | recurrente | mock (default mock: nothing is ever charged without an explicit switch). */
+/**
+ * True when the deployment is the live one. In production a missing key is a hard error: a silent fallback to the mock
+ * would let orders "pay" without charging.
+ */
+export function isProduction(env: Record<string, string | undefined> = process.env): boolean {
+  return env.VERCEL_ENV === "production" || env.PAYMENT_STRICT === "1";
+}
+
+/**
+ * PAYMENT_PROVIDER=polar | recurrente | mock (default mock: nothing is ever charged without an explicit switch).
+ * Outside production, polar/recurrente without keys fall back to the mock with a warning, so `npm run dev` always works.
+ */
 export function createPaymentProvider(env: Record<string, string | undefined> = process.env): PaymentProvider {
-  switch (env.PAYMENT_PROVIDER ?? "mock") {
-    case "polar":
-      return PolarPaymentProvider.fromEnv(env);
-    case "recurrente":
-      return RecurrentePaymentProvider.fromEnv(env);
-    default:
-      return new MockPaymentProvider(env.PUBLIC_BASE_URL ?? "http://localhost:3000");
+  const wanted = env.PAYMENT_PROVIDER ?? "mock";
+  try {
+    if (wanted === "polar") return PolarPaymentProvider.fromEnv(env);
+    if (wanted === "recurrente") return RecurrentePaymentProvider.fromEnv(env);
+  } catch (err) {
+    if (isProduction(env) || !(err instanceof PaymentConfigError)) throw err;
+    console.warn(`[payments] ${wanted} is not configured (${err.message}); using the mock provider. Nothing will be charged.`);
   }
+  return new MockPaymentProvider(env.PUBLIC_BASE_URL ?? "http://localhost:3000");
 }
 
 /** Provider by name, for webhook routes (each provider has its own endpoint and secret). */
