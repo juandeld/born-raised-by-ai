@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Jinglo — Una llamada del Polo Norte</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#13233f">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,400..700,0..100;1,9..144,400..600,0..100&family=Pinyon+Script&display=swap" rel="stylesheet">
+<style>
+:root{
+  --night:#13233f; --night-deep:#0d182c; --night-soft:#1d3358;
+  --paper:#e9dcbd; --paper-light:#f1e7cd; --ink:#2b2018; --ink-soft:#5a4838;
+  --cran:#a8262c; --cran-deep:#7d1a20; --pine:#2f5d50; --gold:#e3ab52; --cream:#f3e8cf;
+  --serif:"Fraunces","Iowan Old Style","Palatino Linotype",Georgia,serif;
+  --script:"Pinyon Script","Snell Roundhand","Apple Chancery",cursive;
+  --gut:20px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{background:var(--night);color:var(--cream);font-family:var(--serif);font-variation-settings:"SOFT" 60;font-size:1.125rem;line-height:1.6;overflow-x:hidden}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;opacity:.16;mix-blend-mode:soft-light;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .45 0 0 0 0 .4 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E")}
+img{display:block;max-width:100%;height:auto}
+button,input{font:inherit;color:inherit}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.paper :focus-visible{outline-color:var(--cran)}
+.wrap{width:100%;max-width:1120px;margin:0 auto;padding:0 var(--gut)}
+h1,h2,h3{font-weight:600;line-height:1.06;letter-spacing:-.012em;font-variation-settings:"SOFT" 100,"opsz" 144}
+h2{font-size:clamp(2rem,7vw,3.3rem);max-width:15em;text-wrap:balance}
+p{max-width:34rem}
+.edge{position:absolute;left:0;width:100%;height:34px;display:block;pointer-events:none}
+.paper>.edge{position:absolute}
+.plate .edge.v{display:none}
+.edge.top{top:-33px}.edge.bottom{bottom:-33px;transform:scaleY(-1)}
+section{position:relative}
+.paper{background:var(--paper);color:var(--ink);padding:88px 0 80px}
+.paper::before{content:"";position:absolute;inset:0;opacity:.5;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.04 .9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .36 0 0 0 0 .22 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23f)'/%3E%3C/svg%3E")}
+.paper>*{position:relative}
+.night{padding:88px 0 80px}
+
+/* top bar */
+.bar{position:absolute;z-index:5;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:16px var(--gut)}
+.brand{font-size:1.6rem;font-style:italic;font-weight:600;letter-spacing:-.02em;text-decoration:none;color:var(--cream);text-shadow:0 1px 8px #0d182c99}
+.lang{display:flex;gap:2px}
+.lang button{background:none;border:0;min-height:44px;min-width:44px;padding:0 8px;font-size:.9rem;opacity:.8;cursor:pointer;color:var(--cream);text-shadow:0 1px 6px #0d182c}
+.lang button[aria-pressed=true]{opacity:1;font-weight:700;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:6px;text-decoration-color:var(--gold)}
+
+/* hero */
+.hero{padding:0;overflow:hidden}
+.plate{position:relative;height:min(40vh,340px);overflow:hidden}
+.plate img{width:100%;height:100%;object-fit:cover;object-position:50% 36%}
+.plate .edge{bottom:-1px;transform:none;height:46px;fill:var(--night)}
+.hero-copy{position:relative;padding:6px var(--gut) 56px;max-width:640px;margin:0 auto}
+.call{position:relative;margin:-92px 0 22px;width:min(100%,330px);padding:12px 14px 12px 16px;display:flex;align-items:center;gap:14px;background:var(--paper-light);color:var(--ink);border-radius:14px 18px 12px 16px;box-shadow:0 2px 0 #00000040,0 14px 24px -10px #000a;transform:rotate(-1.6deg);animation:enter .8s .5s cubic-bezier(.2,.8,.2,1) both}
+.call .who{flex:1;line-height:1.2}
+.call .who b{display:block;font-size:1.15rem}
+.call .who span{font-size:.92rem;color:var(--ink-soft)}
+.call .wave{position:absolute;left:-14px;top:50%;width:14px;height:34px;transform:translateY(-50%);opacity:0}
+.pick{flex:none;width:48px;height:48px;border-radius:50%;border:0;background:var(--pine);display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 0 #1b3a31}
+.pick svg{width:22px;height:22px;fill:var(--cream)}
+.call.ring{animation:shake .5s 2}
+.call.ring .wave{opacity:1}
+@keyframes enter{from{opacity:0;transform:translateY(26px) rotate(-1.6deg)}to{opacity:1;transform:rotate(-1.6deg)}}
+@keyframes shake{0%,100%{transform:rotate(-1.6deg)}20%{transform:rotate(1.2deg) translateX(2px)}40%{transform:rotate(-3.4deg) translateX(-2px)}60%{transform:rotate(1deg) translateX(2px)}80%{transform:rotate(-2.6deg)}}
+h1{font-size:clamp(2.55rem,11.2vw,4.7rem);letter-spacing:-.025em;text-wrap:balance;transition:opacity .16s}
+h1.swap{opacity:0}
+.lead{margin-top:20px;font-size:1.2rem;color:#e6dcc3}
+.field{margin-top:28px;max-width:26rem}
+.field label{display:block;font-size:.98rem;color:#cfc6ad}
+.field input{display:block;width:100%;margin-top:2px;background:none;border:0;border-bottom:2px solid var(--gold);padding:4px 0 2px;min-height:56px;font-family:var(--script);font-size:2.3rem;color:var(--cream);border-radius:0}
+.field input::placeholder{font-family:var(--serif);font-size:1.05rem;color:#9aa3b8;font-style:italic}
+.field input:focus{outline:0;border-bottom-color:var(--cream)}
+.field small{display:block;margin-top:6px;font-size:.86rem;color:#9ea7bb}
+.cta{display:inline-flex;align-items:center;justify-content:center;text-align:center;min-height:58px;padding:12px 28px;margin-top:22px;background:var(--cran);color:var(--cream);font-weight:600;font-size:1.1rem;text-decoration:none;border-radius:8px 12px 9px 13px;border:0;cursor:pointer;box-shadow:0 4px 0 var(--cran-deep);transition:transform .12s,box-shadow .12s}
+.cta:active{transform:translateY(3px);box-shadow:0 1px 0 var(--cran-deep)}
+.cta.wide{width:100%;padding:12px 14px;font-size:1.02rem}
+.fine{margin-top:16px;font-size:.95rem;color:#cfc6ad}
+
+/* listen */
+.listen .grid{display:grid;grid-template-columns:minmax(0,1fr);gap:34px;align-items:center}
+.gift .grid>*,.listen .grid>*{min-width:0}
+.phone-art{position:relative;max-width:420px;margin:0 auto;transform:rotate(-1.2deg)}
+.phone-art img{width:100%;border-radius:4px 14px 6px 10px;box-shadow:0 2px 0 #0003,0 22px 30px -18px #3a2a1a}
+.phone-art .rings{position:absolute;left:4%;top:44%;width:70px;height:70px;opacity:0;transition:opacity .3s}
+.playing .phone-art .rings{opacity:1;animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.15)}}
+.player{margin-top:26px;display:flex;align-items:center;gap:16px}
+.hang{flex:none;display:inline-flex;align-items:center;gap:10px;min-height:58px;padding:0 24px 0 18px;border:0;border-radius:40px;background:var(--cran);color:var(--cream);font-weight:600;font-size:1.05rem;cursor:pointer;box-shadow:0 4px 0 var(--cran-deep)}
+.hang svg{width:24px;height:24px;fill:currentColor}
+.hang .off{display:none}.playing .hang .on{display:none}.playing .hang .off{display:block}
+.peaks{flex:1 1 0;height:48px;display:flex;align-items:center;gap:1px;min-width:0}
+.peaks i{flex:1 1 0;min-width:0;background:#b9a98a;border-radius:2px;transition:background .2s}
+.peaks i.done{background:var(--cran)}
+.note{margin-top:14px;font-size:.92rem;color:var(--ink-soft)}
+
+/* steps */
+.steps{list-style:none;margin-top:44px;display:grid;gap:0}
+.steps li{position:relative;padding:0 0 38px 78px}
+.steps li::before{content:"";position:absolute;left:25px;top:62px;bottom:2px;width:16px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='24'%3E%3Cpath d='M8 0C17 6-1 18 8 24' fill='none' stroke='%23e3ab52' stroke-opacity='.55' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") repeat-y center top/16px 24px}
+.steps li:last-child::before{display:none}
+.steps .n{position:absolute;left:0;top:-6px;width:62px;font-size:3.4rem;font-style:italic;font-weight:500;color:var(--gold);line-height:1;text-align:center}
+.steps h3{font-size:1.5rem;margin-bottom:6px}
+.steps p{color:#d8cfb6}
+.diorama{margin-top:48px;position:relative}
+.diorama img{width:100%;border-radius:4px 16px 6px 12px;box-shadow:0 20px 40px -20px #000}
+.diorama figcaption{margin-top:10px;font-style:italic;color:#aab2c4;font-size:.98rem}
+
+/* gift */
+.gift .grid{display:grid;grid-template-columns:minmax(0,1fr);gap:44px;align-items:center}
+.cert{position:relative;max-width:360px;margin:0 auto;transform:rotate(1.4deg)}
+.cert img{width:100%;border-radius:3px;box-shadow:0 18px 30px -18px #000a}
+.cert .txt{position:absolute;left:23%;right:20%;top:15.5%;height:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#3c2a20;line-height:1.25}
+.cert .txt small{font-size:clamp(.62rem,2.5vw,.85rem);font-style:italic}
+.cert .nm{font-family:var(--script);font-size:clamp(2rem,10vw,3rem);line-height:1.1;color:var(--cran-deep);margin:.2em 0;word-break:break-word}
+.cert .nm.empty{opacity:.35}
+.cert .sig{font-family:var(--script);font-size:clamp(1.3rem,5.5vw,1.9rem);margin-top:.6em;color:#3c2a20}
+.gift ul{list-style:none;margin-top:26px;display:grid;gap:18px}
+.gift li{padding-left:22px;position:relative}
+.gift li::before{content:"";position:absolute;left:0;top:.62em;width:9px;height:9px;background:var(--cran);transform:rotate(45deg)}
+.gift li b{font-weight:600}
+.quote{font-size:clamp(1.3rem,4.5vw,1.75rem);font-style:italic;line-height:1.35;margin-top:20px;max-width:26rem;color:var(--ink-soft)}
+
+/* who */
+.who .scene{margin-top:36px}
+.who .scene img{width:100%;border-radius:4px 16px 6px 12px;box-shadow:0 20px 40px -20px #000}
+.cols{display:grid;gap:28px;margin-top:40px}
+.cols h3{font-size:1.45rem;margin-bottom:6px;color:var(--gold);font-weight:500;font-style:italic}
+.cols p{color:#d8cfb6}
+
+/* guarantee */
+.guar h2{max-width:13em}
+.guar dl{margin-top:36px;display:grid;gap:26px}
+.guar dt{font-weight:600;font-size:1.3rem}
+.guar dd{margin-top:4px;color:var(--ink-soft)}
+.stamp{position:absolute;right:var(--gut);top:68px;width:92px;height:92px;transform:rotate(12deg);display:none}
+
+/* urgency */
+.urg{background:var(--night-deep);padding:0 0 76px;overflow:hidden}
+.urg .bg{height:240px;overflow:hidden;position:relative}
+.urg .bg img{width:100%;height:100%;object-fit:cover;object-position:50% 70%}
+.urg .bg .edge{bottom:-1px;transform:none;height:34px;fill:var(--night-deep)}
+.urg .in{margin-top:-8px}
+.count{display:flex;gap:6px;margin:28px 0 8px;font-variant-numeric:lining-nums tabular-nums}
+.count div{text-align:center;min-width:64px}
+.count b{display:block;font-size:clamp(2.4rem,11vw,3.8rem);font-weight:500;line-height:1;color:var(--gold)}
+.count span{font-size:.88rem;color:#aab2c4}
+.count .sep{font-size:2.4rem;color:#56648a;align-self:flex-start;min-width:0;line-height:1.1}
+.urg .last{font-weight:600;margin-top:14px}
+.urg .why{margin-top:10px;color:#cfc6ad}
+
+/* price */
+.tickets{display:grid;gap:22px;margin-top:36px}
+.ticket{position:relative;padding:28px 24px 26px;background:var(--paper-light);border-radius:6px;-webkit-mask:radial-gradient(circle 11px at 0 56%,#0000 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 11px at 100% 56%,#0000 98%,#000) right/51% 100% no-repeat;mask:radial-gradient(circle 11px at 0 56%,#0000 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 11px at 100% 56%,#0000 98%,#000) right/51% 100% no-repeat}
+.ticket h3{font-size:1.4rem}
+.ticket .amt{font-size:3.4rem;font-weight:600;line-height:1.05;margin:6px 0 4px;letter-spacing:-.03em}
+.ticket p{color:var(--ink-soft);font-size:1rem}
+.ticket.main{box-shadow:inset 0 0 0 2px var(--cran)}
+.ticket.soon{background:#dccfae;opacity:.8}
+.ticket.soon .amt{font-size:2.2rem}
+.soon-tag{display:inline-block;margin-top:14px;font-style:italic;color:var(--ink-soft)}
+.ticket .cta{margin-top:18px}
+
+/* families (hidden until real reviews) */
+.fam[hidden]{display:none}
+
+/* faq */
+.faq{margin-top:34px;max-width:46rem}
+.faq details{border-top:1px solid #b3a483}
+.faq details:last-child{border-bottom:1px solid #b3a483}
+.faq summary{list-style:none;cursor:pointer;padding:18px 40px 18px 0;font-weight:600;font-size:1.15rem;line-height:1.3;position:relative;min-height:56px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";position:absolute;right:4px;top:12px;font-size:1.7rem;font-weight:400;color:var(--cran);transition:transform .25s}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq details p{padding:0 8px 20px 0;color:var(--ink-soft);max-width:38rem}
+
+footer{background:var(--night-deep);padding:56px 0 110px;font-size:.92rem;color:#aab2c4}
+footer .brand{font-size:1.9rem;display:inline-block;margin-bottom:10px}
+footer p{max-width:36rem;margin-top:8px}
+
+/* sticky */
+.sticky{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:10px var(--gut) calc(10px + env(safe-area-inset-bottom));background:var(--night-deep);border-top:1px solid #2c3d63;transform:translateY(110%);transition:transform .3s}
+.sticky.show{transform:none}
+.sticky .cta{margin:0;width:100%;min-height:52px}
+
+@media (min-width:860px){
+  :root{--gut:40px}
+  body{font-size:1.2rem}
+  .bar{padding:22px var(--gut)}
+  .hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.9fr);min-height:min(900px,100vh);align-items:stretch}
+  .hero-copy{grid-column:1;grid-row:1;align-self:center;padding:120px 24px 70px max(var(--gut),calc((100vw - 1120px)/2 + var(--gut)));margin:0;max-width:none}
+  .plate{grid-column:2;grid-row:1;height:auto;min-height:760px}
+  .plate img{object-position:50% 40%}
+  .plate .edge.h{display:none}
+  .plate .edge.v{display:block;top:0;bottom:auto;left:-1px;width:44px;height:100%}
+  .call{position:absolute;left:calc(100% - 110px);bottom:64px;margin:0;z-index:3;width:330px}
+  .hero-copy{position:relative}
+  .listen .grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:80px}
+  .gift .grid{grid-template-columns:minmax(0,.8fr) minmax(0,1fr);gap:80px}
+  .gift .cert{order:0}
+  .cols{grid-template-columns:repeat(3,1fr);gap:48px}
+  .who .scene{margin-top:44px}
+  .steps{grid-template-columns:repeat(3,1fr);gap:40px;margin-top:56px}
+  .steps li{padding:70px 0 0 0}
+  .steps li::before{display:none}
+  .steps .n{left:0;text-align:left;top:0}
+  .steps li:not(:last-child)::after{content:"";position:absolute;top:30px;left:56px;right:-34px;height:16px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='16'%3E%3Cpath d='M0 8C6 17 18-1 24 8' fill='none' stroke='%23e3ab52' stroke-opacity='.55' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") repeat-x left center/24px 16px}
+  .tickets{grid-template-columns:1.25fr 1fr;align-items:start}
+  .guar dl{grid-template-columns:repeat(3,1fr);gap:48px}
+  .stamp{display:block;top:80px;right:calc((100vw - 1120px)/2 + 40px)}
+  .urg .bg{height:300px}
+  .sticky{display:none}
+  .cta.wide{width:auto}
+}
+@media (max-width:859px){.call{margin-top:-58px}.hero-copy{padding-bottom:40px}}
+@media (prefers-reduced-motion:reduce){.call{animation:none}.call.ring{animation:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <a class="brand" href="#top" aria-label="Jinglo">Jinglo</a>
+  <nav class="lang" aria-label="Idioma / Language">
+    <button data-l="es" aria-pressed="true">ES</button>
+    <button data-l="es-es" aria-pressed="false">ES-ES</button>
+    <button data-l="en" aria-pressed="false">EN</button>
+  </nav>
+</header>
+
+<main id="top">
+<section class="hero">
+  <div class="plate">
+    <img src="{{img:hero}}" alt="" data-alt="heroAlt" width="900" height="1350" fetchpriority="high">
+    {{edge:hero:night:rtl}}
+  </div>
+  <div class="hero-copy">
+    <div class="call" id="call" role="group" aria-live="polite">
+      <svg class="wave" viewBox="0 0 14 34" aria-hidden="true"><path d="M12 3C5 9 5 25 12 31M7 11C4 15 4 19 7 23" fill="none" stroke="#e3ab52" stroke-width="2.4" stroke-linecap="round"/></svg>
+      <div class="who"><b data-k="callFrom"></b><span id="callSub"></span></div>
+      <button class="pick" id="pick" type="button" aria-label="Contestar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 10.8a15 15 0 006.6 6.6l2.2-2.2a1 1 0 011-.25 11 11 0 003.5.56 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.2.2 2.4.56 3.5a1 1 0 01-.25 1z"/></svg></button>
+    </div>
+    <h1 id="h1"></h1>
+    <p class="lead" id="lead"></p>
+    <div class="field">
+      <label for="nm" data-k="fieldL"></label>
+      <input id="nm" type="text" maxlength="22" autocomplete="off" autocapitalize="words" enterkeyhint="done">
+      <small data-k="fieldH"></small>
+    </div>
+    <a class="cta" id="cta1" href="#precio"></a>
+    <p class="fine" data-k="fine"></p>
+  </div>
+</section>
+
+<section class="paper listen" id="escucha">
+  {{edge:l1:paper:top}}
+  <div class="wrap grid" id="listenGrid">
+    <div class="phone-art">
+      <img src="{{img:telefono}}" alt="" data-alt="phoneAlt" width="900" height="900">
+      <svg class="rings" viewBox="0 0 70 70" aria-hidden="true"><path d="M8 20C2 30 2 42 8 52M18 14C8 28 8 46 18 58M28 8C14 26 14 48 28 64" fill="none" stroke="#a8262c" stroke-width="3" stroke-linecap="round"/></svg>
+    </div>
+    <div>
+      <h2 data-k="listenT"></h2>
+      <p style="margin-top:16px" data-k="listenP"></p>
+      <div class="player">
+        <button class="hang" id="hang" type="button" aria-pressed="false">
+          <svg class="on" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 10.8a15 15 0 006.6 6.6l2.2-2.2a1 1 0 011-.25 11 11 0 003.5.56 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.2.2 2.4.56 3.5a1 1 0 01-.25 1z"/></svg>
+          <svg class="off" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1a1 1 0 01-.56.9c-.98.49-1.87 1.12-2.66 1.85a1 1 0 01-1.4 0L.3 13.7a1 1 0 01-.29-.71c0-.28.11-.53.29-.71C3.34 9.78 7.46 8 12 8s8.66 1.78 11.71 4.28c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48a1 1 0 01-1.4 0 11 11 0 00-2.67-1.85 1 1 0 01-.56-.9v-3.1A15 15 0 0012 9z"/></svg>
+          <span id="hangT"></span>
+        </button>
+        <div class="peaks" id="peaks" aria-hidden="true"></div>
+      </div>
+      <audio id="aud" preload="none" src="{{audio}}"></audio>
+      <p class="note" data-k="listenN"></p>
+    </div>
+  </div>
+</section>
+
+<section class="night how" id="como">
+  {{edge:h1:night:top}}
+  <div class="wrap">
+    <h2 data-k="howT"></h2>
+    <ol class="steps" id="steps"></ol>
+    <figure class="diorama">
+      <img src="{{img:taller}}" alt="" data-alt="tallerAlt" width="1100" height="733">
+      <figcaption data-k="tallerCap"></figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="paper gift" id="recibes">
+  {{edge:g1:paper:top}}
+  <div class="wrap grid">
+    <div class="cert" aria-label="" id="cert">
+      <img src="{{img:certificado}}" alt="" width="720" height="1004">
+      <div class="txt" aria-hidden="true">
+        <small id="cBy"></small>
+        <small id="cThat"></small>
+        <div class="nm" id="cName"></div>
+        <small id="cList"></small>
+        <small id="cYear"></small>
+        <div class="sig" id="cSig"></div>
+      </div>
+    </div>
+    <div>
+      <h2 data-k="giftT"></h2>
+      <p class="quote" data-k="giftQ"></p>
+      <ul id="giftL"></ul>
+    </div>
+  </div>
+</section>
+
+<section class="night who" id="paraquien">
+  {{edge:w1:night:top}}
+  <div class="wrap">
+    <h2 data-k="whoT"></h2>
+    <figure class="scene"><img src="{{img:familia}}" alt="" data-alt="famAlt" width="1100" height="733"></figure>
+    <div class="cols" id="cols"></div>
+  </div>
+</section>
+
+<section class="paper guar" id="garantia">
+  {{edge:q1:paper:top}}
+  <svg class="stamp" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="none" stroke="#a8262c" stroke-width="3"/><circle cx="50" cy="50" r="38" fill="none" stroke="#a8262c" stroke-width="1.2" stroke-dasharray="2 4"/><text x="50" y="58" text-anchor="middle" font-family="Fraunces,serif" font-style="italic" font-weight="600" font-size="30" fill="#a8262c">7</text><text x="50" y="74" text-anchor="middle" font-family="Fraunces,serif" font-style="italic" font-size="12" fill="#a8262c" id="stampT"></text></svg>
+  <div class="wrap">
+    <h2 data-k="guarT"></h2>
+    <dl id="guarL"></dl>
+  </div>
+</section>
+
+<section class="urg" id="urgencia">
+  <div class="bg"><img src="{{img:trineo}}" alt="" width="1100" height="733">{{edge:u1:night:rtl}}</div>
+  <div class="wrap in">
+    <h2 data-k="urgT"></h2>
+    <div class="count" id="count" role="timer" aria-label=""></div>
+    <p class="last" data-k="urgLast"></p>
+    <p class="why" data-k="urgWhy"></p>
+  </div>
+</section>
+
+<section class="paper price" id="precio">
+  {{edge:p1:paper:top}}
+  <div class="wrap">
+    <h2 data-k="priceT"></h2>
+    <div class="tickets">
+      <article class="ticket main">
+        <h3 data-k="p1n"></h3>
+        <div class="amt" data-k="p1"></div>
+        <p data-k="p1d"></p>
+        <a class="cta wide" id="cta2" href="#precio"></a>
+      </article>
+      <article class="ticket soon">
+        <h3 data-k="p2n"></h3>
+        <div class="amt" data-k="p2"></div>
+        <p data-k="p2d"></p>
+        <span class="soon-tag" data-k="soon"></span>
+      </article>
+    </div>
+    <p class="note" style="margin-top:22px" data-k="priceN"></p>
+  </div>
+</section>
+
+<!-- Bloque de reseñas: OCULTO hasta tener reseñas reales y autorizadas. No inventar. Quitar el atributo hidden cuando existan. -->
+<section class="paper fam" id="familias" hidden>
+  <div class="wrap">
+    <h2 data-k="famT"></h2>
+    <div id="famL"></div>
+  </div>
+</section>
+
+<section class="paper faqs" id="faq" style="padding-top:20px">
+  <div class="wrap">
+    <h2 data-k="faqT"></h2>
+    <div class="faq" id="faqL"></div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a class="brand" href="#top">Jinglo</a>
+    <p data-k="by"></p>
+    <p data-k="legal"></p>
+  </div>
+</footer>
+
+<div class="sticky" id="sticky"><a class="cta" id="cta3" href="#precio"></a></div>
+
+<script>
+(function(){
+var T={
+es:{
+ doc:"Jinglo — Una llamada del Polo Norte para tu peque",
+ heroAlt:"Una casita en una colina nevada, de noche, con una ventana encendida.",
+ phoneAlt:"Un teléfono rojo sonando en la mesita del pasillo, con nieve afuera de la ventana.",
+ tallerAlt:"El taller del Polo Norte de noche, con paquetes en los estantes y un teléfono de candelero sobre la mesa.",
+ famAlt:"Un niño en pijama rojo contesta un teléfono antiguo frente al árbol de Navidad mientras su mamá lo mira.",
+ callFrom:"Polo Norte", callSubN:"llamando a {n}…", callSub0:"llamada entrante…",
+ h1_0:"Este año, el Polo Norte llama a casa.", h1_n:"Hay una llamada del Polo Norte para {n}.",
+ lead_0:"Un día de diciembre, a la hora que tú elijas, suena tu teléfono. Es Santa, y pregunta por tu peque. Tú solo tienes que estar ahí para ver su cara.",
+ lead_n:"Un día de diciembre, a la hora que tú elijas, suena tu teléfono. Es Santa, y pregunta por {n}. Tú solo tienes que estar ahí para ver su cara.",
+ fieldL:"¿Cómo se llama tu peque?", fieldPh:"Escribe su nombre", fieldH:"Solo para que veas cómo quedaría.",
+ cta_0:"Reservar la llamada · MX$199", cta_n:"Reservar la llamada de {n} · MX$199", ctaS:"Reservar la llamada · MX$199",
+ fine:"Pago único. Sin app. Sin suscripción. Reembolso en 7 días.",
+ listenT:"Contesta. Esto es lo que va a oír.",
+ listenP:"Un fragmento de 21 segundos de una llamada de muestra. En la tuya, Santa dice el nombre de tu peque y lo que tú le cuentes.",
+ listenN:"Muestra en español con voz sintetizada (inteligencia artificial). En las preguntas frecuentes te explicamos cómo funciona.",
+ hang:"Descolgar", hangOff:"Colgar",
+ howT:"Tú lo preparas en dos minutos. Santa se encarga del resto.",
+ steps:[["Cuéntanos de tu peque","Su nombre, algo que Santa pueda mencionar (un dibujo, un diente, una travesura) y el día y la hora que mejor te vengan. Dos minutos, sin crear cuenta."],["Suena tu teléfono","Contestas, escuchas un aviso corto, pulsas 1 y le pasas el teléfono. La llamada dura unos cinco minutos."],["Se queda para siempre","Apenas termina te llega un enlace con la grabación y el certificado. Descárgalos y guárdalos."]],
+ tallerCap:"Del otro lado de la línea.",
+ giftT:"Un recuerdo que se queda cuando se acaba la Navidad.",
+ giftQ:"Dentro de diez años vas a querer volver a escuchar esa vocecita contestándole al Polo Norte.",
+ gift:[["La grabación completa","de la llamada, en MP3, para guardarla y mandársela a los abuelos."],["El certificado de la Lista de los Buenos","con su nombre, en PDF, listo para imprimir y enmarcar."],["Y son tuyos","porque te llegan en un enlace por correo. Descárgalos dentro de los 30 días siguientes."]],
+ cBy:"Por orden del Polo Norte", cThat:"Se certifica que", cName0:"tu peque", cList:"figura en la Lista de los Buenos", cYear:"Navidad 2026", cSig:"Santa",
+ whoT:"Para los que quieren estar en la sala cuando suena.",
+ who:[["Papás y mamás","Tú le pasas el teléfono y te quedas con la mejor vista de la casa: su cara. Y después, con la grabación, también su voz."],["Abuelos y abuelas","¿Vives lejos? Reservas desde donde estés, nos dices a qué teléfono llamar y a qué hora, y el recuerdo te llega a ti también."],["Padrinos y tíos","El regalo que no ocupa lugar en la maleta, que nadie más va a dar y que se va a contar en cada Navidad."]],
+ guarT:"Si no sale como lo prometemos, no pagas.", stamp:"días",
+ guar:[["Si nadie contesta","Intentamos dos veces dentro de la ventana que elegiste. Si no logramos hablar contigo, te devolvemos todo, sin que tengas que pedirlo."],["Si cambias de idea","Tienes 7 días para pedir el reembolso completo desde el enlace de tu recibo. Sin preguntas."],["Si quieres frenar","Antes de empezar, un aviso corto te pide pulsar 1. Si pulsas 2, la llamada no empieza."]],
+ urgT:"Nochebuena no espera a nadie.", urgTimer:"Tiempo restante hasta la noche del 24 de diciembre", d:"días", h:"horas", m:"min", s:"seg", urgDone:"Nochebuena ya llegó. Vuelve el año que viene.",
+ urgLast:"Último día para reservar: 22 de diciembre.",
+ urgWhy:"Las llamadas se hacen en vivo y cada franja de dos horas tiene un cupo limitado. Si dejas la reserva para el final, la hora que quieres puede estar llena.",
+ priceT:"Reserva la llamada.",
+ p1n:"Una llamada", p1:"MX$199", p1d:"Santa llama el día y la hora que elijas. Incluye la grabación y el certificado.",
+ p2n:"Paquete de Nochebuena", p2:"MX$349", p2d:"Dos llamadas: una cuando tú quieras y otra la noche del 24.", soon:"Disponible muy pronto.",
+ priceN:"Antes de pagar verás, con todas sus letras, que la voz de Santa la genera una inteligencia artificial.",
+ famT:"Lo que dicen las familias", faqT:"Lo que se pregunta antes de reservar",
+ faq:[
+  ["¿Quién habla en la llamada? ¿Es una persona?","No es una persona: es una voz generada con inteligencia artificial que interpreta a Santa. Te lo decimos antes de pagar, en tu correo de confirmación y en un aviso hablado que escuchas tú al contestar, antes de que empiece la llamada. Con tu peque, Santa habla como Santa. Tú decides si algún día le cuentas cómo funciona."],
+  ["¿Es seguro para mi hijo o hija?","Tú eliges el número, el día y la hora, y la llamada solo se hace dentro de esa ventana, entre las 8:00 y las 21:00 de tu hora local. Primero contesta un adulto y pulsa 1; después le pasa el teléfono. Santa no pide datos personales ni propone hablar fuera de la llamada, dura unos cinco minutos y tú puedes colgar cuando quieras."],
+  ["¿Qué pasa con la privacidad de mi peque?","Guardamos su primer nombre, lo que nos cuentes y su voz durante la llamada, solo para esta experiencia. No se venden ni se usan para entrenar inteligencia artificial, y los borramos a los 30 días."],
+  ["¿Y si mi peque es tímido o no contesta?","Pasa mucho. Santa habla despacio, hace preguntas sencillas y repite con paciencia. Puedes sentarte a su lado y ayudarle a contestar. Si pasan unos 30 segundos sin que nadie diga nada, Santa se despide con cariño."],
+  ["¿Es una suscripción? ¿Tengo que bajar una app?","No. Es un pago único, sin app y sin suscripción. No se renueva nada."],
+  ["¿Y si nadie contesta cuando llama?","Intentamos dos veces dentro de la ventana que elegiste. Si no logramos hablar contigo, te devolvemos todo automáticamente."],
+  ["¿Y si me arrepiento?","Tienes 7 días para pedir el reembolso completo, automático y sin preguntas, desde el enlace de tu recibo."]],
+ by:"Jinglo es un servicio de Lumen Labs.", legal:"Las voces de las llamadas están generadas con inteligencia artificial."
+},
+en:{
+ doc:"Jinglo — A call from the North Pole for your little one",
+ heroAlt:"A small house on a snowy hill at night, one window glowing.",
+ phoneAlt:"A red telephone ringing on the hallway table, snow falling outside the window.",
+ tallerAlt:"The North Pole workshop at night, parcels on the shelves and a candlestick telephone on the bench.",
+ famAlt:"A child in red pyjamas answers an old telephone in front of the Christmas tree while a parent looks on.",
+ callFrom:"North Pole", callSubN:"calling for {n}…", callSub0:"incoming call…",
+ h1_0:"This year, the North Pole is calling home.", h1_n:"There’s a call from the North Pole for {n}.",
+ lead_0:"One evening in December, at the time you choose, your phone rings. It’s Santa, and he’s asking for your little one. All you have to do is be there to see their face.",
+ lead_n:"One evening in December, at the time you choose, your phone rings. It’s Santa, and he’s asking for {n}. All you have to do is be there to see their face.",
+ fieldL:"What’s your little one called?", fieldPh:"Type their name", fieldH:"Just so you can see how it would look.",
+ cta_0:"Book the call · £11.99", cta_n:"Book {n}’s call · £11.99", ctaS:"Book the call · £11.99",
+ fine:"One payment. No app. No subscription. 7-day refund.",
+ listenT:"Pick up. This is what they’ll hear.",
+ listenP:"Twenty-one seconds from a sample call. On yours, Santa says your little one’s name and whatever you’ve told him.",
+ listenN:"Spanish-language sample with a synthesised (AI) voice; an English voice is on its way. The FAQ explains how it works.",
+ hang:"Pick up", hangOff:"Hang up",
+ howT:"You set it up in two minutes. Santa takes it from there.",
+ steps:[["Tell us about your little one","Their name, something Santa can mention (a drawing, a wobbly tooth, a bit of mischief) and the day and time that suit you. Two minutes, no account needed."],["Your phone rings","You answer, hear a short notice, press 1 and hand over the phone. The call lasts about five minutes."],["Keep it for good","As soon as it ends you get a link to the recording and the certificate. Download them and keep them."]],
+ tallerCap:"The other end of the line.",
+ giftT:"A keepsake that outlasts Christmas.",
+ giftQ:"In ten years you’ll want to hear that tiny voice answering the North Pole all over again.",
+ gift:[["The full recording","of the call, as an MP3, to keep and send to the grandparents."],["A Nice List certificate","with their name, as a PDF, ready to print and frame."],["And they’re yours","because both arrive in one emailed link. Download them within 30 days."]],
+ cBy:"By order of the North Pole", cThat:"This certifies that", cName0:"your little one", cList:"is on the Nice List", cYear:"Christmas 2026", cSig:"Santa",
+ whoT:"For anyone who wants to be in the room when it rings.",
+ who:[["Mums and dads","You hand over the phone and get the best seat in the house: their face. Afterwards, the recording gives you their voice too."],["Grandparents","Living far away? Book from wherever you are, tell us which number to ring and when, and the keepsake reaches you as well."],["Godparents and aunties and uncles","The gift that takes no room in the suitcase, that nobody else will give, and that gets retold every Christmas."]],
+ guarT:"If it doesn’t go as promised, you don’t pay.", stamp:"days",
+ guar:[["If nobody answers","We try twice inside the window you chose. If we can’t reach you, you get everything back automatically, no request needed."],["If you change your mind","You have 7 days to ask for a full refund from the link on your receipt. No questions."],["If you want to stop","Before it starts, a short notice asks you to press 1. Press 2 and the call doesn’t begin."]],
+ urgT:"Christmas Eve won’t wait.", urgTimer:"Time left until the evening of 24 December", d:"days", h:"hours", m:"min", s:"sec", urgDone:"Christmas Eve has come and gone. See you next year.",
+ urgLast:"Last day to book: 22 December.",
+ urgWhy:"Calls happen live and each two-hour slot has limited room. Leave it to the last minute and the time you want may be full.",
+ priceT:"Book the call.",
+ p1n:"One call", p1:"£11.99", p1d:"Santa rings on the day and at the time you choose. Includes the recording and the certificate.",
+ p2n:"Christmas Eve bundle", p2:"£19.99", p2d:"Two calls: one whenever you like, and one on the night of the 24th.", soon:"Coming very soon.",
+ priceN:"Before you pay you’ll be told, in plain words, that Santa’s voice is generated by artificial intelligence.",
+ famT:"What families say", faqT:"What people ask before booking",
+ faq:[
+  ["Who is speaking on the call? Is it a real person?","Not a person: it’s a voice generated with artificial intelligence, playing Santa. We tell you before you pay, in your confirmation email, and in a spoken notice you hear when you answer, before the call begins. With your little one, Santa speaks as Santa. Whether to explain it someday is up to you."],
+  ["Is it safe for my child?","You choose the number, day and time, and the call only happens inside that window, between 8:00 and 21:00 local time. An adult answers first and presses 1, then hands over the phone. Santa never asks for personal details or suggests talking outside the call, it lasts about five minutes, and you can hang up whenever you like."],
+  ["What happens to my child’s data?","We keep their first name, what you tell us and their voice during the call, only for this experience. It is never sold or used to train AI, and it’s deleted after 30 days."],
+  ["What if my little one is shy, or says nothing?","It happens a lot. Santa speaks slowly, asks simple questions and repeats them patiently. You can sit beside them and help them answer. If around 30 seconds pass with nobody saying a word, Santa says a warm goodbye."],
+  ["Is it a subscription? Do I need an app?","No. One payment, no app, no subscription. Nothing renews."],
+  ["What if nobody picks up?","We try twice inside the window you chose. If we can’t reach you, you’re refunded automatically."],
+  ["What if I change my mind?","You have 7 days to ask for a full, automatic refund with no questions, from the link on your receipt."]],
+ by:"Jinglo is a Lumen Labs service.", legal:"The voices on the calls are generated with artificial intelligence."
+}};
+/* es-ES: Papá Noel, móvil, euros */
+var E=JSON.parse(JSON.stringify(T.es));
+var rep=function(o){if(typeof o==="string")return o.replace(/Santa/g,"Papá Noel").replace(/teléfono/g,"móvil").replace(/\bMX\$199\b/g,"12,99 €").replace(/MX\$349/g,"19,99 €").replace(/\bpulsas\b/g,"pulsas");if(Array.isArray(o))return o.map(rep);if(o&&typeof o==="object"){var r={};for(var k in o)r[k]=rep(o[k]);return r}return o};
+E=rep(E);
+E.doc="Jinglo — Una llamada del Polo Norte para tu peque";
+E.h1_0="Esta Navidad, el Polo Norte llama a casa.";
+E.lead_0="Una tarde de diciembre, a la hora que tú elijas, suena tu móvil. Es Papá Noel, y pregunta por tu peque. Tú solo tienes que estar ahí para ver su cara.";
+E.lead_n="Una tarde de diciembre, a la hora que tú elijas, suena tu móvil. Es Papá Noel, y pregunta por {n}. Tú solo tienes que estar ahí para ver su cara.";
+E.listenN="Muestra en español de Latinoamérica con voz sintetizada (inteligencia artificial); la de España llegará con su propia voz. En las preguntas frecuentes te explicamos cómo funciona.";
+E.steps[0][1]="Su nombre, algo que Papá Noel pueda mencionar (un dibujo, un diente que se mueve, una trastada) y el día y la hora que mejor te vengan. Dos minutos, sin crear cuenta.";
+E.gift[0][1]="de la llamada, en MP3, para guardarla y enviársela a los abuelos.";
+E.who[0][1]="Le pasas el móvil y te quedas con la mejor vista de la casa: su cara. Y después, con la grabación, también su voz.";
+E.who[1][1]="¿Vivís lejos? Reservas desde donde estés, nos dices a qué número llamar y a qué hora, y el recuerdo te llega a ti también.";
+E.who[2][1]="El regalo que no ocupa sitio en la maleta, que nadie más va a hacer y que se contará cada Navidad.";
+E.guarT="Si no sale como prometemos, no pagas.";
+E.urgWhy="Las llamadas se hacen en directo y cada franja de dos horas tiene un cupo limitado. Si dejas la reserva para el final, la hora que quieres puede estar completa.";
+T["es-es"]=E;
+
+var LS=function(f){try{return f()}catch(e){}};
+var lang=LS(function(){return localStorage.getItem("jl")})||"es";
+var q=new URLSearchParams(location.search);if(q.get("lang")&&T[q.get("lang")])lang=q.get("lang");
+if(!T[lang])lang="es";
+var name="";
+var $=function(i){return document.getElementById(i)};
+function esc(s){return s}
+function fill(s){return s.replace(/\{n\}/g,name)}
+function nm(){return name.trim()}
+
+function render(){
+  var t=T[lang],n=nm();
+  document.documentElement.lang=lang==="en"?"en":(lang==="es-es"?"es-ES":"es-MX");
+  document.title=t.doc;
+  document.querySelectorAll("[data-k]").forEach(function(el){var v=t[el.dataset.k];if(typeof v==="string")el.textContent=v});
+  document.querySelectorAll("[data-alt]").forEach(function(el){el.alt=t[el.dataset.alt]});
+  $("nm").placeholder=t.fieldPh;
+  $("hangT").textContent=$("aud").paused?t.hang:t.hangOff;
+  $("pick").setAttribute("aria-label",lang==="en"?"Answer":"Contestar");
+  var h=$("h1"),lead=$("lead");
+  var nh=n?t.h1_n.replace("{n}",n):t.h1_0;
+  if(h.textContent!==nh){h.classList.add("swap");setTimeout(function(){h.textContent=nh;h.classList.remove("swap")},h.textContent?150:0);if(!h.textContent)h.textContent=nh}
+  lead.textContent=n?t.lead_n.replace(/\{n\}/g,n):t.lead_0;
+  $("callSub").textContent=n?t.callSubN.replace("{n}",n):t.callSub0;
+  var c=n?t.cta_n.replace("{n}",n):t.cta_0;$("cta1").textContent=c;$("cta2").textContent=t.ctaS;$("cta3").textContent=t.ctaS;
+  // steps
+  $("steps").innerHTML="";t.steps.forEach(function(s,i){var li=document.createElement("li");li.innerHTML='<span class="n" aria-hidden="true">'+(i+1)+'</span><h3></h3><p></p>';li.querySelector("h3").textContent=s[0];li.querySelector("p").textContent=s[1];$("steps").appendChild(li)});
+  $("giftL").innerHTML="";t.gift.forEach(function(s){var li=document.createElement("li");li.innerHTML="<b></b> <span></span>";li.firstChild.textContent=s[0];li.lastChild.textContent=s[1];$("giftL").appendChild(li)});
+  $("cols").innerHTML="";t.who.forEach(function(s){var d=document.createElement("div");d.innerHTML="<h3></h3><p></p>";d.querySelector("h3").textContent=s[0];d.querySelector("p").textContent=s[1];$("cols").appendChild(d)});
+  $("guarL").innerHTML="";t.guar.forEach(function(s){var d=document.createElement("div");d.innerHTML="<dt></dt><dd></dd>";d.querySelector("dt").textContent=s[0];d.querySelector("dd").textContent=s[1];$("guarL").appendChild(d)});
+  $("stampT").textContent=t.stamp;
+  $("faqL").innerHTML="";t.faq.forEach(function(s){var d=document.createElement("details");d.innerHTML="<summary></summary><p></p>";d.querySelector("summary").textContent=s[0];d.querySelector("p").textContent=s[1];$("faqL").appendChild(d)});
+  // certificate
+  $("cBy").textContent=t.cBy;$("cThat").textContent=t.cThat;$("cList").textContent=t.cList;$("cYear").textContent=t.cYear;$("cSig").textContent=t.cSig;
+  var cn=$("cName");cn.textContent=n||t.cName0;cn.classList.toggle("empty",!n);
+  document.querySelectorAll(".lang button").forEach(function(b){b.setAttribute("aria-pressed",b.dataset.l===lang)});
+  tick();
+}
+document.querySelectorAll(".lang button").forEach(function(b){b.onclick=function(){lang=b.dataset.l;LS(function(){localStorage.setItem("jl",lang)});render()}});
+$("nm").addEventListener("input",function(e){name=e.target.value.replace(/[<>]/g,"").slice(0,22);render()});
+
+// countdown to the evening of 24 Dec (real, viewer-local)
+var target=new Date(new Date().getFullYear()>2026?2027:2026,11,24,18,0,0).getTime();
+function tick(){
+  var t=T[lang],box=$("count"),ms=target-Date.now();
+  if(ms<=0){box.innerHTML="";box.nextElementSibling.textContent=t.urgDone;return}
+  var s=Math.floor(ms/1000),d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60),sc=s%60;
+  var p=function(v,l){return '<div><b>'+v+'</b><span>'+l+'</span></div>'};
+  var z=function(v){return v<10?"0"+v:v};
+  box.setAttribute("aria-label",t.urgTimer);
+  box.innerHTML=p(d,t.d)+'<span class="sep">:</span>'+p(z(h),t.h)+'<span class="sep">:</span>'+p(z(m),t.m)+'<span class="sep">:</span>'+p(z(sc),t.s);
+}
+setInterval(tick,1000);
+
+// audio + real waveform
+var aud=$("aud"),peaks=$("peaks"),bars=[],NB=56;
+for(var i=0;i<NB;i++){var b=document.createElement("i");b.style.height=(22+Math.abs(Math.sin(i*1.7)*Math.cos(i*.6))*70)+"%";peaks.appendChild(b);bars.push(b)}
+LS(function(){
+  var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+  fetch(aud.src).then(function(r){return r.arrayBuffer()}).then(function(ab){var c=new AC();return c.decodeAudioData(ab)}).then(function(buf){
+    var d=buf.getChannelData(0),step=Math.floor(d.length/NB),mx=0,v=[];
+    for(var i=0;i<NB;i++){var s=0;for(var j=i*step;j<(i+1)*step;j+=40){s+=Math.abs(d[j])}v.push(s);mx=Math.max(mx,s)}
+    v.forEach(function(x,i){bars[i].style.height=Math.max(10,x/mx*100)+"%"});
+  }).catch(function(){});
+});
+function setPlaying(on){$("escucha").classList.toggle("playing",on);$("hang").setAttribute("aria-pressed",on);$("hangT").textContent=on?T[lang].hangOff:T[lang].hang}
+$("hang").onclick=function(){if(aud.paused){aud.play().catch(function(){})}else{aud.pause()}};
+aud.onplay=function(){setPlaying(true)};aud.onpause=function(){setPlaying(false)};
+aud.onended=function(){setPlaying(false);bars.forEach(function(b){b.classList.remove("done")})};
+aud.ontimeupdate=function(){var k=Math.floor(aud.currentTime/aud.duration*NB);bars.forEach(function(b,i){b.classList.toggle("done",i<k)})};
+$("pick").onclick=function(){$("escucha").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"});setTimeout(function(){aud.play().catch(function(){})},500)};
+
+// the phone rings now and then (hero only)
+var call=$("call");
+if(!matchMedia("(prefers-reduced-motion:reduce)").matches){
+  var rg=function(){call.classList.add("ring");setTimeout(function(){call.classList.remove("ring")},1100)};
+  setTimeout(function(){rg();setInterval(rg,7000)},1800);
+}
+
+// sticky CTA once the hero is out of view
+var st=$("sticky");
+if("IntersectionObserver" in window){
+  new IntersectionObserver(function(es){var r=es[0].boundingClientRect;var pr=$("precio").getBoundingClientRect();st.classList.toggle("show",!es[0].isIntersecting&&r.bottom<0&&!(pr.top<innerHeight&&pr.bottom>0))},{threshold:0}).observe($("cta1"));
+  new IntersectionObserver(function(es){if(es[0].isIntersecting)st.classList.remove("show")},{threshold:.1}).observe($("precio"));
+}
+render();
+})();
+</script>
+</body>
+</html>
