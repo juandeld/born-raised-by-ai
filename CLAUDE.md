@@ -23,6 +23,7 @@ Next.js (Vercel) · Supabase · Inngest · Claude Haiku 5.5 / Sonnet 5.5 · Elev
 - `legal-compliance` y `qa-redteam` son bloqueantes: nada llega al cliente sin su aprobación escrita en el PR.
 - `arquitecto` es el único que aprueba cambios en `engines/` y en el flujo de pago.
 - Las métricas se definen antes del código: cada PR que crea un flujo incluye sus eventos en `analytics/events.ts`.
+- Nunca se nombran proveedores ni modelos de IA (OpenAI, Anthropic/Claude, Google, etc.) en nada que vea el cliente: web, correos, PDF, anuncios, soporte. La revelación de IA se hace de forma genérica (D23).
 - Los agentes escriben en español; el código, los nombres de variables y los commits en inglés.
 
 ## Comandos

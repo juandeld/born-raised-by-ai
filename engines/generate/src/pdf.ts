@@ -24,8 +24,8 @@ const SIZES = { letter: [612, 792], a4: [595.28, 841.89] } as const;
 const INK = rgb(0.07, 0.07, 0.07);
 
 const L = {
-  es: { coverTop: "La aventura de", last: "Ahora te toca a ti", lastSub: "Dibuja a tu familia en este marco y coloréala.", ai: "Ilustraciones creadas con inteligencia artificial.", thanks: "Gracias por colorear. ¡Hasta la próxima aventura!" },
-  en: { coverTop: "The adventure of", last: "Now it is your turn", lastSub: "Draw your family inside this frame and color them in.", ai: "Illustrations created with artificial intelligence.", thanks: "Thanks for coloring. See you on the next adventure!" },
+  es: { coverTop: "La aventura de", last: "Ahora te toca a ti", lastSub: "Dibuja a tu familia en este marco y coloréala.", ai: "Ilustraciones e historia creadas con nuestro proceso propio de ilustración asistido por inteligencia artificial; pueden tener imperfecciones.", thanks: "Gracias por colorear. ¡Hasta la próxima aventura!" },
+  en: { coverTop: "The adventure of", last: "Now it is your turn", lastSub: "Draw your family inside this frame and color them in.", ai: "Illustrations and story created with our own illustration process assisted by artificial intelligence; they may have imperfections.", thanks: "Thanks for coloring. See you on the next adventure!" },
 };
 
 /** Keeps only characters the standard font can encode (WinAnsi). */
@@ -133,8 +133,8 @@ export async function assembleBook(input: BookInput): Promise<Uint8Array> {
     sub.forEach((ln, i) => page.drawText(ln, { x: (W - regular.widthOfTextAtSize(ln, 15)) / 2, y: H - 112 - i * 20, size: 15, font: regular, color: INK }));
     page.drawRectangle({ x: 50, y: 110, width: W - 100, height: H - 270, borderColor: INK, borderWidth: 5 });
     page.drawText(t.thanks, { x: (W - regular.widthOfTextAtSize(t.thanks, 12)) / 2, y: 78, size: 12, font: regular, color: INK });
-    const ai = `${t.ai} ${input.brand}`;
-    page.drawText(ai, { x: (W - regular.widthOfTextAtSize(ai, 8)) / 2, y: 58, size: 8, font: regular, color: rgb(0.4, 0.4, 0.4) });
+    const ai = winAnsiSafe(`${t.ai} ${input.brand}`, regular);
+    wrap(ai, regular, 8, W - 120).forEach((ln, i) => page.drawText(ln, { x: (W - regular.widthOfTextAtSize(ln, 8)) / 2, y: 58 - i * 11, size: 8, font: regular, color: rgb(0.4, 0.4, 0.4) }));
   }
 
   return doc.save();

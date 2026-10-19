@@ -57,13 +57,13 @@ const ES: ColorearCopy = {
     items: [
       { t: "Sube las fotos", d: "De 1 a 5 personas o mascotas, con el nombre de cada una." },
       { t: "Elige la aventura", d: "Dinosaurios, espacio, castillos... Elige entre 24 temas o escribe el tuyo." },
-      { t: "Recibe tu libro", d: "Dibujamos a tu familia en una historia de 22 escenas. Te llega el PDF en pantalla y por correo, para imprimir cuantas veces quieras." },
+      { t: "Recibe tu libro", d: "Dibujamos a tu familia en una historia de 22 escenas, con control de calidad en cada página. Te llega el PDF en pantalla y por correo, para imprimir cuantas veces quieras." },
     ],
   },
   samples: {
     title: "Así se ve un libro",
     text: "Ejemplos de estilo con personajes inventados. En tu libro, los protagonistas son tu familia.",
-    caption: "Ilustraciones de ejemplo, no son personas reales.",
+    caption: "Ilustraciones de ejemplo, no son personas reales. Ilustraciones e historia creadas con nuestro proceso propio de ilustración asistido por inteligencia artificial; pueden tener imperfecciones.",
     alts: ["Dibujo de ejemplo: una niña y su perro en el jardín", "Dibujo de ejemplo: una familia en un globo", "Dibujo de ejemplo: un niño y un dinosaurio"],
   },
   privacy: {
@@ -71,13 +71,14 @@ const ES: ColorearCopy = {
     items: [
       "Las fotos se borran en cuanto los personajes están listos, y siempre antes de 24 horas.",
       "Nunca las usamos para entrenar modelos ni para reconocer a nadie.",
-      "Los nombres no se envían a la IA: los ponemos nosotros en el libro.",
+      "Los nombres se quedan en nuestros servidores: los ponemos nosotros en el libro.",
       "El libro terminado se borra a los 30 días. Reembolso automático por 7 días.",
     ],
   },
   faq: {
     title: "Preguntas frecuentes",
     items: [
+      { q: "¿Cómo lo hacen?", a: "Detrás de cada libro hay un proceso con varias etapas: convertimos cada foto en un personaje de dibujo que se mantiene reconocible en las 24 páginas, escribimos una historia con principio, aventura y final pensada para la edad del niño, y cada página pasa por revisión automática de calidad (trazo limpio, sin color ni sombreados, apto para colorear) y se vuelve a dibujar si no la supera. Al final maquetamos todo en un PDF listo para imprimir en Carta o A4. Todo con privacidad por diseño: las fotos se borran en cuanto los personajes están listos, siempre antes de 24 horas. Las ilustraciones y la historia se crean con nuestro proceso propio asistido por inteligencia artificial y pueden tener imperfecciones." },
       { q: "¿Cuánto tarda?", a: "Normalmente entre 5 y 15 minutos. Verás cómo van apareciendo los personajes y las páginas, y te lo enviamos por correo." },
       { q: "¿Qué fotos funcionan mejor?", a: "Fotos claras, con buena luz y la cara visible, de una sola persona o mascota por foto. Se aceptan JPG y PNG de hasta 10 MB." },
       { q: "¿Qué pasa con las fotos?", a: "Se usan solo para generar los dibujos de tu libro y se borran en cuanto están listos, siempre antes de 24 horas. Nunca se usan para entrenar modelos. Lo único que guardamos son los dibujos, durante 30 días, para que puedas volver a descargar tu libro." },
@@ -186,13 +187,13 @@ const EN: ColorearCopy = {
     items: [
       { t: "Upload the photos", d: "1 to 5 people or pets, with a name for each one." },
       { t: "Choose the adventure", d: "Dinosaurs, space, castles... Pick one of 24 themes or write your own." },
-      { t: "Get your book", d: "We draw your family into a 22-scene story. The PDF arrives on screen and by email, ready to print as often as you like." },
+      { t: "Get your book", d: "We draw your family into a 22-scene story, with quality control on every page. The PDF arrives on screen and by email, ready to print as often as you like." },
     ],
   },
   samples: {
     title: "What a book looks like",
     text: "Style examples with made-up characters. In your book, the heroes are your family.",
-    caption: "Example illustrations, not real people.",
+    caption: "Example illustrations, not real people. Illustrations and story created with our own illustration process assisted by artificial intelligence; they may have imperfections.",
     alts: ["Example drawing: a girl and her dog in the garden", "Example drawing: a family in a balloon", "Example drawing: a boy and a dinosaur"],
   },
   privacy: {
@@ -200,13 +201,14 @@ const EN: ColorearCopy = {
     items: [
       "Photos are deleted as soon as the characters are ready, and always within 24 hours.",
       "We never use them to train models or to recognize anyone.",
-      "Names are not sent to the AI: we add them to the book ourselves.",
+      "Names stay on our servers: we add them to the book ourselves.",
       "The finished book is deleted after 30 days. Automatic refund for 7 days.",
     ],
   },
   faq: {
     title: "Frequently asked questions",
     items: [
+      { q: "How does it work?", a: "Behind every book is a multi-stage process: we turn each photo into a cartoon character that stays recognizable across all 24 pages, write a story with a beginning, an adventure and an ending suited to the child's age, and every page goes through automatic quality review (clean linework, no color or shading, ready to color) and is redrawn if it does not pass. Finally we lay everything out as a print-ready PDF for Letter or A4. Privacy by design throughout: photos are deleted as soon as the characters are ready, always within 24 hours. The illustrations and the story are created with our own illustration process assisted by artificial intelligence and may have imperfections." },
       { q: "How long does it take?", a: "Usually 5 to 15 minutes. You will see the characters and pages appear, and we also email it to you." },
       { q: "Which photos work best?", a: "Clear photos with good light and the face visible, one person or pet per photo. JPG and PNG up to 10 MB." },
       { q: "What happens to the photos?", a: "They are used only to create the drawings for your book and are deleted as soon as they are ready, always within 24 hours. They are never used to train models. The only thing we keep is the drawings, for 30 days, so you can download your book again." },

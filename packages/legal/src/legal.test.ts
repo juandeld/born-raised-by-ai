@@ -147,7 +147,7 @@ describe("placeholders", () => {
     expect(fill("{{X}}", {})).toBe("{{X}}");
   });
 
-  describe("colorear consent (D22: one checkbox, vendor-neutral)", () => {
+  describe("colorear consent (D22/D23: one checkbox, vendor-neutral)", () => {
     const langs = ["es-419", "es-ES", "en"] as const;
     const brands = /openai|anthropic|resend|supabase|vercel|polar|recurrente|chatgpt|gpt|dall|google|gemini/i;
 
@@ -161,7 +161,7 @@ describe("placeholders", () => {
         for (const id of COLOREAR_CHECKBOX_ORDER) {
           const t = RAW_COLOREAR_CHECKBOXES[id][lang].text;
           expect(t).not.toMatch(brands);
-          expect(RAW_COLOREAR_CHECKBOXES[id][lang].id).toMatch(/colorear-v2$/);
+          expect(RAW_COLOREAR_CHECKBOXES[id][lang].id).toMatch(/colorear-v3$/);
         }
         expect(RAW_COLOREAR_CHECKBOXES.K1[lang].text.length).toBeLessThanOrEqual(140);
         expect(RAW_COLOREAR_CHECKBOXES.K1[lang].text).toMatch(/IA|AI/);
@@ -169,16 +169,16 @@ describe("placeholders", () => {
       }
     });
 
-    it("visible notice is neutral; the privacy policy names the sub-processors", () => {
+    it("the notice and the privacy page share one neutral text: categories only, sub-processor list on request (D23)", () => {
       for (const lang of langs) {
-        const neutral = JSON.stringify(renderColorearAviso(lang, vars));
-        expect(neutral).not.toMatch(/google|gemini|chatgpt/i);
-        expect(neutral).not.toMatch(/openai|anthropic|resend|supabase|vercel/i);
-        expect(neutral).toMatch(/identificar|identifying/);
-        const named = JSON.stringify(renderColorearAviso(lang, vars, { named: true }));
-        expect(named).toContain("OpenAI");
-        expect(named).toContain("Anthropic");
-        expect(hasUnfilledPlaceholders(named + neutral)).toBe(false);
+        const text = JSON.stringify(renderColorearAviso(lang, vars));
+        expect(text).not.toMatch(brands);
+        expect(text).not.toMatch(/openai|anthropic|claude|resend|supabase|vercel|polar|recurrente|nano ?banana|midjourney/i);
+        expect(text).not.toMatch(/proveedor(es)? de (IA|generaci)|AI provider|image-generation|text-generation/i);
+        expect(text).toContain("p@x.co");
+        expect(text).toMatch(/subencargados|sub-processors/);
+        expect(text).toMatch(/inteligencia artificial|artificial intelligence/);
+        expect(hasUnfilledPlaceholders(text)).toBe(false);
       }
     });
   });
