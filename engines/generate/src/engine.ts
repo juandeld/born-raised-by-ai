@@ -432,6 +432,14 @@ export class ColorearEngine {
     return !state.lease || new Date(state.lease.until) < this.d.now();
   }
 
+  /** Self-healing from the status page: if the book is paid and nobody is working on it, ask for a new run. Cheap and safe to call often. */
+  async resumeIfStalled(accessToken: string): Promise<boolean> {
+    const order = await this.orderByToken(accessToken);
+    if (!order || !this.d.continueRun || !(await this.needsRun(order))) return false;
+    await this.d.continueRun(order.id);
+    return true;
+  }
+
   async runGeneration(orderId: string, opts: { budgetMs?: number; concurrency?: number } = {}): Promise<RunResult> {
     const startedAt = Date.now();
     const budgetMs = opts.budgetMs ?? Number(this.d.env.COLOREAR_RUN_BUDGET_MS ?? 230_000);
@@ -734,7 +742,9 @@ export class ColorearEngine {
       }
       if (out.resumed < (opts.maxRuns ?? 2) && (await this.needsRun(o))) {
         out.resumed++;
-        await this.runGeneration(o.id);
+        // on the web the run needs its own invocation (maxDuration); in scripts and tests it runs inline
+        if (this.d.continueRun) await this.d.continueRun(o.id).catch(() => undefined);
+        else await this.runGeneration(o.id);
       }
     }
     // photos of unpaid or abandoned orders: gone after 2 h unpaid, 24 h otherwise
