@@ -19,7 +19,8 @@
     "costs": "tsx scripts/costs.ts",
     "retention": "tsx scripts/retention.ts",
     "deploy:santa": "echo 'Deploy santa: pending Vercel account (see docs/arquitectura/pendientes-cuentas.md)' && exit 1",
-    "legal:docs": "tsx scripts/legal-docs.ts"
+    "legal:docs": "tsx scripts/legal-docs.ts",
+    "colorear:sample": "tsx scripts/colorear-sample.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

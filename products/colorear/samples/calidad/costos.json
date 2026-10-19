@@ -1,0 +1,56 @@
+[
+  {
+    "file": "dinosaurio-mini-low.png",
+    "model": "gpt-image-1-mini",
+    "quality": "low",
+    "seconds": 14.6,
+    "kb": 1159,
+    "cost_usd_cents": 0.369,
+    "cost_source": "usage"
+  },
+  {
+    "file": "dinosaurio-mini-medium.png",
+    "model": "gpt-image-1-mini",
+    "quality": "medium",
+    "seconds": 13.7,
+    "kb": 1110,
+    "cost_usd_cents": 1.31,
+    "cost_source": "usage"
+  },
+  {
+    "file": "dinosaurio-gpt-image-1-medium.png",
+    "model": "gpt-image-1",
+    "quality": "medium",
+    "seconds": 19,
+    "kb": 1143,
+    "cost_usd_cents": 6.442,
+    "cost_source": "usage"
+  },
+  {
+    "file": "cohete-mini-low.png",
+    "model": "gpt-image-1-mini",
+    "quality": "low",
+    "seconds": 7.4,
+    "kb": 1021,
+    "cost_usd_cents": 0.369,
+    "cost_source": "usage"
+  },
+  {
+    "file": "cohete-mini-medium.png",
+    "model": "gpt-image-1-mini",
+    "quality": "medium",
+    "seconds": 14.5,
+    "kb": 982,
+    "cost_usd_cents": 1.31,
+    "cost_source": "usage"
+  },
+  {
+    "file": "cohete-gpt-image-1-medium.png",
+    "model": "gpt-image-1",
+    "quality": "medium",
+    "seconds": 17,
+    "kb": 978,
+    "cost_usd_cents": 6.444,
+    "cost_source": "usage"
+  }
+]

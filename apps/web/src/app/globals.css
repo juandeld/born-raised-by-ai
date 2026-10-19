@@ -63,3 +63,17 @@ body {
   html { scroll-behavior: auto; }
   .btn { transition: none; }
 }
+
+/* Colorear */
+@layer components {
+  .cbtn {
+    @apply inline-flex min-h-[54px] w-full items-center justify-center rounded-2xl border-[3px] border-crayon-ink bg-crayon-yellow px-6 text-lg font-extrabold text-crayon-ink shadow-[0_5px_0_0_#1f2340] transition active:translate-y-[3px] active:shadow-[0_2px_0_0_#1f2340] focus:outline-none focus-visible:ring-4 focus-visible:ring-crayon-blue/50;
+  }
+  .cbtn-ghost { @apply bg-white; }
+  .cbtn[disabled] { @apply cursor-not-allowed opacity-60; }
+  .cfield {
+    @apply block min-h-[52px] w-full rounded-2xl border-[3px] border-crayon-ink/70 bg-white px-4 text-base text-crayon-ink placeholder:text-crayon-ink/40 focus:border-crayon-blue focus:outline-none focus:ring-4 focus:ring-crayon-blue/30;
+  }
+  .clabel { @apply mb-1 block text-sm font-bold text-crayon-ink; }
+  .ccard { @apply rounded-3xl border-[3px] border-crayon-ink bg-white p-5; }
+}

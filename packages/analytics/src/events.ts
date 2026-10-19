@@ -31,6 +31,7 @@ export const OPS_EVENTS = [
   "generation_failed",
   "content_blocked",
   "book_downloaded",
+  "photos_deleted",
 ] as const;
 
 export type FunnelEventName = (typeof FUNNEL)[number];
@@ -74,14 +75,16 @@ export interface EventPropsMap {
   refunded: BaseProps & { reason: string; amount_usd_cents: number; automatic: boolean };
   opted_out: BaseProps & { source: string };
   incident_flagged: BaseProps & { incident_type: string };
-  /** Colorear: one book generation run. Themes are catalog ids, never free text. */
-  generation_started: BaseProps & { pages_total: number; provider: string; quality: string; age_band: string; themes: string[] };
+  /** Colorear: one book generation run. `theme` is a catalog id, "custom" or "none"; never the buyer's text. */
+  generation_started: BaseProps & { pages_total: number; provider: string; model: string; quality: string; age_band: string; persons: number; theme: string };
   generation_page_retried: BaseProps & { page_index: number; attempt: number; reason: string };
   /** image_cost_usd_cents is the estimated provider cost of the whole book (fractions of a cent allowed). */
   generation_completed: BaseProps & { provider: string; images_generated: number; retries: number; image_cost_usd_cents: number; duration_seconds: number; pdf_bytes: number };
   generation_failed: BaseProps & { reason: string; pages_done: number };
   content_blocked: BaseProps & { stage: "input" | "output"; reason: string };
   book_downloaded: BaseProps & { kind: "pdf" };
+  /** Photos of the order were erased (reason: characters_ready | unpaid | refund | retention). Counts only. */
+  photos_deleted: BaseProps & { count: number; reason: string };
 }
 
 export type EventProps<N extends EventName> = EventPropsMap[N];

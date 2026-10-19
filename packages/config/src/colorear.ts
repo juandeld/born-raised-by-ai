@@ -2,28 +2,35 @@ import { isCountry, type CountryCode, type Currency } from "./pricing";
 import { RETENTION_DAYS } from "./retention";
 
 /**
- * Colorear (name + age + 3 themes, no photos). Single source of truth for the web app and the generate engine.
- * Decision D15: images come from OpenAI gpt-image-1 by default once OPENAI_API_KEY exists; Nano Banana is the alternate.
+ * Colorear, "Tu familia para colorear": the buyer uploads 1-5 photos (child, siblings, pet, grandma...) and receives a 24-page
+ * PDF where those people, turned into friendly line-art characters, live an adventure with a short story and their names.
+ * Decision D15: images come from OpenAI (gpt-image-1-mini by default); Nano Banana is the alternate provider.
  */
 export const COLOREAR = {
   slug: "colorear",
-  /** Cover + 46 drawings + back cover. */
-  pagesTotal: 48,
-  drawings: 46,
+  /** Cover + 22 story scenes + final "draw your family" page. */
+  pagesTotal: 24,
+  scenes: 22,
+  maxPhotos: 5,
+  /** Server-side limit per photo after the browser compressed it (Vercel body limit is 4.5 MB per request). */
+  maxPhotoBytes: 900_000,
+  /** Original upload limit shown to the buyer (compressed in the browser before sending). */
+  maxUploadMb: 10,
   ageMin: 3,
   ageMax: 8,
   refundWindowDays: 7,
-  /** Order data and book files are deleted this many days after delivery (D8). */
+  /** Finished book (PDF) is deleted this many days after delivery (D8). */
   retentionDays: RETENTION_DAYS.order,
-  themesRequired: 3,
+  /** Photos are deleted as soon as the characters exist, and never later than this many hours after upload. */
+  photoMaxHours: 24,
 } as const;
 
-/** Price of the 48-page book in minor units of the local currency. $21.99 proposed by marketing-growth, confirmed by pricing (docs/planes/colorear-precios.md). */
+/** Price of the 24-page book in minor units of the local currency ($12.99 per Juan, 18-oct; docs/planes/colorear-precios.md). */
 export const COLOREAR_PRICES: Record<CountryCode, { amountMinor: number; currency: Currency }> = {
-  US: { amountMinor: 2199, currency: "USD" },
-  ES: { amountMinor: 1999, currency: "EUR" },
-  GB: { amountMinor: 1699, currency: "GBP" },
-  MX: { amountMinor: 39900, currency: "MXN" },
+  US: { amountMinor: 1299, currency: "USD" },
+  ES: { amountMinor: 1199, currency: "EUR" },
+  GB: { amountMinor: 999, currency: "GBP" },
+  MX: { amountMinor: 22900, currency: "MXN" },
 };
 
 export function colorearPrice(country: CountryCode): { amountMinor: number; currency: Currency } {
@@ -82,9 +89,8 @@ export interface ColorearTheme {
 }
 
 /**
- * Closed catalog (no free text in v1: lowers brand/copyright and moderation risk). Ids are what travels in analytics and prompts.
- * Subject banks for each id live in engines/generate/src/subjects.ts; a test checks both lists match.
- * No theme names a brand, character with a license, or real person.
+ * Suggestion chips for the optional "adventure theme" (the buyer may also type a city or a theme). The id travels in analytics.
+ * Subject banks live in engines/generate/src/subjects.ts (story ideas for the template story and the mock). No brands.
  */
 export const COLOREAR_THEMES: ColorearTheme[] = [
   { id: "dinosaurs", emoji: "\u{1F995}", es: "Dinosaurios", en: "Dinosaurs" },
@@ -136,8 +142,9 @@ export function imageProviderName(env: Record<string, string | undefined> = proc
  * Estimated cost of one 1024x1536 image in USD cents, by provider and quality. [no verificado] taken from public OpenAI
  * pricing as remembered (low ~ $0.016, medium ~ $0.063, high ~ $0.25); confirm with the first real invoice.
  */
-export const IMAGE_COST_USD_CENTS: Record<ImageProviderName, Record<"low" | "medium" | "high", number>> = {
+export const IMAGE_COST_USD_CENTS: Record<ImageProviderName | "openai-mini", Record<"low" | "medium" | "high", number>> = {
   openai: { low: 1.6, medium: 6.3, high: 25 },
+  "openai-mini": { low: 0.6, medium: 1.5, high: 5.2 },
   nanobanana: { low: 3.4, medium: 3.4, high: 3.4 },
   mock: { low: 0, medium: 0, high: 0 },
 };
