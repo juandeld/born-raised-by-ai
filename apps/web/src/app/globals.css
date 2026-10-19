@@ -89,7 +89,7 @@ body {
     @apply mt-1 block min-h-[52px] w-full rounded-xl border border-lapiz-ink/40 bg-white px-4 text-base text-lapiz-ink placeholder:text-lapiz-muted/80 focus:border-lapiz-teal focus:outline-none focus:ring-4 focus:ring-lapiz-gold/50;
   }
   .c-card { @apply rounded-2xl border border-lapiz-line bg-white p-5 sm:p-6; }
-  .c-h { font-family: "Bricolage Grotesque", ui-rounded, system-ui, sans-serif; font-weight: 700; letter-spacing: -0.01em; line-height: 1.12; text-wrap: balance; }
+  .c-h { font-family: "Bricolage Grotesque Variable", "Bricolage Grotesque", ui-rounded, system-ui, sans-serif; font-weight: 700; letter-spacing: -0.01em; line-height: 1.12; text-wrap: balance; }
   /* hand-drawn pencil stroke under section titles: a structural cue that starts a new block */
   .c-rule::after {
     content: ""; display: block; width: 88px; height: 8px; margin-top: 10px;
