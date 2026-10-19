@@ -26,7 +26,7 @@ Costo variable de referencia: ~$1.05 por pedido (investigación b2c).
 | H0 Cuentas | Parcial: Supabase, Vercel, Resend (solo prueba) y OpenAI listos; falta Polar, dominio y Resend con dominio verificado | Pasos en el reporte del líder |
 | H1 Arquitectura | Hecho en código (motor `engines/generate`, proveedor OpenAI, estado por pasos reanudable); falta aprobación formal de `arquitecto` | PR 2958e3e y siguientes |
 | H2 Prototipo de calidad | Hecho: libro de 24 páginas con fotos de stock (portada con personajes reales, 3 personas), 104 s y $0.53 en producción. Pendiente validación de `qa-redteam`, `ux-ui` y `desarrollo-infantil` | Muestra en `/tmp/claude-0/colorear-muestra/real2/` (fuera del repo) |
-| H3 Legal de fotos de menores | Textos de consentimiento, aviso, privacidad y términos publicados en el sitio; pendiente aprobación escrita de `legal-compliance` | `packages/legal/src/colorear.ts`, `/colorear/<es|en>/privacidad` y `/terminos` |
+| H3 Legal de fotos de menores | Consentimiento en un solo clic (D22, `colorear-legal-v2`): una casilla K1 con "Ver detalle" y K2 (términos y privacidad) al pagar; aviso y correo sin marcas, proveedores nombrados solo en la política de privacidad. `legal-compliance` aprueba por escrito en D22 con tres condiciones (retención del proveedor de imágenes por confirmar con OpenAI antes de cobrar en real) | `packages/legal/src/colorear.ts`, `/colorear/<es|en>/privacidad` y `/terminos` |
 | H4 Checkout, entrega y soporte | Flujo completo en producción con pago simulado: landing es/en, subida de 1-5 fotos, consentimiento, estado en vivo, PDF con enlace firmado (10 min), correo, reembolso y encuesta. Falta cambiar a Polar real | `/colorear` en producción |
 | H5-H8 | No iniciados; H5 bloqueado por H3 y por Polar | |
 

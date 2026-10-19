@@ -48,7 +48,7 @@ async function main() {
     env, now: () => new Date(), brand: { ...brandConfig(env), brand: "Colorfam" },
   });
   const { order } = await engine.createCheckout(
-    { lang, country: "MX", email: "muestra@example.com", persons, photos, theme: arg("theme"), age: Number(arg("age", "6")), checkboxIds: ["K1", "K2", "K3", "K4"], ip: null },
+    { lang, country: "MX", email: "muestra@example.com", persons, photos, theme: arg("theme"), age: Number(arg("age", "6")), checkboxIds: ["K1", "K2"], ip: null },
     { successUrl: () => "http://localhost/x", cancelUrl: "http://localhost/x" },
   );
   await engine.handlePaymentEvent({ type: "payment_succeeded", orderId: order.id, checkoutId: order.checkout_id, paymentId: "sample" });

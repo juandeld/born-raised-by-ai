@@ -68,7 +68,10 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
   const nextId = useRef(1);
   const started = useRef(false);
   const legal = countries[country]!;
-  const allChecked = legal.checkboxes.every((k) => checked[k.id]);
+  const consentBox = legal.checkboxes.find((k) => k.id === "K1")!;
+  const payNotice = legal.checkboxes.find((k) => k.id === "K2")!;
+  const allChecked = !!checked[consentBox.id];
+  const detailLabel = lang === "es" ? "Ver detalle" : "See details";
 
   const beacon = (event: "landing_view" | "form_started") => {
     try {
@@ -133,7 +136,7 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
     fd.set("theme", theme.trim());
     fd.set("themeId", themeId);
     fd.set("creative", creative);
-    fd.set("checkboxIds", JSON.stringify(legal.checkboxes.filter((k) => checked[k.id]).map((k) => k.id)));
+    fd.set("checkboxIds", JSON.stringify(legal.checkboxes.filter((k) => k.id === payNotice.id || checked[k.id]).map((k) => k.id)));
     items.forEach((it, i) => {
       fd.set(`photo${i + 1}`, new File([it.blob], `photo-${i + 1}.jpg`, { type: "image/jpeg" }));
       fd.set(`name${i + 1}`, it.name.trim());
@@ -286,29 +289,29 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
       </div>
 
       <div className="rounded-2xl border border-lapiz-line bg-lapiz-gold-tint p-5 sm:p-6">
-        <details>
-          <summary className="flex min-h-[48px] cursor-pointer items-center font-semibold">{c.aviso}</summary>
-          <div className="mt-3 space-y-2 text-sm">
+        <p className="c-h text-lg">{c.consent}</p>
+        <label className="mt-2 flex min-h-[48px] cursor-pointer items-start gap-3 text-[13.5px] leading-snug">
+          <input type="checkbox" className="mt-0.5 h-6 w-6 shrink-0 accent-[#1b6b67]" checked={!!checked[consentBox.id]} onChange={(e) => setChecked((p) => ({ ...p, [consentBox.id]: e.target.checked }))} />
+          <span>{consentBox.text}</span>
+        </label>
+        <details className="mt-1">
+          <summary className="flex min-h-[44px] cursor-pointer items-center text-sm font-semibold underline">{detailLabel}</summary>
+          <div className="mt-2 space-y-2 text-sm">
             <p>{legal.aviso.intro}</p>
             {legal.aviso.sections.map((s) => <p key={s.heading}><strong>{s.heading}</strong> {s.body}</p>)}
             <p>{legal.aviso.privacyLink.split(/:\s/)[0]}: <a className="font-semibold underline" href={`/colorear/${lang}/privacidad`} target="_blank" rel="noreferrer">/colorear/{lang}/privacidad</a></p>
           </div>
         </details>
-        <p className="c-h mt-4 text-lg">{c.consent}</p>
-        <ul className="mt-2 space-y-3">
-          {legal.checkboxes.map((k) => (
-            <li key={k.id}>
-              <label className="flex min-h-[48px] cursor-pointer items-start gap-3 text-sm">
-                <input type="checkbox" className="mt-0.5 h-6 w-6 shrink-0 accent-[#1b6b67]" checked={!!checked[k.id]} onChange={(e) => setChecked((p) => ({ ...p, [k.id]: e.target.checked }))} />
-                <span>{k.text}</span>
-              </label>
-            </li>
-          ))}
-        </ul>
         {err("consent")}
       </div>
 
       <p className="text-sm font-semibold">{legal.refundLine}</p>
+      <p className="text-sm">
+        {payNotice.text}{" "}
+        <a className="font-semibold underline" href={`/colorear/${lang}/terminos`} target="_blank" rel="noreferrer">{lang === "es" ? "Términos" : "Terms"}</a>
+        {" · "}
+        <a className="font-semibold underline" href={`/colorear/${lang}/privacidad`} target="_blank" rel="noreferrer">{lang === "es" ? "Privacidad" : "Privacy"}</a>
+      </p>
       {Object.entries(errors).filter(([k]) => !["photos", "persons", "age", "email", "theme", "consent"].includes(k)).map(([k, v]) => <p key={k} role="alert" className="font-semibold text-lapiz-error">{v}</p>)}
       <button type="submit" disabled={busy} className="c-btn c-btn-block min-h-[60px]">
         {busy ? c.paying : c.pay(legal.price)}

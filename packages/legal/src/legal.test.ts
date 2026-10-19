@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { lockedPrefixLength } from "./prelude";
-import { AVISO, EN_GB_RIGHTS_SUFFIX, PRELUDES, RAW_CHECKBOXES, fill, hasUnfilledPlaceholders, renderAviso, renderPrelude, resolveAllCheckboxes } from "./index";
+import { AVISO, EN_GB_RIGHTS_SUFFIX, PRELUDES, RAW_CHECKBOXES, RAW_COLOREAR_CHECKBOXES, COLOREAR_CHECKBOX_ORDER, COLOREAR_IMPLICIT_IDS, renderColorearAviso, fill, hasUnfilledPlaceholders, renderAviso, renderPrelude, resolveAllCheckboxes } from "./index";
 
 const dir = resolve(__dirname, "../../../docs/legal/textos");
 const read = (f: string) => readFileSync(resolve(dir, f), "utf8").replace(/\s*`\[no verificado[^\]]*\]`/g, "");
@@ -145,5 +145,41 @@ describe("placeholders", () => {
     expect(r.audio!.handoff).toContain("Sofía");
     expect(hasUnfilledPlaceholders(JSON.stringify(r))).toBe(false);
     expect(fill("{{X}}", {})).toBe("{{X}}");
+  });
+
+  describe("colorear consent (D22: one checkbox, vendor-neutral)", () => {
+    const langs = ["es-419", "es-ES", "en"] as const;
+    const brands = /openai|anthropic|resend|supabase|vercel|polar|recurrente|chatgpt|gpt|dall|google|gemini/i;
+
+    it("has one checkbox plus the pay-time acceptance, both recorded", () => {
+      expect(COLOREAR_CHECKBOX_ORDER).toEqual(["K1", "K2"]);
+      expect(COLOREAR_IMPLICIT_IDS).toEqual(["K2"]);
+    });
+
+    it("keeps the checkbox short and free of brand names", () => {
+      for (const lang of langs) {
+        for (const id of COLOREAR_CHECKBOX_ORDER) {
+          const t = RAW_COLOREAR_CHECKBOXES[id][lang].text;
+          expect(t).not.toMatch(brands);
+          expect(RAW_COLOREAR_CHECKBOXES[id][lang].id).toMatch(/colorear-v2$/);
+        }
+        expect(RAW_COLOREAR_CHECKBOXES.K1[lang].text.length).toBeLessThanOrEqual(140);
+        expect(RAW_COLOREAR_CHECKBOXES.K1[lang].text).toMatch(/IA|AI/);
+        expect(RAW_COLOREAR_CHECKBOXES.K1[lang].text).toMatch(/24 h/);
+      }
+    });
+
+    it("visible notice is neutral; the privacy policy names the sub-processors", () => {
+      for (const lang of langs) {
+        const neutral = JSON.stringify(renderColorearAviso(lang, vars));
+        expect(neutral).not.toMatch(/google|gemini|chatgpt/i);
+        expect(neutral).not.toMatch(/openai|anthropic|resend|supabase|vercel/i);
+        expect(neutral).toMatch(/identificar|identifying/);
+        const named = JSON.stringify(renderColorearAviso(lang, vars, { named: true }));
+        expect(named).toContain("OpenAI");
+        expect(named).toContain("Anthropic");
+        expect(hasUnfilledPlaceholders(named + neutral)).toBe(false);
+      }
+    });
   });
 });

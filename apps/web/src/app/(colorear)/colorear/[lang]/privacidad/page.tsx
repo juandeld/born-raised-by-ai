@@ -13,7 +13,7 @@ export default async function Privacidad({ params }: { params: Promise<{ lang: s
   const c = COLOREAR_COPY[lang];
   const vars = documentVars("");
   const country = colorearCountriesFor(lang)[0]!;
-  const a = renderColorearAviso(colorearLegalLocale(country), vars, { gb: country === "GB" });
+  const a = renderColorearAviso(colorearLegalLocale(country), vars, { gb: country === "GB", named: true });
   return (
     <>
       <CHeader lang={lang} />
