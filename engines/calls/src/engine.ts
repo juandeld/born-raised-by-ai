@@ -32,6 +32,13 @@ export interface DeliveryView {
  * Facade of the calls engine. Everything a product needs: checkout, payment confirmation, scheduling, call control,
  * delivery, refunds, support, retention. Products configure it (product config + texts); they do not fork it.
  */
+export interface TickReport {
+  swept: number;
+  recovered: number;
+  attempts: Array<{ orderId: string; kind: string; reason?: string }>;
+  errors: string[];
+}
+
 export class CallsEngine {
   readonly orders: OrderService;
   readonly refunds: RefundService;
@@ -177,6 +184,48 @@ export class CallsEngine {
         await this.refunds.refund(call.order_id, { reason: "opt_out", automatic: true });
         return { kind: "opted_out" };
     }
+  }
+
+  /**
+   * One pass of the job that Inngest would otherwise run (used where Inngest is not configured, called by /api/cron/tick
+   * every minute from an external ping): closes stuck calls, finishes post-call work that was waiting for the recording,
+   * and dials every scheduled order whose window is open. Idempotent: attemptCall already refuses an order with a call in
+   * progress, and the database allows only one active call per order (migration 0003).
+   */
+  async tick(opts: { maxAttempts?: number } = {}): Promise<TickReport> {
+    const d = this.deps;
+    const report: TickReport = { swept: 0, recovered: 0, attempts: [], errors: [] };
+    const guard = async (label: string, fn: () => Promise<void>) => {
+      try {
+        await fn();
+      } catch (err) {
+        report.errors.push(`${label}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    };
+    await guard("sweep", async () => {
+      report.swept = await this.sweepStuckCalls();
+    });
+    // Completed calls whose recording was not ready when the call ended: the vendor copy is still there (recording_id set).
+    await guard("recover", async () => {
+      const pending = await d.db.calls.find({ status: "ended", result: "completed", recording_id: { notNull: true } }, { limit: 20 });
+      for (const call of pending) {
+        const out = await this.afterCall(call.id);
+        if (out.kind === "delivered") report.recovered += 1;
+      }
+    });
+    // Scheduled orders whose window has opened (closed windows too: attempt() refunds them automatically).
+    const due = await d.db.orders.find({ status: "scheduled", window_start: { lte: iso(d.now()) } }, { orderBy: "window_start", limit: 50 });
+    let dials = 0;
+    const max = opts.maxAttempts ?? 10;
+    for (const order of due) {
+      if (dials >= max) break;
+      await guard(`order ${order.id}`, async () => {
+        const out = await this.attemptCall(order.id);
+        report.attempts.push({ orderId: order.id, kind: out.kind, ...("reason" in out ? { reason: out.reason } : {}) });
+        if (out.kind === "placed") dials += 1;
+      });
+    }
+    return report;
   }
 
   /**

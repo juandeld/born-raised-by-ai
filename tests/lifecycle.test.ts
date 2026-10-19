@@ -180,3 +180,50 @@ describe("web checkout helpers", () => {
     void urls;
   });
 });
+
+describe("tick (scheduler without Inngest)", () => {
+  it("dials the orders whose window is open, once, and does nothing before the window", async () => {
+    const h = makeHarness();
+    const { order } = await buyAndSchedule(h);
+    // before the window opens: nothing happens
+    h.clock.now = new Date(new Date(order.window_start).getTime() - 60 * 60_000);
+    let r = await h.engine.tick();
+    expect(r.attempts.filter((a) => a.kind === "placed")).toHaveLength(0);
+    expect(await h.deps.db.calls.find({ order_id: order.id })).toHaveLength(0);
+
+    enterWindow(h, order.window_start);
+    r = await h.engine.tick();
+    expect(r.errors).toEqual([]);
+    expect(r.attempts.filter((a) => a.kind === "placed")).toHaveLength(1);
+    expect((await h.deps.db.orders.get(order.id))!.status).toBe("delivered");
+
+    // a second tick finds nothing left to do for this order
+    r = await h.engine.tick();
+    expect(r.attempts).toEqual([]);
+    expect(await h.deps.db.calls.find({ order_id: order.id })).toHaveLength(1);
+  });
+
+  it("sweeps a call that never reported its end", async () => {
+    const h = makeHarness();
+    h.telephony.autoplay = false;
+    const { order } = await buyAndSchedule(h);
+    enterWindow(h, order.window_start);
+    await h.engine.tick();
+    h.clock.now = new Date(h.clock.now.getTime() + 20 * 60_000);
+    const r = await h.engine.tick();
+    expect(r.swept).toBe(1);
+  });
+
+  it("an error in one order does not stop the others and is reported", async () => {
+    const h = makeHarness();
+    const { order } = await buyAndSchedule(h);
+    enterWindow(h, order.window_start);
+    const original = h.engine.attemptCall.bind(h.engine);
+    h.engine.attemptCall = async () => {
+      throw new Error("boom");
+    };
+    const r = await h.engine.tick();
+    expect(r.errors[0]).toMatch(/boom/);
+    h.engine.attemptCall = original;
+  });
+});
