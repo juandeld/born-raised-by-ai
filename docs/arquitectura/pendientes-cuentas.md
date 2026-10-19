@@ -35,3 +35,10 @@ Primero añadir el dominio en Vercel (Project, Settings, Domains); Vercel muestr
 | CNAME | www | cname.vercel-dns.com | 1 hora |
 
 Borrar antes el registro A de "parking" de GoDaddy y el CNAME `www` existente. Para correo con Resend añadir los registros que muestre su panel (Domains): un TXT SPF (`v=spf1 include:amazonses.com ~all` o el que indique Resend, en el subdominio `send`), un TXT/CNAME DKIM (`resend._domainkey`) y, opcional, un TXT DMARC (`_dmarc`). Si ya existe MX o SPF del buzón de la empresa, no duplicar el SPF: combinarlo en uno solo.
+
+
+## Estado 18-oct-2026 (noche)
+- Supabase: proyecto creado, migración 0001 aplicada, llaves en Vercel.
+- Vercel: desplegado en https://born-raised-by-ai-4ta9.vercel.app (root apps/web), PAYMENT_PROVIDER=mock.
+- ElevenLabs: agente es-419 creado (agent_2601m58wfve0fdc9j1dbfm0v5fy8) con voz LykVXmiL9G4zV1CJHN2o. Faltan: ELEVENLABS_API_KEY en Vercel, agentes es-ES / en-US / en-GB, confirmación escrita del caso de uso.
+- Pendientes de Juan: Twilio (SID, token, número), Resend (API key), lumen-labs.co DNS → Vercel, Polar y Recurrente (KYC), cuenta USD.
