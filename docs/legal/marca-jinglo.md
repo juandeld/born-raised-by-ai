@@ -45,3 +45,12 @@ USPTO US$350 más abogado estadounidense (obligatorio para solicitantes extranje
 4. Aprobar o rechazar la excepción a D6 para contratar abogado en EE. UU. (solo para presentar ahí).
 5. Presentar primero IMPI (clase 41) por su cuenta; EE. UU. y UE cuando haya ventas.
 6. Opcional: preguntar el precio de `jinglo.com` (vendedor NameFind); no pagar más de unos cientos de dólares.
+
+## Búsqueda oficial (Juan, 19-oct-2026, 15:55–16:01)
+| Registro | Resultado |
+|---|---|
+| USPTO (tmsearch.uspto.gov, wordmark JINGLO, vivas y muertas) | Sin resultados |
+| WIPO Global Brand Database (nombre contiene JINGLO; incluye EUIPO, UKIPO y oficinas nacionales) | Sin resultados |
+| IMPI (Marcia, "jinglo", búsqueda fonética) | Única cercana: **JINGLEO**, exp. 3356630, Gerson Eduardo Solís Bernal (México), presentada 11-abr-2025, en trámite, **clase 28** (juegos, juguetes, adornos y árboles de Navidad). Resto (Si-Glo, Wing'O, Jingbo, Xingáo): lejanas |
+
+Veredicto de `legal-compliance` (director, a partir de las capturas): **riesgo bajo** en EE. UU., UE y UK; **bajo a medio en México**. JINGLEO es fonéticamente casi idéntica y del mismo universo navideño-infantil, pero en clase 28 (productos), no en 41 (servicios de entretenimiento) ni 9; el IMPI puede considerar conexos juguetes y entretenimiento infantil, y el titular podría ampliar a clase 41. Jinglo puede usarse ya. Recomendación: presentar en IMPI clase 41 (y 9 si hay app) **pronto**, porque en México gana quien presenta primero y existe un titular cercano en el mismo nicho; decisión de Juan (D19: esperar tracción).
