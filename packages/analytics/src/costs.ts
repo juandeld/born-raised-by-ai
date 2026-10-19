@@ -14,6 +14,8 @@ export interface EventRow {
 
 export interface OrderCost {
   orderId: string;
+  /** Product slug of the order ("santa" when the event does not carry one). */
+  product: string;
   country: string;
   paidUsd: number;
   agentMinutes: number;
@@ -23,6 +25,8 @@ export interface OrderCost {
   telephony: number;
   recording: number;
   llm: number;
+  /** Image generation (colorear): estimated provider cost of the whole book. */
+  image: number;
   payment: number;
   infra: number;
   total: number;
@@ -82,11 +86,15 @@ export function computeOrderCosts(events: EventRow[], rates: CostRates = COST_RA
     }
     const delivered = list.some((e) => e.name === "delivered");
     const infra = delivered ? rates.infraPerOrderUsd : 0;
+    // Colorear: images are the cost. generation_completed carries the estimate in cents (fractions allowed).
+    const image = list.filter((e) => e.name === "generation_completed").reduce((sum, e) => sum + num(e.properties.image_cost_usd_cents) / 100, 0);
+    const product = paid.product || "santa";
     // Expected range compares IA + telco + infra (without payment fee), like the research table.
-    const variable = elevenlabs + telephony + recording + llm + infra;
+    const variable = elevenlabs + telephony + recording + llm + image + infra;
     const expected = EXPECTED_VARIABLE_COST_USD[country];
     out.push({
       orderId,
+      product,
       country,
       paidUsd,
       agentMinutes,
@@ -96,10 +104,12 @@ export function computeOrderCosts(events: EventRow[], rates: CostRates = COST_RA
       telephony,
       recording,
       llm,
+      image,
       payment,
       infra,
       total: variable + payment,
-      withinExpected: expected && delivered ? variable <= expected.max * 1.15 : null,
+      // Santa compares with the research table; colorear (no table) must keep variable cost under 25 % of the price.
+      withinExpected: product === "colorear" ? (delivered ? variable <= paidUsd * 0.25 : null) : expected && delivered ? variable <= expected.max * 1.15 : null,
     });
   }
   return out;

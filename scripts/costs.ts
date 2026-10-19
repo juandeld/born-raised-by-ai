@@ -16,7 +16,10 @@ async function main() {
 const db = getDb();
 const rows = (await db.events.find({ ts: { gte: since } })) as unknown as EventRow[];
 const real = rows.filter((e) => !e.test_mode);
-const costs = computeOrderCosts(real);
+const allCosts = computeOrderCosts(real);
+// Colorear has its own table below (image cost); this one stays Santa-only as before.
+const costs = allCosts.filter((c) => c.product !== "colorear");
+const colorear = allCosts.filter((c) => c.product === "colorear");
 const summary = summarizeByCountry(costs);
 
 console.log(`Costs per order, last ${days} days (db: ${db.kind}, ${real.length} events, ${costs.length} orders, test orders excluded)`);
@@ -39,6 +42,20 @@ if (!summary.length) {
   );
   const outside = costs.filter((c) => c.withinExpected === false);
   if (outside.length) console.log(`${outside.length} order(s) outside the expected range: ${outside.map((c) => c.orderId.slice(0, 8)).join(", ")}`);
+}
+
+if (colorear.length) {
+  console.log(`\nColorear: real image cost per order, last ${days} days (${colorear.length} orders)`);
+  console.table(
+    summarizeByCountry(colorear).map((s) => ({
+      country: s.country,
+      orders: s.orders,
+      "image+infra $": s.avgVariable.toFixed(2),
+      "payment fee $": s.avgPayment.toFixed(2),
+      "total $": s.avgTotal.toFixed(2),
+      "variable % of price": `${s.variablePctOfPrice.toFixed(1)} % ${s.variablePctOfPrice <= 25 ? "OK" : "OVER 25 %"}`,
+    })),
+  );
 }
 }
 

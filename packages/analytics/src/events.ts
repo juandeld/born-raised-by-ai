@@ -19,7 +19,19 @@ export const FUNNEL = [
 ] as const;
 
 /** Operational events (not funnel steps) needed for refunds, voicemail/failure and costs. */
-export const OPS_EVENTS = ["call_attempt_ended", "refunded", "opted_out", "incident_flagged"] as const;
+export const OPS_EVENTS = [
+  "call_attempt_ended",
+  "refunded",
+  "opted_out",
+  "incident_flagged",
+  // generate engine (colorear), docs/briefs/colorear-H1b-metricas.md
+  "generation_started",
+  "generation_page_retried",
+  "generation_completed",
+  "generation_failed",
+  "content_blocked",
+  "book_downloaded",
+] as const;
 
 export type FunnelEventName = (typeof FUNNEL)[number];
 export type OpsEventName = (typeof OPS_EVENTS)[number];
@@ -62,6 +74,14 @@ export interface EventPropsMap {
   refunded: BaseProps & { reason: string; amount_usd_cents: number; automatic: boolean };
   opted_out: BaseProps & { source: string };
   incident_flagged: BaseProps & { incident_type: string };
+  /** Colorear: one book generation run. Themes are catalog ids, never free text. */
+  generation_started: BaseProps & { pages_total: number; provider: string; quality: string; age_band: string; themes: string[] };
+  generation_page_retried: BaseProps & { page_index: number; attempt: number; reason: string };
+  /** image_cost_usd_cents is the estimated provider cost of the whole book (fractions of a cent allowed). */
+  generation_completed: BaseProps & { provider: string; images_generated: number; retries: number; image_cost_usd_cents: number; duration_seconds: number; pdf_bytes: number };
+  generation_failed: BaseProps & { reason: string; pages_done: number };
+  content_blocked: BaseProps & { stage: "input" | "output"; reason: string };
+  book_downloaded: BaseProps & { kind: "pdf" };
 }
 
 export type EventProps<N extends EventName> = EventPropsMap[N];
