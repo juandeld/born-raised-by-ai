@@ -115,6 +115,8 @@ export async function assembleBook(input: BookInput): Promise<Uint8Array> {
     if (text) {
       const size = 17;
       const lines = wrap(text, regular, size, W - 110).slice(0, 4);
+      // white strip so the caption never collides with art that reaches the bottom of the drawing
+      page.drawRectangle({ x: 0, y: 0, width: W, height: 28 + lines.length * 21, color: rgb(1, 1, 1) });
       let y = 38 + lines.length * 21;
       for (const ln of lines) {
         y -= 21;
