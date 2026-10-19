@@ -80,7 +80,7 @@ const ES: ColorearCopy = {
     items: [
       { q: "¿Cuánto tarda?", a: "Normalmente entre 5 y 15 minutos. Verás cómo van apareciendo los personajes y las páginas, y te lo enviamos por correo." },
       { q: "¿Qué fotos funcionan mejor?", a: "Fotos claras, con buena luz y la cara visible, de una sola persona o mascota por foto. Se aceptan JPG y PNG de hasta 10 MB." },
-      { q: "¿Qué pasa con las fotos?", a: "Se envían al proveedor de imágenes solo para dibujar a los personajes, no se usan para entrenar modelos y se borran en cuanto terminan, siempre antes de 24 horas." },
+      { q: "¿Qué pasa con las fotos?", a: "Se usan solo para generar los dibujos de tu libro y se borran en cuanto están listos, siempre antes de 24 horas. Nunca se usan para entrenar modelos. Lo único que guardamos son los dibujos, durante 30 días, para que puedas volver a descargar tu libro." },
       { q: "¿Y si no me gusta el resultado?", a: "Reembolso completo y automático hasta 7 días después de recibirlo, desde el enlace de tu recibo. Sin preguntas." },
       { q: "¿Es una suscripción?", a: "No. Es un pago único por libro." },
       { q: "¿Los dibujos son de personajes de películas?", a: "No. Los personajes son tu familia y la aventura es original. No usamos marcas ni personajes con derechos de autor." },
@@ -209,7 +209,7 @@ const EN: ColorearCopy = {
     items: [
       { q: "How long does it take?", a: "Usually 5 to 15 minutes. You will see the characters and pages appear, and we also email it to you." },
       { q: "Which photos work best?", a: "Clear photos with good light and the face visible, one person or pet per photo. JPG and PNG up to 10 MB." },
-      { q: "What happens to the photos?", a: "They go to the image provider only to draw the characters, are not used to train models, and are deleted as soon as they are done, always within 24 hours." },
+      { q: "What happens to the photos?", a: "They are used only to create the drawings for your book and are deleted as soon as they are ready, always within 24 hours. They are never used to train models. The only thing we keep is the drawings, for 30 days, so you can download your book again." },
       { q: "What if I do not like it?", a: "Full automatic refund up to 7 days after you receive it, from the link in your receipt. No questions asked." },
       { q: "Is it a subscription?", a: "No. It is a one-time payment per book." },
       { q: "Are the drawings of movie characters?", a: "No. The characters are your family and the adventure is original. We do not use brands or copyrighted characters." },
