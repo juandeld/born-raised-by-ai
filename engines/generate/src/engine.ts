@@ -588,7 +588,7 @@ export class ColorearEngine {
           const req = { prompt, width: 1024, height: 1536, quality, refs, kind: isCover ? ("cover" as const) : ("scene" as const), ageBand: band, hints: { roles: present.map((k) => roles[k - 1] ?? "person"), setting: scene?.visual ?? "", seed: p.n + 7 } };
           let result;
           try {
-            result = await render(`page${p.n}`, req, { emptyTop: isCover ? 0.12 : 0 }, p);
+            result = await render(`page${p.n}`, req, { emptyTop: isCover ? 0.05 : 0 }, p);
           } catch (err) {
             if (!(err instanceof ModerationError)) throw err;
             // refused: ask again with a plain, safe description of the same scene
