@@ -443,7 +443,7 @@ export class ColorearEngine {
   async runGeneration(orderId: string, opts: { budgetMs?: number; concurrency?: number } = {}): Promise<RunResult> {
     const startedAt = Date.now();
     const budgetMs = opts.budgetMs ?? Number(this.d.env.COLOREAR_RUN_BUDGET_MS ?? 230_000);
-    const concurrency = opts.concurrency ?? Math.max(1, Math.min(16, Number(this.d.env.COLOREAR_CONCURRENCY ?? 8) || 8));
+    const concurrency = opts.concurrency ?? Math.max(1, Math.min(16, Number(this.d.env.COLOREAR_CONCURRENCY ?? 12) || 12));
     const remaining = () => budgetMs - (Date.now() - startedAt);
     const order = await this.d.db.orders.get(orderId);
     if (!order || order.product !== COLOREAR.slug || order.pii_purged_at) return { status: "skipped" };
@@ -588,7 +588,7 @@ export class ColorearEngine {
           const req = { prompt, width: 1024, height: 1536, quality, refs, kind: isCover ? ("cover" as const) : ("scene" as const), ageBand: band, hints: { roles: present.map((k) => roles[k - 1] ?? "person"), setting: scene?.visual ?? "", seed: p.n + 7 } };
           let result;
           try {
-            result = await render(`page${p.n}`, req, { emptyTop: isCover ? 0.2 : 0 }, p);
+            result = await render(`page${p.n}`, req, { emptyTop: isCover ? 0.12 : 0 }, p);
           } catch (err) {
             if (!(err instanceof ModerationError)) throw err;
             // refused: ask again with a plain, safe description of the same scene

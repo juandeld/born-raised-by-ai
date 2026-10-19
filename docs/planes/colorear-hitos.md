@@ -17,3 +17,19 @@ Costo variable de referencia: ~$1.05 por pedido (investigación b2c).
 | **H6 Lanzamiento de prueba MX/ES ($300)** | 3 creativos (morph foto a dibujo, fiesta, abuelos); landing; listados Pinterest/Etsy para Navidad US/UK | **Primera venta real entregada** (cumple el gate P3 del portafolio) | `marketing-growth`, `pricing` | H5 | H7; gate de dot |
 | **H7 Evaluación tras $150** | Reporte: CAC, margen, reembolsos, reseñas por país | Veredicto por país con las reglas: escalar (CAC ≤ 60 % y reembolsos < 5 %), pausar (CAC > 80 % o reembolsos > 8 %) | `director-portafolio`, `metricas` | H6 | H8 |
 | **H8 Escalando** | Presupuesto reasignado por creativo y país; versión de 48 páginas a $19.99; cross-sell con compradores de Santa | 30 ventas reales alcanzadas y veredicto de mantener o escalar; no se gasta más de la prueba antes de eso | `marketing-growth`, `director-portafolio` | H7 | Cierre de temporada |
+
+
+## Estado real (19-oct-2026)
+
+| Hito | Estado | Evidencia |
+|---|---|---|
+| H0 Cuentas | Parcial: Supabase, Vercel, Resend (solo prueba) y OpenAI listos; falta Polar, dominio y Resend con dominio verificado | Pasos en el reporte del líder |
+| H1 Arquitectura | Hecho en código (motor `engines/generate`, proveedor OpenAI, estado por pasos reanudable); falta aprobación formal de `arquitecto` | PR 2958e3e y siguientes |
+| H2 Prototipo de calidad | Hecho: libro de 24 páginas con fotos de stock (portada con personajes reales, 3 personas), 104 s y $0.53 en producción. Pendiente validación de `qa-redteam`, `ux-ui` y `desarrollo-infantil` | Muestra en `/tmp/claude-0/colorear-muestra/real2/` (fuera del repo) |
+| H3 Legal de fotos de menores | Textos de consentimiento, aviso, privacidad y términos publicados en el sitio; pendiente aprobación escrita de `legal-compliance` | `packages/legal/src/colorear.ts`, `/colorear/<es|en>/privacidad` y `/terminos` |
+| H4 Checkout, entrega y soporte | Flujo completo en producción con pago simulado: landing es/en, subida de 1-5 fotos, consentimiento, estado en vivo, PDF con enlace firmado (10 min), correo, reembolso y encuesta. Falta cambiar a Polar real | `/colorear` en producción |
+| H5-H8 | No iniciados; H5 bloqueado por H3 y por Polar | |
+
+Decisión de duración (Vercel Hobby): la generación corre en `/api/colorear/run` con `maxDuration = 300` y se ejecuta después de responder 202 (`after`). El motor se detiene solo a los 235 s, guarda el estado en Storage y pide otra invocación; la página de estado (cada 3 s) y el cron barrido la reanudan si se cae. Medido: 104 s en una sola invocación, así que normalmente no hace falta dividir.
+
+Velocidad: 12 imágenes en paralelo (`COLOREAR_CONCURRENCY`); 104 s en producción con el límite de OpenAI actual (meta <90 s: se logra bajando la calidad a `low` o subiendo la concurrencia si el tier de OpenAI lo permite).
