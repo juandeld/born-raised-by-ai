@@ -25,12 +25,12 @@ async function load() {
     import("../apps/web/src/app/(lang)/[lang]/confirmacion/[token]/page"),
     import("../apps/web/src/app/(lang)/[lang]/entrega/[token]/page"),
     import("../apps/web/src/app/(lang)/[lang]/privacidad/page"),
-    import("../apps/web/src/app/api/checkout/route"),
-    import("../apps/web/src/app/api/track/route"),
-    import("../apps/web/src/app/api/mock-pay/route"),
-    import("../apps/web/src/app/api/webhooks/[provider]/route"),
+    import("../apps/web/src/server/api/checkout"),
+    import("../apps/web/src/server/api/track"),
+    import("../apps/web/src/server/api/mock-pay"),
+    import("../apps/web/src/server/api/webhooks-provider"),
     import("../apps/web/src/lib/engine"),
-    import("../apps/web/src/app/api/dev/run-call/route"),
+    import("../apps/web/src/server/api/dev-run-call"),
   ]);
   return { landing, comprar, confirm, delivery, priv, checkout, track, mockPay, webhook, engineLib, runCall };
 }

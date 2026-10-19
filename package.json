@@ -20,6 +20,7 @@
     "retention": "tsx scripts/retention.ts",
     "deploy:santa": "echo 'Deploy santa: pending Vercel account (see docs/arquitectura/pendientes-cuentas.md)' && exit 1",
     "legal:docs": "tsx scripts/legal-docs.ts",
+    "check:functions": "tsx scripts/check-functions.ts",
     "colorear:sample": "tsx scripts/colorear-sample.ts"
   },
   "devDependencies": {
