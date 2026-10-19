@@ -32,4 +32,4 @@ Costo variable de referencia: ~$1.05 por pedido (investigación b2c).
 
 Decisión de duración (Vercel Hobby): la generación corre en `/api/colorear/run` con `maxDuration = 300` y se ejecuta después de responder 202 (`after`). El motor se detiene solo a los 235 s, guarda el estado en Storage y pide otra invocación; la página de estado (cada 3 s) y el cron barrido la reanudan si se cae. Medido: 104 s en una sola invocación, así que normalmente no hace falta dividir.
 
-Velocidad: 12 imágenes en paralelo (`COLOREAR_CONCURRENCY`); 104 s en producción con el límite de OpenAI actual (meta <90 s: se logra bajando la calidad a `low` o subiendo la concurrencia si el tier de OpenAI lo permite).
+Velocidad: medido en producción 104 s y 110 s (meta <90 s, no alcanzada). El tiempo lo dominan la portada (reintentos de QA, ahora relajados) y la cola de 23 páginas con 12 imágenes en paralelo (`COLOREAR_CONCURRENCY`). Una tercera corrida tuvo una petición a OpenAI colgada (~150 s); se bajó el timeout a 100 s. Para llegar a <90 s de forma fiable: calidad `low` o verificar el límite de imágenes por minuto del tier de OpenAI.
