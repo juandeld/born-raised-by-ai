@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useRef, useState } from "react";
 import { send } from "./Track";
-import type { Copy, FieldKey } from "@/lib/copy";
+import type { FieldKey, FormCopy } from "@/lib/copy";
 
 export interface FormProps {
   slug: "es" | "es-es" | "en";
@@ -14,7 +14,8 @@ export interface FormProps {
   twelveHour: boolean;
   summary: string;
   payLabel: string;
-  copy: Copy["form"];
+  /** Serializable copy: the server page replaces the function fields with templates ("{tz}", "{a}", "{b}"). */
+  copy: FormCopy;
   aviso: { title: string; intro: string; sections: Array<{ heading: string; body: string }>; privacyLink: string; privacyHref: string };
   checkboxes: Array<{ id: string; text: string }>;
   reminder: string;
@@ -175,13 +176,13 @@ export function CheckoutForm(p: FormProps) {
           <select id="window" required value={windowHour} onChange={(e) => setWindowHour(e.target.value === "" ? "" : Number(e.target.value))} className="field" aria-invalid={!!err("window")}>
             <option value="" disabled>--</option>
             {hours.map((h) => (
-              <option key={h} value={h} disabled={pastToday(h)}>{p.copy.windowOption(fmtHour(h, p.twelveHour), fmtHour(h + 2, p.twelveHour))}</option>
+              <option key={h} value={h} disabled={pastToday(h)}>{p.copy.windowOptionTpl.replace("{a}", fmtHour(h, p.twelveHour)).replace("{b}", fmtHour(h + 2, p.twelveHour))}</option>
             ))}
           </select>
         </div>
       </div>
       <p className="-mt-3 text-xs text-night-900/65">
-        {p.copy.hints.window} {p.copy.timezone(tz.replace(/_/g, " "))}.{" "}
+        {p.copy.hints.window} {p.copy.timezoneTpl.replace("{tz}", tz.replace(/_/g, " "))}.{" "}
         {p.timezones.length > 1 && (
           <button type="button" className="underline underline-offset-2" onClick={() => setShowTz((v) => !v)}>{p.copy.changeTimezone}</button>
         )}

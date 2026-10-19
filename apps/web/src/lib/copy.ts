@@ -402,3 +402,12 @@ const en: Copy = {
 };
 
 export const COPY: Record<"es" | "es-es" | "en", Copy> = { es: es419, "es-es": esES, en };
+
+export type FormCopy = Omit<Copy["form"], "timezone" | "windowOption" | "summary" | "pay"> & { timezoneTpl: string; windowOptionTpl: string };
+
+/** Builds the client-safe copy on the server (functions cannot cross to a client component). */
+export function serializeFormCopy(c: Copy["form"]): FormCopy {
+  const { timezone, windowOption, summary, pay, ...rest } = c;
+  void summary; void pay;
+  return { ...rest, timezoneTpl: timezone("{tz}"), windowOptionTpl: windowOption("{a}", "{b}") };
+}

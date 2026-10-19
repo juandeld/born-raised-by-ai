@@ -68,7 +68,10 @@ export class OrderService {
 
     if (!EMAIL_RE.test(input.email.trim())) errors.email = "Invalid email";
     const phone = normalizePhone(input.phone);
-    if (!/^\+\d{8,15}$/.test(phone) || !phone.startsWith(`+${country?.callingCode ?? "0"}`)) errors.phone = `Phone must be in international format starting with +${country?.callingCode}`;
+    // Test mode (mock payments or TEST_MODE=1) accepts any E.164 number so the owner can test from a country not yet open (e.g. +502).
+    const testMode = this.d.payments.name === "mock" || this.d.env.TEST_MODE === "1";
+    const countryMatch = testMode || phone.startsWith(`+${country?.callingCode ?? "0"}`);
+    if (!/^\+\d{8,15}$/.test(phone) || !countryMatch) errors.phone = `Phone must be in international format starting with +${country?.callingCode}`;
 
     const name = sanitizeChildName(input.childName);
     if (!name.ok) errors.childName = name.reason;

@@ -5,6 +5,7 @@ import { CheckoutForm } from "@/components/CheckoutForm";
 import { Footer, Header } from "@/components/SiteChrome";
 import { getEngine } from "@/lib/engine";
 import { legalReady, legalVars } from "@/lib/legal-vars";
+import { serializeFormCopy } from "@/lib/copy";
 import { bundleEnabled, pickCountry, pickVariant, resolveSlug, timezonesFor } from "@/lib/slugs";
 
 export const metadata = { robots: { index: false } };
@@ -53,7 +54,7 @@ export default async function Comprar({ params, searchParams }: { params: Promis
                 twelveHour={locale === "en"}
                 summary={copy.form.summary(variantName, price)}
                 payLabel={copy.form.pay(price)}
-                copy={copy.form}
+                copy={serializeFormCopy(copy.form)}
                 aviso={{ title: aviso.title, intro: aviso.intro, sections: aviso.sections, privacyLink: aviso.privacyLink, privacyHref: `/${slug}/privacidad` }}
                 checkboxes={checkboxes}
                 reminder={REMINDER_LINE[lang]}
