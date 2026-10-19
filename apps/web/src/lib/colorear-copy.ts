@@ -16,7 +16,7 @@ export interface ColorearCopy {
     photos: { label: string; hint: string; add: string; remove: string; tooLarge: string; tooMany: string; badType: string; heic: string; count: (n: number) => string };
     people: { label: string; hint: string; name: string; role: string; rolePh: string; add: string; remove: string; roleSuggestions: string[] };
     age: { label: string; hint: string };
-    theme: { label: string; hint: string; ph: string };
+    theme: { label: string; hint: string; ph: string; own: string; picked: string };
     email: { label: string; hint: string };
     country: { label: string };
     aviso: string;
@@ -55,9 +55,9 @@ const ES: ColorearCopy = {
   steps: {
     title: "Así funciona",
     items: [
-      { t: "1. Sube las fotos", d: "De 1 a 5 personas (o mascotas). Escribe el nombre de cada una." },
-      { t: "2. Creamos la aventura", d: "Convertimos las fotos en dibujos y escribimos una historia de 22 escenas." },
-      { t: "3. Imprime y colorea", d: "Recibes el PDF en pantalla y por correo. Imprímelo cuantas veces quieras." },
+      { t: "Sube las fotos", d: "De 1 a 5 personas o mascotas, con el nombre de cada una." },
+      { t: "Elige la aventura", d: "Dinosaurios, espacio, castillos... Elige entre 24 temas o escribe el tuyo." },
+      { t: "Recibe tu libro", d: "Dibujamos a tu familia en una historia de 22 escenas. Te llega el PDF en pantalla y por correo, para imprimir cuantas veces quieras." },
     ],
   },
   samples: {
@@ -90,7 +90,7 @@ const ES: ColorearCopy = {
     title: "Crea tu libro",
     intro: "Tarda unos 2 minutos. Pagas al final y el libro empieza a hacerse al instante.",
     photos: {
-      label: "1. Fotos (de 1 a 5)",
+      label: "Sube las fotos (de 1 a 5)",
       hint: "Una persona o mascota por foto, con la cara visible. JPG o PNG, hasta 10 MB cada una.",
       add: "Agregar fotos",
       remove: "Quitar",
@@ -101,7 +101,7 @@ const ES: ColorearCopy = {
       count: (n) => `${n} de 5 fotos`,
     },
     people: {
-      label: "2. ¿Quiénes salen?",
+      label: "¿Quiénes salen?",
       hint: "Un nombre y quién es, para cada foto. Los nombres se quedan en nuestro servidor.",
       name: "Nombre",
       role: "Quién es",
@@ -110,9 +110,9 @@ const ES: ColorearCopy = {
       remove: "Quitar",
       roleSuggestions: ["niña", "niño", "mamá", "papá", "abuela", "abuelo", "perro", "gato", "bebé"],
     },
-    age: { label: "3. Edad de quien va a colorear", hint: "Ajusta la dificultad de los dibujos." },
-    theme: { label: "4. ¿Una aventura especial? (opcional)", hint: "Un tema o una ciudad. Si lo dejas vacío, elegimos una sorpresa.", ph: "dinosaurios, el espacio, mi ciudad..." },
-    email: { label: "Tu correo", hint: "Ahí te enviamos el libro y el recibo." },
+    age: { label: "Edad de quien va a colorear", hint: "Ajusta la dificultad de los dibujos." },
+    theme: { label: "Elige la aventura", hint: "Toda la historia gira en torno a este tema. Si no eliges ninguno, te sorprendemos.", ph: "dinosaurios, mi ciudad, el cumpleaños de Sofía...", own: "O escribe la tuya", picked: "Elegida" },
+    email: { label: "¿A dónde te enviamos el libro?", hint: "Tu correo. Ahí llegan el libro y el recibo." },
     country: { label: "País" },
     aviso: "Aviso para madres, padres y tutores",
     consent: "Confirmo cada punto",
@@ -184,9 +184,9 @@ const EN: ColorearCopy = {
   steps: {
     title: "How it works",
     items: [
-      { t: "1. Upload the photos", d: "1 to 5 people (or pets). Type a name for each one." },
-      { t: "2. We create the adventure", d: "We turn the photos into drawings and write a 22-scene story." },
-      { t: "3. Print and color", d: "You get the PDF on screen and by email. Print it as many times as you like." },
+      { t: "Upload the photos", d: "1 to 5 people or pets, with a name for each one." },
+      { t: "Choose the adventure", d: "Dinosaurs, space, castles... Pick one of 24 themes or write your own." },
+      { t: "Get your book", d: "We draw your family into a 22-scene story. The PDF arrives on screen and by email, ready to print as often as you like." },
     ],
   },
   samples: {
@@ -219,7 +219,7 @@ const EN: ColorearCopy = {
     title: "Create your book",
     intro: "It takes about 2 minutes. You pay at the end and the book starts right away.",
     photos: {
-      label: "1. Photos (1 to 5)",
+      label: "Upload the photos (1 to 5)",
       hint: "One person or pet per photo, face visible. JPG or PNG, up to 10 MB each.",
       add: "Add photos",
       remove: "Remove",
@@ -230,7 +230,7 @@ const EN: ColorearCopy = {
       count: (n) => `${n} of 5 photos`,
     },
     people: {
-      label: "2. Who is in the book?",
+      label: "Who is in the book?",
       hint: "A name and who they are, for each photo. Names stay on our server.",
       name: "Name",
       role: "Who they are",
@@ -239,9 +239,9 @@ const EN: ColorearCopy = {
       remove: "Remove",
       roleSuggestions: ["girl", "boy", "mom", "dad", "grandma", "grandpa", "dog", "cat", "baby"],
     },
-    age: { label: "3. Age of the child who will color", hint: "Adjusts how detailed the drawings are." },
-    theme: { label: "4. A special adventure? (optional)", hint: "A theme or a city. Leave it empty and we pick a surprise.", ph: "dinosaurs, space, my city..." },
-    email: { label: "Your email", hint: "We send the book and the receipt there." },
+    age: { label: "Age of the child who will color", hint: "Adjusts how detailed the drawings are." },
+    theme: { label: "Choose the adventure", hint: "The whole story is built around this theme. If you pick none, we surprise you.", ph: "dinosaurs, my city, Sofia's birthday...", own: "Or write your own", picked: "Selected" },
+    email: { label: "Where should we send the book?", hint: "Your email. The book and the receipt arrive there." },
     country: { label: "Country" },
     aviso: "Notice to parents and guardians",
     consent: "I confirm each point",

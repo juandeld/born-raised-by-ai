@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ColorearLang } from "@lumen/config";
 import { COLOREAR_COPY } from "@/lib/colorear-copy";
+import { PencilIcon, ThemeIcon } from "./ThemeIcon";
 
 export interface CountryLegal {
   country: string;
@@ -52,7 +53,7 @@ async function compress(file: File): Promise<Blob> {
   throw new Error("too big");
 }
 
-export function ColorearForm({ lang, countries, defaultCountry, themes, creative }: { lang: ColorearLang; countries: Record<string, CountryLegal>; defaultCountry: string; themes: Array<{ id: string; emoji: string; label: string }>; creative: string }) {
+export function ColorearForm({ lang, countries, defaultCountry, themes, creative }: { lang: ColorearLang; countries: Record<string, CountryLegal>; defaultCountry: string; themes: Array<{ id: string; label: string }>; creative: string }) {
   const c = COLOREAR_COPY[lang].form;
   const [items, setItems] = useState<Item[]>([]);
   const [country, setCountry] = useState(defaultCountry);
@@ -155,60 +156,70 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
     setBusy(false);
   }
 
-  const card = "rounded-3xl border-[3px] border-crayon-ink bg-white p-5";
-  const input = "mt-1 block min-h-[48px] w-full rounded-2xl border-[3px] border-crayon-ink bg-white px-4 text-base focus:outline-none focus:ring-4 focus:ring-crayon-yellow";
-  const err = (k: string) => (errors[k] ? <p role="alert" className="mt-2 font-bold text-crayon-red">{errors[k]}</p> : null);
+  const card = "c-card";
+  const input = "c-field";
+  const err = (k: string) => (errors[k] ? <p role="alert" className="mt-2 font-semibold text-lapiz-error">{errors[k]}</p> : null);
+  const stepHead = (n: number, title: string, hint?: string, id?: string) => (
+    <div className="flex items-start gap-3">
+      <span aria-hidden className="c-h grid h-9 w-9 shrink-0 place-items-center rounded-full bg-lapiz-teal text-base text-white">{n}</span>
+      <div>
+        <h3 id={id} className="c-h text-xl">{title}</h3>
+        {hint && <p className="mt-0.5 text-sm text-lapiz-muted">{hint}</p>}
+      </div>
+    </div>
+  );
+  const pickTheme = (id: string, label: string) => { setThemeId(id); setTheme(label); };
 
   return (
     <form onSubmit={submit} noValidate className="space-y-5">
       <div>
-        <h2 className="text-3xl font-black">{c.title}</h2>
-        <p className="mt-1">{c.intro}</p>
+        <h2 className="c-h c-rule text-3xl md:text-4xl">{c.title}</h2>
+        <p className="mt-3">{c.intro}</p>
       </div>
 
       <div className={card}>
-        <p className="text-lg font-extrabold">{c.photos.label}</p>
-        <p className="text-sm opacity-80">{c.photos.hint}</p>
-        <label className={`mt-3 flex min-h-[56px] cursor-pointer items-center justify-center rounded-full border-[3px] border-dashed border-crayon-ink bg-crayon-sky px-4 font-extrabold ${items.length >= MAX ? "pointer-events-none opacity-50" : ""}`}>
+        {stepHead(1, c.photos.label, c.photos.hint)}
+        <label className={`mt-4 flex min-h-[64px] cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-lapiz-teal/70 bg-lapiz-tint px-4 text-center font-semibold text-lapiz-teal-dark transition-colors hover:bg-lapiz-tint/60 focus-within:ring-4 focus-within:ring-lapiz-gold/60 ${items.length >= MAX ? "pointer-events-none opacity-50" : ""}`}>
+          <svg aria-hidden viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M10 4v12M4 10h12" /></svg>
           {c.photos.add} · {c.photos.count(items.length)}
           <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="sr-only" onChange={(e) => { void addFiles(e.target.files); e.target.value = ""; }} />
         </label>
-        {photoMsg && <p role="alert" className="mt-2 font-bold text-crayon-red">{photoMsg}</p>}
+        {photoMsg && <p role="alert" className="mt-2 font-semibold text-lapiz-error">{photoMsg}</p>}
         {err("photos")}
-      </div>
 
-      {items.length > 0 && (
-        <div className={card}>
-          <p className="text-lg font-extrabold">{c.people.label}</p>
-          <p className="text-sm opacity-80">{c.people.hint}</p>
-          <ul className="mt-3 space-y-4">
-            {items.map((it, idx) => (
-              <li key={it.id} className="flex gap-3 rounded-2xl border-2 border-crayon-ink/30 bg-crayon-paper p-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={it.preview} alt="" className="h-24 w-24 shrink-0 rounded-xl border-2 border-crayon-ink object-cover" />
-                <div className="min-w-0 flex-1 space-y-2">
-                  <label className="block text-sm font-bold">
-                    {c.people.name} {idx + 1}
-                    <input className={input} value={it.name} maxLength={30} autoComplete="off" onChange={(e) => patch(it.id, { name: e.target.value })} />
-                  </label>
-                  <label className="block text-sm font-bold">
-                    {c.people.role}
-                    <input className={input} value={it.role} maxLength={40} list="roles" placeholder={c.people.rolePh} onChange={(e) => patch(it.id, { role: e.target.value })} />
-                  </label>
-                  <button type="button" className="text-sm font-bold underline" onClick={() => remove(it.id)}>{c.people.remove}</button>
-                </div>
-              </li>
-            ))}
-          </ul>
-          <datalist id="roles">{c.people.roleSuggestions.map((r) => <option key={r} value={r} />)}</datalist>
-          {err("persons")}
-        </div>
-      )}
+        {items.length > 0 && (
+          <div className="mt-6 border-t border-lapiz-line pt-5">
+            <p className="c-h text-lg">{c.people.label}</p>
+            <p className="text-sm text-lapiz-muted">{c.people.hint}</p>
+            <ul className="mt-3 space-y-4">
+              {items.map((it, idx) => (
+                <li key={it.id} className="flex gap-3 rounded-xl border border-lapiz-line bg-lapiz-paper p-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={it.preview} alt="" className="h-24 w-24 shrink-0 rounded-lg border border-lapiz-line object-cover" />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <label className="block text-sm font-semibold">
+                      {c.people.name} {idx + 1}
+                      <input className={input} value={it.name} maxLength={30} autoComplete="off" onChange={(e) => patch(it.id, { name: e.target.value })} />
+                    </label>
+                    <label className="block text-sm font-semibold">
+                      {c.people.role}
+                      <input className={input} value={it.role} maxLength={40} list="roles" placeholder={c.people.rolePh} onChange={(e) => patch(it.id, { role: e.target.value })} />
+                    </label>
+                    <button type="button" className="inline-flex min-h-[44px] items-center text-sm font-semibold underline underline-offset-4" onClick={() => remove(it.id)}>{c.people.remove}</button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <datalist id="roles">{c.people.roleSuggestions.map((r) => <option key={r} value={r} />)}</datalist>
+            {err("persons")}
+          </div>
+        )}
+      </div>
 
       <div className={card}>
         <label className="block">
-          <span className="text-lg font-extrabold">{c.age.label}</span>
-          <span className="block text-sm opacity-80">{c.age.hint}</span>
+          <span className="c-h text-lg">{c.age.label}</span>
+          <span className="block text-sm text-lapiz-muted">{c.age.hint}</span>
           <select className={input} value={age} onChange={(e) => setAge(e.target.value)}>
             <option value="">-</option>
             {[3, 4, 5, 6, 7, 8].map((n) => <option key={n} value={n}>{n}</option>)}
@@ -217,29 +228,55 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
         {err("age")}
       </div>
 
-      <div className={card}>
-        <p className="text-lg font-extrabold">{c.theme.label}</p>
-        <p className="text-sm opacity-80">{c.theme.hint}</p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {themes.map((t) => (
-            <button key={t.id} type="button" aria-pressed={themeId === t.id} onClick={() => { const on = themeId === t.id; setThemeId(on ? "" : t.id); setTheme(on ? "" : t.label); }} className={`rounded-full border-2 border-crayon-ink px-3 py-1 text-sm font-bold ${themeId === t.id ? "bg-crayon-yellow" : "bg-white"}`}>
-              {t.emoji} {t.label}
-            </button>
-          ))}
+      <fieldset className="rounded-2xl border border-lapiz-teal/50 bg-white p-5 sm:p-6" aria-describedby="theme-hint">
+        <legend className="sr-only">{c.theme.label}</legend>
+        {stepHead(2, c.theme.label, undefined)}
+        <p id="theme-hint" className="mt-1 pl-12 text-sm text-lapiz-muted">{c.theme.hint}</p>
+        <div role="radiogroup" aria-label={c.theme.label} className="mt-5 grid grid-cols-3 gap-2 sm:gap-2.5 md:grid-cols-4">
+          {themes.map((t) => {
+            const on = themeId === t.id;
+            return (
+              <label key={t.id} className={`c-theme relative flex min-h-[96px] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border bg-white px-1.5 py-3 text-center transition-colors hover:border-lapiz-teal/70 hover:bg-lapiz-mist ${on ? "border-lapiz-teal" : "border-lapiz-line"}`}>
+                <input
+                  type="radio"
+                  name="adventure"
+                  value={t.id}
+                  checked={on}
+                  className="sr-only"
+                  onChange={() => pickTheme(t.id, t.label)}
+                  onClick={() => { if (on) pickTheme("", ""); }}
+                />
+                <ThemeIcon id={t.id} className={`h-10 w-10 ${on ? "text-lapiz-teal-dark" : "text-lapiz-ink"}`} />
+                <span className="text-[13px] font-semibold leading-tight sm:text-sm">{t.label}</span>
+                <span aria-hidden className="c-check absolute right-1.5 top-1.5 grid h-5 w-5 scale-75 place-items-center rounded-full bg-lapiz-teal opacity-0 transition">
+                  <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="#fff" strokeWidth="2.200" strokeLinecap="round" strokeLinejoin="round"><path d="M3 8.500l3.200 3L13 4.500" /></svg>
+                </span>
+                {on && <span className="sr-only">{c.theme.picked}</span>}
+              </label>
+            );
+          })}
         </div>
-        <input className={input} value={theme} maxLength={50} placeholder={c.theme.ph} onChange={(e) => { setTheme(e.target.value); setThemeId(""); }} />
+        <label className="mt-5 block">
+          <span className="flex items-center gap-1.5 text-sm font-semibold text-lapiz-muted"><PencilIcon className="h-[18px] w-[18px]" />{c.theme.own}</span>
+          <input className={input} value={theme} maxLength={50} placeholder={c.theme.ph} onChange={(e) => { setTheme(e.target.value); setThemeId(""); }} />
+        </label>
         {err("theme")}
-      </div>
+      </fieldset>
 
       <div className={card}>
         <label className="block">
-          <span className="text-lg font-extrabold">{c.email.label}</span>
-          <span className="block text-sm opacity-80">{c.email.hint}</span>
+          <span className="flex items-start gap-3">
+            <span aria-hidden className="c-h grid h-9 w-9 shrink-0 place-items-center rounded-full bg-lapiz-teal text-base text-white">3</span>
+            <span>
+              <span className="c-h block text-xl">{c.email.label}</span>
+              <span className="block text-sm text-lapiz-muted">{c.email.hint}</span>
+            </span>
+          </span>
           <input type="email" inputMode="email" autoComplete="email" className={input} value={email} onChange={(e) => setEmail(e.target.value)} />
         </label>
         {err("email")}
         {Object.keys(countries).length > 1 && (
-          <label className="mt-4 block text-sm font-bold">
+          <label className="mt-4 block text-sm font-semibold">
             {c.country.label}
             <select className={input} value={country} onChange={(e) => setCountry(e.target.value)}>
               {Object.values(countries).map((k) => <option key={k.country} value={k.country}>{k.label} ({k.price})</option>)}
@@ -248,21 +285,21 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
         )}
       </div>
 
-      <div className={`${card} bg-crayon-sun`}>
+      <div className="rounded-2xl border border-lapiz-line bg-lapiz-gold-tint p-5 sm:p-6">
         <details>
-          <summary className="cursor-pointer text-lg font-extrabold">{c.aviso}</summary>
+          <summary className="flex min-h-[48px] cursor-pointer items-center font-semibold">{c.aviso}</summary>
           <div className="mt-3 space-y-2 text-sm">
             <p>{legal.aviso.intro}</p>
             {legal.aviso.sections.map((s) => <p key={s.heading}><strong>{s.heading}</strong> {s.body}</p>)}
-            <p>{legal.aviso.privacyLink.split(/:\s/)[0]}: <a className="font-bold underline" href={`/colorear/${lang}/privacidad`} target="_blank" rel="noreferrer">/colorear/{lang}/privacidad</a></p>
+            <p>{legal.aviso.privacyLink.split(/:\s/)[0]}: <a className="font-semibold underline" href={`/colorear/${lang}/privacidad`} target="_blank" rel="noreferrer">/colorear/{lang}/privacidad</a></p>
           </div>
         </details>
-        <p className="mt-4 font-extrabold">{c.consent}</p>
+        <p className="c-h mt-4 text-lg">{c.consent}</p>
         <ul className="mt-2 space-y-3">
           {legal.checkboxes.map((k) => (
             <li key={k.id}>
-              <label className="flex cursor-pointer items-start gap-3 text-sm">
-                <input type="checkbox" className="mt-1 h-6 w-6 shrink-0 accent-crayon-red" checked={!!checked[k.id]} onChange={(e) => setChecked((p) => ({ ...p, [k.id]: e.target.checked }))} />
+              <label className="flex min-h-[48px] cursor-pointer items-start gap-3 text-sm">
+                <input type="checkbox" className="mt-0.5 h-6 w-6 shrink-0 accent-[#1b6b67]" checked={!!checked[k.id]} onChange={(e) => setChecked((p) => ({ ...p, [k.id]: e.target.checked }))} />
                 <span>{k.text}</span>
               </label>
             </li>
@@ -272,8 +309,8 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
       </div>
 
       <p className="text-sm font-semibold">{legal.refundLine}</p>
-      {Object.entries(errors).filter(([k]) => !["photos", "persons", "age", "email", "theme", "consent"].includes(k)).map(([k, v]) => <p key={k} role="alert" className="font-bold text-crayon-red">{v}</p>)}
-      <button type="submit" disabled={busy} className="inline-flex min-h-[60px] w-full items-center justify-center rounded-full border-[3px] border-crayon-ink bg-crayon-red px-6 text-lg font-extrabold text-white shadow-[0_6px_0_0_#1f2340] transition active:translate-y-[2px] active:shadow-[0_4px_0_0_#1f2340] disabled:opacity-60">
+      {Object.entries(errors).filter(([k]) => !["photos", "persons", "age", "email", "theme", "consent"].includes(k)).map(([k, v]) => <p key={k} role="alert" className="font-semibold text-lapiz-error">{v}</p>)}
+      <button type="submit" disabled={busy} className="c-btn c-btn-block min-h-[60px]">
         {busy ? c.paying : c.pay(legal.price)}
       </button>
     </form>

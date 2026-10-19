@@ -17,8 +17,8 @@ export default async function Reembolso({ params }: { params: Promise<{ token: s
     <>
       <CHeader lang={st.lang} />
       <main className="mx-auto max-w-xl px-4 py-6">
-        <div className="rounded-3xl border-[3px] border-crayon-ink bg-white p-6">
-          <h1 className="text-2xl font-black">{c.title}</h1>
+        <div className="rounded-2xl border border-lapiz-line bg-white p-6">
+          <h1 className="text-2xl font-bold">{c.title}</h1>
           <p className="mt-2">{c.text}</p>
           {st.phase === "refunded" ? <p className="mt-4 font-bold">{c.done}</p> : <RefundButton token={token} lang={st.lang} />}
         </div>
