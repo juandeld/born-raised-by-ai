@@ -71,6 +71,11 @@ export function priceFor(country: CountryCode, variant: Variant): { amountMinor:
 }
 
 export function formatPrice(amountMinor: number, currency: Currency, formatLocale: string): string {
+  // MXN shares the "$" symbol with USD; "MX$199" / "199 MXN" avoids a Mexican parent reading $199 as US dollars.
+  if (currency === "MXN") {
+    const n = new Intl.NumberFormat("es-MX", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amountMinor / 100);
+    return `MX$${n}`;
+  }
   return new Intl.NumberFormat(formatLocale, {
     style: "currency",
     currency,
