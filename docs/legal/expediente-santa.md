@@ -1,6 +1,6 @@
 # Expediente legal de Santa (borrador)
 
-Estado: borrador preparado el 18-oct-2026 por encargo de Juan (D6). Pendiente de revisión y aprobación escrita de `legal-compliance`. Nada de esto está validado por un abogado humano; todo texto y toda cifra marcados [no verificado] requieren confirmación. Fuentes: `docs/investigacion/santa.md` sección 5 y `docs/briefs/santa-H1-legal.md`. Todo cambio legal o de datos recogidos lo aprueba Juan.
+Estado: SUPERADO el 18-oct-2026 por los textos finales en `docs/legal/textos/` y por `docs/legal/riesgos-y-mitigaciones.md` (D6 actualizada: sin abogado). Se conserva como historial; no pegar de aquí. Nada de esto está validado por un abogado humano; todo texto y toda cifra marcados [no verificado] requieren confirmación. Fuentes: `docs/investigacion/santa.md` sección 5 y `docs/briefs/santa-H1-legal.md`. Todo cambio legal o de datos recogidos lo aprueba Juan.
 
 ## 1. Textos de consentimiento del checkout (adulto que paga)
 Se muestran antes del pago, en el idioma del comprador. Casillas sin marcar por defecto.
@@ -45,7 +45,7 @@ Texto para checkout y términos (aplica a productos tipo pase o examen; el únic
 ## 5. Marcas y nombres prohibidos
 Elf on the Shelf, Portable North Pole, Rudolph y cualquier marca de terceros; la marca propia y el dominio no los incluyen.
 
-## 6. Preguntas para el abogado (resumen; detalle en `brief-abogado.md`)
+## 6. Preguntas para el abogado (historial; ahora cubiertas en `riesgos-y-mitigaciones.md`)
 1. COPPA: ¿basta el cobro con tarjeta como consentimiento parental verificable para una llamada con voz del niño como dato biométrico? ¿Qué debe decir la política de retención?
 2. TCPA: ¿cómo aplica a una llamada que el comprador pide para un tercero (el niño o un familiar)? ¿Qué consentimiento escrito basta? ¿Qué hacer con los estados de consentimiento de todas las partes para la grabación?
 3. España/UE: ¿qué exige el art. 50 del AI Act exactamente (momento, forma, idioma)? ¿Interacción con RGPD y datos de menores (edad de consentimiento digital en España)?
@@ -58,4 +58,4 @@ Elf on the Shelf, Portable North Pole, Rudolph y cualquier marca de terceros; la
 ## 7. Pendientes
 - Revisión y aprobación escrita de `legal-compliance`.
 - Aprobación de Juan para cualquier cambio de texto legal o de datos recogidos.
-- Cotización del abogado (ver `brief-abogado.md`).
+- Cotización del abogado: ya no aplica (D6 actualizada).
