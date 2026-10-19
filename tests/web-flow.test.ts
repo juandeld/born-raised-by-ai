@@ -64,7 +64,7 @@ describe("landing pages", () => {
     expect(out).toContain("Santa llama a tu hijo, por su nombre");
     expect(out).toContain("Así de fácil, en 3 pasos");
     expect(out).toContain("Escucha cómo suena");
-    expect(out).toMatch(/\$199\.00/); // MXN single price from packages/config
+    expect(out).toContain("MX$199"); // MXN single price from packages/config
     expect(out).toMatch(/\$349\.00/);
     expect(out).toContain("pago único, sin app y sin suscripción");
     expect(out).toContain("/es/comprar?c=MX&amp;v=single");
@@ -101,7 +101,7 @@ describe("form page", () => {
 
   it("falls back to the single call while the bundle second call is not schedulable", async () => {
     const out = await html(M.comprar.default({ params: params({ lang: "es" }), searchParams: params({ v: "bundle" }) }));
-    expect(out).toContain(`Una llamada · $199.00`);
+    expect(out).toContain("Una llamada · MX$199");
   });
 });
 
