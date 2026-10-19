@@ -1,0 +1,46 @@
+import type { Currency, CountryCode, Variant } from "@lumen/config";
+
+export interface CheckoutRequest {
+  orderId: string;
+  productSlug: string;
+  variant: Variant;
+  country: CountryCode;
+  productName: string;
+  /** Amount in minor units of `currency`. The caller already converted if the provider needs it. */
+  amountMinor: number;
+  currency: Currency;
+  customerEmail: string;
+  successUrl: string;
+  cancelUrl: string;
+  testMode: boolean;
+}
+
+export interface CheckoutSession {
+  provider: string;
+  checkoutId: string;
+  url: string;
+}
+
+export type PaymentEvent =
+  | { type: "payment_succeeded"; orderId: string | null; checkoutId: string | null; paymentId: string }
+  | { type: "payment_failed"; orderId: string | null; checkoutId: string | null }
+  | { type: "refunded"; orderId: string | null; checkoutId: string | null; paymentId: string };
+
+export interface RefundRequest {
+  paymentId: string;
+  amountMinor?: number;
+  currency: Currency;
+  reason: string;
+}
+
+export interface PaymentProvider {
+  readonly name: "polar" | "recurrente" | "mock";
+  /** Currencies the provider can charge. Others are converted to USD by the checkout service. */
+  readonly supportedCurrencies: Currency[] | "any";
+  createCheckout(req: CheckoutRequest): Promise<CheckoutSession>;
+  /** Verifies the signature and returns a normalized event, or null for events we ignore. Throws if the signature is invalid. */
+  parseWebhook(rawBody: string, headers: Record<string, string | undefined>): Promise<PaymentEvent | null>;
+  refund(req: RefundRequest): Promise<{ refundId: string }>;
+}
+
+export class PaymentConfigError extends Error {}
