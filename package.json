@@ -3,8 +3,14 @@
   "private": true,
   "version": "0.1.0",
   "description": "Born & Raised by AI - Lumen Labs monorepo",
-  "workspaces": ["apps/*", "engines/*", "packages/*"],
-  "engines": { "node": ">=20" },
+  "workspaces": [
+    "apps/*",
+    "engines/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "npm run dev -w @lumen/web",
     "build": "npm run build -w @lumen/web",
@@ -12,7 +18,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json && npm run typecheck -w @lumen/web",
     "costs": "tsx scripts/costs.ts",
     "retention": "tsx scripts/retention.ts",
-    "deploy:santa": "echo 'Deploy santa: pending Vercel account (see docs/arquitectura/pendientes-cuentas.md)' && exit 1"
+    "deploy:santa": "echo 'Deploy santa: pending Vercel account (see docs/arquitectura/pendientes-cuentas.md)' && exit 1",
+    "legal:docs": "tsx scripts/legal-docs.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

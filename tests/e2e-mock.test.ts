@@ -282,3 +282,13 @@ describe("end to end in mock mode: order -> consent -> payment -> call with prel
     expect(await h.deps.db.suppression.get(order.phone_e164_hash!)).not.toBeNull();
   });
 });
+
+describe("scheduler wake-up", () => {
+  it("places the call when it wakes a few milliseconds after the window opens (no endless one-minute sleeps)", async () => {
+    const h = makeHarness();
+    const { order } = await buyAndSchedule(h);
+    h.clock.now = new Date(new Date(order.window_start).getTime() + 1_437); // 1.4 s after the minute boundary
+    const out = await h.engine.attemptCall(order.id);
+    expect(out.kind).toBe("placed");
+  });
+});

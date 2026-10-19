@@ -4,7 +4,7 @@ import { getPreludeTexts, type TextLocale } from "@lumen/legal";
 import type { EngineDeps } from "./deps";
 import { composeMessage } from "./emails";
 import { fromNumberFor, addMinutes, baseProps, formatLocal, iso } from "./util";
-import { nextCallableInstant, planRetry, type CallWindow } from "./window";
+import { isCallable, nextCallableInstant, planRetry, type CallWindow } from "./window";
 import type { Language } from "./types";
 import type { RefundService } from "./refunds";
 
@@ -75,7 +75,10 @@ export class CallScheduler {
     // Earliest allowed instant: inside the window, inside local hours, 15 min after the previous attempt.
     const last = calls.at(-1);
     const notBefore = last?.ended_at ? addMinutes(new Date(last.ended_at), d.product.minutesBetweenAttempts) : now;
-    const earliest = nextCallableInstant(new Date(Math.max(now.getTime(), notBefore.getTime())), w, hours);
+    // If "now" is already callable, call now. (nextCallableInstant rounds UP to the minute, so a wake-up that lands a few
+    // milliseconds after a minute boundary would sleep one more minute, forever.)
+    const base = new Date(Math.max(now.getTime(), notBefore.getTime()));
+    const earliest = isCallable(base, w, hours) ? base : nextCallableInstant(base, w, hours);
     if (!earliest) {
       await this.refunds.refund(order.id, { reason: "window_closed", automatic: true });
       return { kind: "exhausted", reason: "window_closed" };
