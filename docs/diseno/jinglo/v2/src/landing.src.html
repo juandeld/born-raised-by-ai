@@ -55,6 +55,7 @@ section{position:relative}
 .plate .edge{bottom:-1px;transform:none;height:46px;fill:var(--night)}
 .hero-copy{position:relative;padding:6px var(--gut) 56px;max-width:640px;margin:0 auto}
 .call{position:relative;margin:-92px 0 22px;width:min(100%,330px);padding:12px 14px 12px 16px;display:flex;align-items:center;gap:14px;background:var(--paper-light);color:var(--ink);border-radius:14px 18px 12px 16px;box-shadow:0 2px 0 #00000040,0 14px 24px -10px #000a;transform:rotate(-1.6deg);animation:enter .8s .5s cubic-bezier(.2,.8,.2,1) both}
+.call .santa{position:absolute;right:46px;bottom:calc(100% - 3px);width:150px;height:auto;z-index:0;pointer-events:none;filter:drop-shadow(0 6px 10px #0006)}
 .call .who{flex:1;line-height:1.2}
 .call .who b{display:block;font-size:1.15rem}
 .call .who span{font-size:.92rem;color:var(--ink-soft)}
@@ -196,6 +197,7 @@ footer p{max-width:36rem;margin-top:8px}
   .plate .edge.h{display:none}
   .plate .edge.v{display:block;top:0;bottom:auto;left:-1px;width:44px;height:100%}
   .call{position:absolute;left:calc(100% - 110px);bottom:64px;margin:0;z-index:3;width:330px}
+  .call .santa{width:230px;right:30px}
   .hero-copy{position:relative}
   .listen .grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:80px}
   .gift .grid{grid-template-columns:minmax(0,.8fr) minmax(0,1fr);gap:80px}
@@ -238,6 +240,7 @@ footer p{max-width:36rem;margin-top:8px}
   <div class="hero-copy">
     <div class="call" id="call" role="group" aria-live="polite">
       <svg class="wave" viewBox="0 0 14 34" aria-hidden="true"><path d="M12 3C5 9 5 25 12 31M7 11C4 15 4 19 7 23" fill="none" stroke="#e3ab52" stroke-width="2.4" stroke-linecap="round"/></svg>
+      <img class="santa" src="{{img:santa}}" alt="" data-alt="santaAlt" width="520" height="480">
       <div class="who"><b data-k="callFrom"></b><span id="callSub"></span></div>
       <button class="pick" id="pick" type="button" aria-label="Contestar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 10.8a15 15 0 006.6 6.6l2.2-2.2a1 1 0 011-.25 11 11 0 003.5.56 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.2.2 2.4.56 3.5a1 1 0 01-.25 1z"/></svg></button>
     </div>
@@ -392,6 +395,7 @@ footer p{max-width:36rem;margin-top:8px}
 var T={
 es:{
  doc:"Jinglo — Una llamada del Polo Norte para tu peque",
+ santaAlt:"Santa, con gesto amable, hablando por un teléfono antiguo.",
  heroAlt:"Una casita en una colina nevada, de noche, con una ventana encendida.",
  phoneAlt:"Un teléfono rojo sonando en la mesita del pasillo, con nieve afuera de la ventana.",
  tallerAlt:"El taller del Polo Norte de noche, con paquetes en los estantes y un teléfono de candelero sobre la mesa.",
@@ -438,6 +442,7 @@ es:{
 },
 en:{
  doc:"Jinglo — A call from the North Pole for your little one",
+ santaAlt:"A kindly Santa talking on an old telephone.",
  heroAlt:"A small house on a snowy hill at night, one window glowing.",
  phoneAlt:"A red telephone ringing on the hallway table, snow falling outside the window.",
  tallerAlt:"The North Pole workshop at night, parcels on the shelves and a candlestick telephone on the bench.",
