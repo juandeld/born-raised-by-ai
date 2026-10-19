@@ -1,5 +1,10 @@
 {
   "extends": "./tsconfig.base.json",
-  "include": ["engines/**/*.ts", "packages/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts"],
-  "exclude": ["node_modules", "apps"]
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": { "@/*": ["apps/web/src/*"] }
+  },
+  "include": ["engines/**/*.ts", "packages/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts", "apps/web/src/**/*.ts", "apps/web/src/**/*.tsx"],
+  "exclude": ["node_modules"]
 }
