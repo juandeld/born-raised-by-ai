@@ -1,4 +1,4 @@
-import type { AgentConfig } from "../guardrails/config";
+import { INCIDENT_TYPES, type AgentConfig } from "../guardrails/config";
 import { assertAgentVariables } from "../guardrails/sanitize";
 import type { ConnectInfo, ConversationInfo, RegisterCallInput, VoiceProvider } from "./voice";
 
@@ -23,7 +23,21 @@ export interface ElevenLabsConfig {
   maxTokens: number;
   publicBaseUrl: string;
   toolSecret: string;
+  /**
+   * Backup LLMs, in order. "default" lets the vendor choose (it was seen cascading to gemini and gpt-4o on a children's call),
+   * "disabled" turns the cascade off. Default here is the same family as the main model.
+   */
+  backupLlm: "default" | "disabled" | string[];
+  cascadeTimeoutSeconds: number;
 }
+
+export function parseBackupLlm(raw: string | undefined): "default" | "disabled" | string[] {
+  const v = (raw ?? "claude-sonnet-5-5").trim();
+  if (v === "default" || v === "disabled") return v;
+  return v.split(",").map((x) => x.trim()).filter(Boolean);
+}
+
+type ToolBody = { tool_config: Record<string, unknown> };
 
 export class ElevenLabsVoiceProvider implements VoiceProvider {
   readonly name = "elevenlabs";
@@ -51,6 +65,8 @@ export class ElevenLabsVoiceProvider implements VoiceProvider {
       maxTokens: Number(env.ELEVENLABS_LLM_MAX_TOKENS ?? 120),
       publicBaseUrl: env.PUBLIC_BASE_URL ?? "http://localhost:3000",
       toolSecret: env.AGENT_TOOL_SECRET ?? "",
+      backupLlm: parseBackupLlm(env.ELEVENLABS_BACKUP_LLM),
+      cascadeTimeoutSeconds: Number(env.ELEVENLABS_CASCADE_TIMEOUT ?? 6),
     });
   }
 
@@ -58,49 +74,128 @@ export class ElevenLabsVoiceProvider implements VoiceProvider {
     return { "xi-api-key": this.cfg.apiKey, "content-type": "application/json" };
   }
 
-  private toolDefs(config: AgentConfig) {
-    const hook = (name: string, description: string, properties: Record<string, unknown>) => ({
-      type: "webhook",
-      name,
-      description,
-      api_schema: {
-        url: `${this.cfg.publicBaseUrl}/api/calls/tools/${name}`,
-        method: "POST",
-        request_headers: { "x-agent-secret": this.cfg.toolSecret },
-        // The call is identified by the Twilio call sid that the platform provides, never by the order id (A-05).
-        request_body_schema: { type: "object", properties: { call_sid: { type: "string", dynamic_variable: "system__call_sid" }, ...properties } },
+  /**
+   * Workspace tool definitions (POST /v1/convai/tools). The inline `tools` field of the agent is deprecated: tools are
+   * created once as workspace objects and attached to the agent by id (`prompt.tool_ids`). The call is identified by the
+   * Twilio call sid that the platform provides (system__call_sid), never by the order id (A-05).
+   */
+  toolBodies(config: AgentConfig): Record<string, ToolBody> {
+    const hook = (name: string, description: string, properties: Record<string, unknown>, required: string[] = []): ToolBody => ({
+      tool_config: {
+        type: "webhook",
+        name,
+        description,
+        response_timeout_secs: 10,
+        // The character never narrates a bookkeeping call to the child.
+        pre_tool_speech: "off",
+        tool_error_handling_mode: "hide",
+        api_schema: {
+          url: `${this.cfg.publicBaseUrl}/api/calls/tools/${name}`,
+          method: "POST",
+          request_headers: { "x-agent-secret": this.cfg.toolSecret },
+          request_body_schema: {
+            type: "object",
+            properties: { call_sid: { type: "string", dynamic_variable: "system__call_sid" }, ...properties },
+            required: ["call_sid", ...required],
+          },
+        },
       },
     });
-    return config.tools.map((t) => {
-      if (t === "end_call") return { type: "system", name: "end_call", description: "End the call after the closing phrase." };
-      if (t === "mark_optout") return hook("mark_optout", "Register that the person does not want more calls to this number.", {});
-      return hook("flag_incident", "Register a safety or conduct incident. No content, only the type.", {
-        incident_type: { type: "string", enum: ["seguridad", "maltrato", "autolesion", "datos", "contenido", "abuso", "contacto", "fallo_tecnico", "confusion"] },
-      });
+    const out: Record<string, ToolBody> = {};
+    for (const t of config.tools) {
+      if (t === "end_call") continue; // built-in system tool, see builtInTools()
+      if (t === "mark_optout") out[t] = hook(t, "Registra que la persona adulta no quiere más llamadas a este número. Solo si lo pide con claridad. Nunca lo menciones en voz alta.", {});
+      else if (t === "flag_incident") {
+        out[t] = hook(
+          t,
+          "Registra un incidente de seguridad o conducta. Solo el tipo, nunca contenido. Nunca lo menciones en voz alta.",
+          { incident_type: { type: "string", description: "Tipo de incidente.", enum: [...INCIDENT_TYPES] } },
+          ["incident_type"],
+        );
+      }
+    }
+    return out;
+  }
+
+  builtInTools(config: AgentConfig): Record<string, unknown> {
+    if (!config.tools.includes("end_call")) return {};
+    return {
+      end_call: {
+        type: "system",
+        name: "end_call",
+        description: "Termina la llamada. Úsala solo después de decir la despedida (frase fija D-02 o la despedida amable). Nunca nombres la herramienta en voz alta.",
+        params: { system_tool_type: "end_call" },
+      },
+    };
+  }
+
+  private backupLlmConfig(): Record<string, unknown> {
+    const b = this.cfg.backupLlm;
+    if (b === "default" || b === "disabled") return { preference: b };
+    return { preference: "override", order: b };
+  }
+
+  /** Creates or updates one workspace tool by name; returns its id. */
+  private async upsertTool(name: string, body: ToolBody): Promise<string> {
+    const list = await this.fetchFn(`${this.base}/v1/convai/tools?search=${encodeURIComponent(name)}&page_size=100`, { headers: this.headers() });
+    if (!list.ok) throw new Error(`ElevenLabs list tools ${list.status}: ${await list.text()}`);
+    const j = (await list.json()) as { tools?: Array<{ id: string; tool_config?: { name?: string } }> };
+    const hit = j.tools?.find((t) => t.tool_config?.name === name);
+    const res = await this.fetchFn(hit ? `${this.base}/v1/convai/tools/${hit.id}` : `${this.base}/v1/convai/tools`, {
+      method: hit ? "PATCH" : "POST",
+      headers: this.headers(),
+      body: JSON.stringify(body),
     });
+    if (!res.ok) throw new Error(`ElevenLabs upsert tool ${name} ${res.status}: ${await res.text()}`);
+    const r = (await res.json()) as { id?: string };
+    const id = r.id ?? hit?.id;
+    if (!id) throw new Error(`ElevenLabs upsert tool ${name}: no id in the response`);
+    return id;
+  }
+
+  /** The agent PATCH/POST body. Pure, so it can be tested. `toolIds` are the ids returned by the tool upserts. */
+  agentBody(config: AgentConfig, toolIds: string[], create: { voiceId: string } | null): Record<string, unknown> {
+    const conversation_config: Record<string, any> = {
+      agent: {
+        first_message: config.firstMessage,
+        language: config.language.startsWith("es") ? "es" : "en",
+        prompt: {
+          prompt: config.prompt,
+          llm: this.cfg.llm,
+          temperature: this.cfg.temperature,
+          max_tokens: this.cfg.maxTokens,
+          tool_ids: toolIds,
+          built_in_tools: this.builtInTools(config),
+          backup_llm_config: this.backupLlmConfig(),
+          cascade_timeout_seconds: this.cfg.cascadeTimeoutSeconds,
+        },
+      },
+      conversation: { max_duration_seconds: config.maxCallSeconds },
+      // Without this a stuck call ran to the 600 s cap (seen on the first real call, 18-oct-2026).
+      turn: { silence_end_call_timeout: config.silence.closeAfterSeconds },
+    };
+    // The voice is sent ONLY when the agent is created. An update never touches tts, so a PATCH can never change the voice.
+    if (create) {
+      conversation_config.tts = {
+        voice_id: create.voiceId,
+        model_id: this.cfg.ttsModel,
+        stability: this.cfg.stability,
+        similarity_boost: this.cfg.similarityBoost,
+        speed: this.cfg.speed,
+        agent_output_audio_format: "ulaw_8000",
+      };
+    }
+    // Privacy and guardrail settings are not sent: the live account owns them (zero retention and the content
+    // guardrails are configured per agent in the vendor, see docs/arquitectura/agentes-elevenlabs.md).
+    return create ? { name: config.name, conversation_config } : { conversation_config };
   }
 
   async syncAgent(config: AgentConfig, existingAgentId?: string): Promise<{ agentId: string }> {
-    const voiceId = this.cfg.voiceIds[config.language];
-    if (!voiceId) throw new Error(`No ElevenLabs voice id configured for ${config.language}`);
-    const body = {
-      name: config.name,
-      conversation_config: {
-        agent: {
-          first_message: config.firstMessage,
-          language: config.language.startsWith("es") ? "es" : "en",
-          prompt: { prompt: config.prompt, llm: this.cfg.llm, temperature: this.cfg.temperature, max_tokens: this.cfg.maxTokens, tools: this.toolDefs(config) },
-        },
-        tts: { voice_id: voiceId, model_id: this.cfg.ttsModel, stability: this.cfg.stability, similarity_boost: this.cfg.similarityBoost, speed: this.cfg.speed },
-        conversation: { max_duration_seconds: config.maxCallSeconds },
-        turn: { silence_end_call_timeout: config.silence.closeAfterSeconds },
-      },
-      platform_settings: {
-        // [no verificado] exact option names; zero retention and no training must be confirmed with ElevenLabs (H0).
-        privacy: { zero_retention_mode: config.dataHandling.zeroRetention, record_voice: false },
-        guardrails: { enabled: config.moderation.enabled },
-      },
-    };
+    const voiceId = this.cfg.voiceIds[config.language] ?? "";
+    if (!existingAgentId && !voiceId) throw new Error(`No ElevenLabs voice id configured for ${config.language} (needed to create the agent)`);
+    const toolIds: string[] = [];
+    for (const [name, body] of Object.entries(this.toolBodies(config))) toolIds.push(await this.upsertTool(name, body));
+    const body = this.agentBody(config, toolIds, existingAgentId ? null : { voiceId });
     const url = existingAgentId ? `${this.base}/v1/convai/agents/${existingAgentId}` : `${this.base}/v1/convai/agents/create`;
     const res = await this.fetchFn(url, { method: existingAgentId ? "PATCH" : "POST", headers: this.headers(), body: JSON.stringify(body) });
     if (!res.ok) throw new Error(`ElevenLabs syncAgent ${res.status}: ${await res.text()}`);
