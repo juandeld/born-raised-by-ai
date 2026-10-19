@@ -44,7 +44,7 @@ describe("end to end in mock mode: order -> consent -> payment -> call with prel
     expect(calls).toHaveLength(1);
     const call = calls[0]!;
     expect(call.result).toBe("completed");
-    expect(call.prelude_version).toBe("03-SANTA-es-419-legal-v1.2");
+    expect(call.prelude_version).toBe("03-SANTA-es-419-legal-v1.3");
     expect(call.agent_seconds).toBe(240);
     expect(call.agent_seconds).toBeLessThanOrEqual(300);
 
@@ -53,7 +53,10 @@ describe("end to end in mock mode: order -> consent -> payment -> call with prel
     const heard = h.telephony.spoken.map((s) => s.text);
     expect(heard[0]).toBe(texts.main);
     expect(heard[1]).toBe(texts.handoff);
-    expect(heard[0]).toContain("voz de inteligencia artificial");
+    expect(heard[0]).toContain("llamada automatizada");
+    expect(heard[0]).toContain("voz artificial");
+    expect(heard[0]).toContain("Jinglo");
+    expect(heard[0]).toContain("grabará");
     expect(heard[0]).toContain("Sofía");
 
     // Recording started once (after key 1), and the vendor copies were deleted after delivery

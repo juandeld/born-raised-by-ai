@@ -16,10 +16,16 @@ export type CallEvent =
 /** What the telephony adapter must do next. The adapter renders these (TwiML for Twilio, direct for the mock). */
 export type Action =
   /** `lockedChars` (D14): the first N characters are played without barge-in; the rest accepts a key press. */
-  | { type: "say"; text: string; lockedChars?: number }
+  | { type: "say"; text: string; lockedChars?: number; audio?: SayAudio }
   | { type: "gather"; timeoutSeconds: number }
   | { type: "hangup"; result: CallResult }
   | { type: "connect_agent"; twiml: string | null; conversationId: string | null };
+
+/** D20: pre-recorded clips (public paths starting with "/") that replace the synthetic <Say>; any other part is spoken text (the child's name). `locked` plays without barge-in, `open` inside the <Gather>. */
+export interface SayAudio {
+  locked?: string[];
+  open: string[];
+}
 
 export interface CallTarget {
   callId: string;

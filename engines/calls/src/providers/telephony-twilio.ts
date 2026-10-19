@@ -145,12 +145,18 @@ export class TwilioTelephonyProvider implements TelephonyProvider {
     const v = SAY_VOICES[ctx.locale];
     const url = (event: string) => `${this.cfg.publicBaseUrl}/api/calls/twilio/voice?call=${ctx.callId}&amp;event=${event}`;
     const say = (text: string) => `<Say language="${v.language}" voice="${v.voice}">${xmlEscape(text)}</Say>`;
+    const play = (path: string) => `<Play>${xmlEscape(path.startsWith("http") ? path : this.cfg.publicBaseUrl.replace(/\/$/, "") + path)}</Play>`;
     const parts: string[] = [];
     let pending: string[] = []; // <Say> elements waiting for the next action
     let locked: string[] = []; // D14: <Say> elements played before the <Gather>, so a key pressed during them is ignored
     const flush = () => { parts.push(...locked, ...pending); locked = []; pending = []; };
     for (const a of actions) {
-      if (a.type === "say") {
+      if (a.type === "say" && a.audio) {
+        // D20: pre-recorded clips. Same structure as the <Say> split: locked clip before the <Gather>, open clip inside it.
+        const part = (x: string) => (x.startsWith("/") || x.startsWith("http") ? play(x) : say(x));
+        if (a.audio.locked) locked.push(...a.audio.locked.map(part));
+        pending.push(...a.audio.open.map(part));
+      } else if (a.type === "say") {
         const n = a.lockedChars ?? 0;
         if (n > 0 && n < a.text.length) {
           locked.push(say(a.text.slice(0, n).trimEnd()));

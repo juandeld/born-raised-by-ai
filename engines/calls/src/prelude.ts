@@ -68,7 +68,12 @@ export function stepPrelude(state: PreludeState, event: CallEvent, t: PreludeTex
       return out(
         { step: "await_key1" },
         [
-          { type: "say", text: t.main, lockedChars: lockedPrefixLength(t.main, t.mainOpenFrom) },
+          {
+            type: "say",
+            text: t.main,
+            lockedChars: lockedPrefixLength(t.main, t.mainOpenFrom),
+            ...(t.audio ? { audio: { locked: t.audio.mainLocked, open: [t.audio.mainOpen] } } : {}),
+          },
           { type: "gather", timeoutSeconds: cfg.dtmfTimeoutSeconds },
         ],
       );
@@ -79,7 +84,13 @@ export function stepPrelude(state: PreludeState, event: CallEvent, t: PreludeTex
           return out(
             { step: "await_key2", repeated: false, invalidKeys: 0 },
             [
-              { type: "say", text: t.handoff, lockedChars: lockedPrefixLength(t.handoff, t.handoffOpenFrom) },
+              {
+                type: "say",
+                text: t.handoff,
+                // D20: the hand-off carries no notice any more, so it is fully interruptible unless a marker is set.
+                lockedChars: t.handoffOpenFrom ? lockedPrefixLength(t.handoff, t.handoffOpenFrom) : 0,
+                ...(t.audio ? { audio: { open: t.audio.handoff } } : {}),
+              },
               { type: "gather", timeoutSeconds: cfg.handoffTimeoutSeconds },
             ],
             // Recording starts here and not before (guardrail A-02).
@@ -117,9 +128,12 @@ type DoneFn = (result: CallResult, actions: Action[], effects?: Effect[]) => Ste
 function noInput(state: PreludeState, t: PreludeTexts, cfg: PreludeConfig, out: OutFn, done: DoneFn, failResult: CallResult, failEffects: Effect[]): StepOutput {
   const timeout = state.step === "await_key2" ? cfg.handoffTimeoutSeconds : cfg.dtmfTimeoutSeconds;
   if (!state.repeated) {
-    // Key 1 wait repeats "Pulse 1 para continuar o 2 para cancelar."; the key 2 wait repeats "Cuando X tenga el teléfono, pulse 1 otra vez."
-    const line = state.step === "await_key2" ? t.handoffRepeat : t.repeat;
-    return out({ repeated: true }, [{ type: "say", text: line }, { type: "gather", timeoutSeconds: timeout }]);
+    // Key 1 wait repeats the key instructions (D20: same clip as the interruptible part of the notice); the key 2 wait repeats the hand-off reminder.
+    const say: Action =
+      state.step === "await_key2"
+        ? { type: "say", text: t.handoffRepeat }
+        : { type: "say", text: t.repeat, ...(t.audio ? { audio: { open: [t.audio.mainOpen] } } : {}) };
+    return out({ repeated: true }, [say, { type: "gather", timeoutSeconds: timeout }]);
   }
   return done(failResult, [{ type: "say", text: t.noResponse }, { type: "hangup", result: failResult }], failEffects);
 }

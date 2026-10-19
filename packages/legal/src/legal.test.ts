@@ -1,5 +1,5 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { lockedPrefixLength } from "./prelude";
 import { AVISO, EN_GB_RIGHTS_SUFFIX, PRELUDES, RAW_CHECKBOXES, fill, hasUnfilledPlaceholders, renderAviso, renderPrelude, resolveAllCheckboxes } from "./index";
@@ -48,17 +48,45 @@ describe("legal texts match docs/legal/textos exactly", () => {
   });
 });
 
-describe("D14 (non-interruptible notice)", () => {
-  it("every locale locks the identity/AI/recording notice and leaves only the key instructions interruptible", () => {
+describe("D14 + D20 (non-interruptible notice, short prelude)", () => {
+  it("every locale locks who calls / AI voice / recording and leaves only the key instructions interruptible", () => {
     for (const [locale, t] of Object.entries(PRELUDES.santa!)) {
-      const locked = t.main.slice(0, lockedPrefixLength(t.main, t.mainOpenFrom));
-      const open = t.main.slice(lockedPrefixLength(t.main, t.mainOpenFrom));
-      expect(locked, locale).toMatch(/Lumen Labs/);
-      expect(locked, locale).toMatch(/inteligencia artificial|artificial intelligence/);
+      const cut = lockedPrefixLength(t.main, t.mainOpenFrom);
+      const locked = t.main.slice(0, cut);
+      const open = t.main.slice(cut);
+      expect(locked, locale).toMatch(/Jinglo/);
+      expect(locked, locale).toMatch(/automatizada|automática|automated/);
+      expect(locked, locale).toMatch(/voz artificial|artificial voice/);
+      expect(locked, locale).toMatch(/Polo Norte|North Pole/);
       expect(locked, locale).toMatch(/grab|record/);
       expect(open, locale).toMatch(/1/);
-      expect(open, locale).not.toMatch(/inteligencia artificial|artificial intelligence|grab|record/);
-      expect(t.handoff.slice(0, lockedPrefixLength(t.handoff, t.handoffOpenFrom)), locale).toMatch(/grab|Recording/);
+      expect(open, locale).toMatch(/2/);
+      expect(open, locale).not.toMatch(/artificial|automat|grab|record|Jinglo/);
+      // the repeat is exactly the interruptible part, so one clip serves both
+      expect(open.trim(), locale).toBe(t.repeat);
+    }
+  });
+  it("D20: child-friendly wording (no IA / robot / computer words a child knows), fully interruptible hand-off", () => {
+    for (const [locale, t] of Object.entries(PRELUDES.santa!)) {
+      for (const text of [t.main, t.repeat, t.handoff, t.handoffRepeat]) {
+        expect(text, locale).not.toMatch(/\bIA\b|\bAI\b|robot|computadora|ordenador|computer|inteligencia/i);
+      }
+      expect(t.main.split(/\s+/).length, locale).toBeLessThanOrEqual(45);
+      expect(t.main, locale).toContain("{{NOMBRE_NIÑO}}");
+      expect(t.handoffOpenFrom, locale).toBeNull();
+      expect(t.id, locale).toMatch(/legal-v1\.3$/);
+    }
+  });
+  it("D20: removed content stays out of the call (it lives in checkout C3-C5 and the email)", () => {
+    for (const [locale, t] of Object.entries(PRELUDES.santa!)) {
+      expect(t.handoff, locale).not.toMatch(/datos|vend|escuchar|information|sell|listen/i);
+    }
+  });
+  it("pre-recorded clips exist for every locale", () => {
+    for (const [locale, t] of Object.entries(PRELUDES.santa!)) {
+      for (const path of [...t.audio!.mainLocked, t.audio!.mainOpen, ...t.audio!.handoff].filter((x) => x.startsWith("/"))) {
+        expect(existsSync(join(__dirname, "../../../apps/web/public", path)), `${locale} ${path}`).toBe(true);
+      }
     }
   });
   it("throws if the marker is missing or ambiguous", () => {
@@ -68,13 +96,12 @@ describe("D14 (non-interruptible notice)", () => {
   });
 });
 
-describe("D13 (legal-v1.2)", () => {
-  it("no child-facing first line mentions computer or AI; main notice names Lumen Labs", () => {
+describe("D13 (legal-v1.2, kept in v1.3)", () => {
+  it("no child-facing first line mentions computer or AI; main notice names the brand and the artificial voice", () => {
     for (const [locale, t] of Object.entries(PRELUDES.santa!)) {
       expect(t.firstLine, locale).not.toMatch(/computadora|ordenador|computer|inteligencia|artificial/i);
-      expect(t.main, locale).toMatch(/Lumen Labs/);
-      expect(t.main, locale).not.toContain("{{MARCA}}");
-      expect(t.handoff, locale).toMatch(/inteligencia artificial|artificial intelligence/);
+      expect(t.main, locale).toMatch(/Jinglo/);
+      expect(t.main, locale).toMatch(/voz artificial|artificial voice/);
     }
     expect(PRELUDES.santa!["es-419"].firstLine).toBe("¡Jo, jo, jo! Hola, {{NOMBRE_NIÑO}}. Soy Santa, ¡y te llamo desde el Polo Norte! ¿Cómo estás?");
   });
@@ -111,8 +138,11 @@ describe("placeholders", () => {
 
   it("prelude renders with child name and brand", () => {
     const r = renderPrelude(PRELUDES.santa!["es-419"], { brand: "Lumen Labs", childName: "Sofía" });
+    expect(r.firstLine).toContain("Sofía");
+    expect(r.main).toContain("Jinglo");
     expect(r.main).toContain("Sofía");
-    expect(r.main).toContain("Lumen Labs");
+    expect(r.audio!.mainLocked).toContain("Sofía");
+    expect(r.audio!.handoff).toContain("Sofía");
     expect(hasUnfilledPlaceholders(JSON.stringify(r))).toBe(false);
     expect(fill("{{X}}", {})).toBe("{{X}}");
   });

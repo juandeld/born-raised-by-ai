@@ -46,6 +46,24 @@ describe("Twilio adapter", () => {
     expect(xml).toMatch(/<Say[^>]*>Hola\. Esta es[^<]*Lumen Labs\.<\/Say><Gather[^>]*><Say[^>]*>Si usted es adulto, pulse 1\.<\/Say><\/Gather><Redirect/);
   });
 
+  it("D20: pre-recorded clips are <Play>, the child's name is <Say> between two clips, locked part before the <Gather>", () => {
+    const xml = tw.renderTwiml(
+      [
+        {
+          type: "say",
+          text: "x",
+          lockedChars: 1,
+          audio: { locked: ["/audio/prelude/es-419/main-a.mp3", "Sofía", "/audio/prelude/es-419/main-b.mp3"], open: ["/audio/prelude/es-419/open.mp3"] },
+        },
+        { type: "gather", timeoutSeconds: 8 },
+      ],
+      { callId: "c1", locale: "es-419" },
+    );
+    expect(xml).toMatch(/<Play>[^<]*main-a\.mp3<\/Play><Say[^>]*>Sofía<\/Say><Play>[^<]*main-b\.mp3<\/Play><Gather[^>]*><Play>[^<]*open\.mp3<\/Play><\/Gather><Redirect/);
+    const handoff = tw.renderTwiml([{ type: "say", text: "x", audio: { open: ["/audio/prelude/es-419/handoff-a.mp3", "Sofía", "/audio/prelude/es-419/handoff-b.mp3"] } }, { type: "gather", timeoutSeconds: 8 }], { callId: "c1", locale: "es-419" });
+    expect(handoff).toMatch(/<Gather[^>]*><Play>[^<]*handoff-a\.mp3<\/Play><Say[^>]*>Sofía<\/Say><Play>[^<]*handoff-b\.mp3<\/Play><\/Gather>/);
+  });
+
   it("connect_agent returns the vendor TwiML verbatim", () => {
     const xml = tw.renderTwiml([{ type: "connect_agent", twiml: "<Response><Connect/></Response>", conversationId: null }], { callId: "c1", locale: "en-US" });
     expect(xml).toBe("<Response><Connect/></Response>");
