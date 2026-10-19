@@ -1,3 +1,4 @@
+import { pickAgentId } from "./agent-ids";
 import { RETENTION_DAYS, addDays } from "@lumen/config";
 import type { CallRow, OrderRow } from "@lumen/db";
 import { getPreludeTexts, renderPrelude, type TextLocale } from "@lumen/legal";
@@ -81,7 +82,7 @@ export class CallController {
 
   private async connectAgent(order: OrderRow, call: CallRow) {
     const language = order.language as Language;
-    const agentId = this.d.agentIds[language] ?? this.d.agentIds["es-419"] ?? "";
+    const agentId = pickAgentId(this.d.agentIds, order.locale, language);
     const variables = buildAgentVariables({
       childFirstName: order.child_first_name!,
       childAge: order.child_age,

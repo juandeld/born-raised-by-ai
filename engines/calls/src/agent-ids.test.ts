@@ -8,3 +8,18 @@ describe("agentIdsFromEnv", () => {
     expect(agentIdsFromEnv({})).toEqual({});
   });
 });
+
+import { pickAgentId } from "./agent-ids";
+describe("pickAgentId", () => {
+  const all = { "es-419": "a", "es-ES": "b", en: "c", "en-US": "d", "en-GB": "e" };
+  it("uses the exact locale first", () => {
+    expect(pickAgentId(all, "en-GB", "en")).toBe("e");
+    expect(pickAgentId(all, "es-ES", "es-ES")).toBe("b");
+  });
+  it("falls back to the closest agent and finally to es-419", () => {
+    expect(pickAgentId({ "es-419": "a", en: "c" }, "en-GB", "en")).toBe("c");
+    expect(pickAgentId({ "es-419": "a" }, "es-ES", "es-ES")).toBe("a");
+    expect(pickAgentId({ "es-419": "a" }, "en-US", "en")).toBe("a");
+    expect(pickAgentId({}, "en-US", "en")).toBe("");
+  });
+});

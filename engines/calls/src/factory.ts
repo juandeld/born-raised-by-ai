@@ -76,6 +76,8 @@ export function agentIdsFromEnv(env: Env): Record<string, string> {
   const esEs = env.ELEVENLABS_AGENT_ID_ES_ES || env.ELEVENLABS_AGENT_ID_ESES;
   if (esEs) ids["es-ES"] = esEs;
   if (env.ELEVENLABS_AGENT_ID_EN) ids.en = env.ELEVENLABS_AGENT_ID_EN;
+  if (env.ELEVENLABS_AGENT_ID_EN_US) ids["en-US"] = env.ELEVENLABS_AGENT_ID_EN_US;
+  if (env.ELEVENLABS_AGENT_ID_EN_GB) ids["en-GB"] = env.ELEVENLABS_AGENT_ID_EN_GB;
   return ids;
 }
 
