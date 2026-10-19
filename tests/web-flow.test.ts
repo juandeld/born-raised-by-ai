@@ -65,7 +65,7 @@ describe("landing pages", () => {
     expect(out).toContain("Así de fácil, en 3 pasos");
     expect(out).toContain("Escucha cómo suena");
     expect(out).toContain("MX$199"); // MXN single price from packages/config
-    expect(out).toMatch(/\$349\.00/);
+    expect(out).toContain("MX$349");
     expect(out).toContain("pago único, sin app y sin suscripción");
     expect(out).toContain("/es/comprar?c=MX&amp;v=single");
     expect(out.match(/<details/g)).toHaveLength(6);
