@@ -109,7 +109,7 @@ export function StatusView({ token, initial }: { token: string; initial: StatusD
           <h1 className="text-3xl font-bold">{c.ready.title(st.names)}</h1>
           <p className="mt-2">{c.ready.text}</p>
           {pdf ? (
-            <a href={`${pdf}&download=1`} className={`${btn} mt-5 w-full bg-lapiz-teal text-white`}>{c.ready.download}</a>
+            <a href={`${pdf}&download=1`} className={`${btn} mt-5 w-full bg-lapiz-coral text-white`}>{c.ready.download}</a>
           ) : (
             <p className="mt-4 font-bold">...</p>
           )}

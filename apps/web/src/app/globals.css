@@ -77,8 +77,9 @@ body {
 
 /* Colorear: "lapiz" look (graphite line, deep teal, marigold). Thin borders, no hard shadows, no emoji. */
 @layer components {
+  /* Primary action: coral, round, with weight (ink outline + solid offset, presses down). White on coral 4.8:1. */
   .c-btn {
-    @apply inline-flex min-h-[56px] w-full items-center justify-center rounded-xl bg-lapiz-teal px-7 text-lg font-semibold text-white transition-colors hover:bg-lapiz-teal-dark focus:outline-none focus-visible:ring-4 focus-visible:ring-lapiz-gold/60 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto;
+    @apply inline-flex min-h-[56px] w-full items-center justify-center rounded-full border-[2.5px] border-lapiz-ink bg-lapiz-coral px-8 text-lg font-bold text-white shadow-[0_4px_0_0_#23303b] transition hover:bg-lapiz-coral-dark focus:outline-none focus-visible:ring-4 focus-visible:ring-lapiz-gold/70 focus-visible:ring-offset-2 active:translate-y-[2px] active:shadow-[0_2px_0_0_#23303b] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto;
   }
   .c-btn-block { @apply w-full sm:w-full; }
   .c-btn-quiet {
@@ -94,8 +95,13 @@ body {
     content: ""; display: block; width: 88px; height: 8px; margin-top: 10px;
     background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 8'%3E%3Cpath d='M2 5.2C12 2 20 6.6 31 4.2s18-2.800 28 .1 18 .6 27-1.400' fill='none' stroke='%23f0b43c' stroke-width='2.600' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat left center / contain;
   }
+  /* Marker accent ("hecho a mano"): ink stroke 3 px, soft corners, solid offset like cut paper. Use sparingly: cover, samples, selected card, stamps. */
+  .c-marker { @apply rounded-[22px] border-[3px] border-lapiz-ink bg-white; box-shadow: 6px 6px 0 0 #23303b; }
+  .c-marker-sm { @apply rounded-2xl border-[2.5px] border-lapiz-ink bg-white; box-shadow: 4px 4px 0 0 #23303b; }
+  /* Stamp: yellow pill with ink outline (hero eyebrow and a few seals) */
+  .c-stamp { @apply inline-block rounded-full border-[2.5px] border-lapiz-ink bg-lapiz-gold px-3.5 py-1 text-sm font-bold text-lapiz-ink; }
   .c-theme { -webkit-tap-highlight-color: transparent; }
-  .c-theme:has(input:checked) { border-color: #1b6b67; background: #e4f0ee; box-shadow: inset 0 0 0 1px #1b6b67; }
+  .c-theme:has(input:checked) { border-color: #23303b; border-width: 2.5px; background: #e4f0ee; box-shadow: 3px 3px 0 0 #1b6b67; }
   .c-theme:has(input:focus-visible) { outline: 3px solid #f0b43c; outline-offset: 2px; }
   .c-theme:has(input:checked) .c-check { opacity: 1; transform: scale(1); }
 }

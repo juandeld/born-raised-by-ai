@@ -14,7 +14,7 @@ const config: Config = {
         paper: { DEFAULT: "#f6efdb", 200: "#e9dcbd" },
         ink: { DEFAULT: "#2b2018", soft: "#5a4838" },
         // Colorear ("lapiz": graphite ink, deep teal, marigold highlight on warm paper). Contrast on paper: ink 12:1, muted 5.9:1, teal 6:1.
-        lapiz: { ink: "#23303b", muted: "#55626e", paper: "#fbfaf7", line: "#d6dadc", teal: "#1b6b67", "teal-dark": "#145551", tint: "#e4f0ee", gold: "#f0b43c", "gold-tint": "#fcf1d6", mist: "#eef2f5", error: "#b3261e" },
+        lapiz: { ink: "#23303b", muted: "#55626e", paper: "#fbfaf7", line: "#d6dadc", teal: "#1b6b67", "teal-dark": "#145551", tint: "#e4f0ee", gold: "#f0b43c", coral: "#c8452f", "coral-dark": "#a53622", "gold-tint": "#fcf1d6", mist: "#eef2f5", error: "#b3261e" },
       },
       fontFamily: { display: ["var(--font-display)", "Georgia", "serif"], sans: ["var(--font-sans)", "system-ui", "sans-serif"], cdisplay: ["'Bricolage Grotesque'", "ui-rounded", "system-ui", "sans-serif"], cbody: ["Figtree", "system-ui", "-apple-system", "Segoe UI", "sans-serif"] },
     },

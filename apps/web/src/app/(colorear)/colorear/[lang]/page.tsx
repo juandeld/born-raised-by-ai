@@ -52,7 +52,8 @@ export default async function Landing({ params, searchParams }: { params: Promis
       <main>
         <section className="mx-auto grid max-w-5xl items-center gap-10 px-4 pb-12 pt-4 md:grid-cols-[1.1fr_0.9fr]">
           <div>
-            <h1 className="c-h text-[2.5rem] md:text-6xl">{c.hero.title}</h1>
+            <p className="c-stamp -rotate-1">{c.hero.kicker}</p>
+            <h1 className="c-h mt-4 text-[2.5rem] md:text-6xl">{c.hero.title}</h1>
             <p className="mt-5 max-w-[34rem] text-lg leading-relaxed text-lapiz-ink/90">{c.hero.text}</p>
             <a href="#crear" className="c-btn mt-7">{c.hero.cta}</a>
             <p className="mt-3 font-semibold">{c.hero.price(price)}</p>
@@ -65,8 +66,8 @@ export default async function Landing({ params, searchParams }: { params: Promis
               ))}
             </ul>
           </div>
-          <div className="relative mx-auto w-full max-w-sm -rotate-1 rounded-xl border border-lapiz-line bg-white p-3 shadow-[0_18px_40px_-24px_rgba(35,48,59,0.45)]">
-            <Image src="/colorear/sample-2.webp" alt={c.samples.alts[1]!} width={480} height={720} priority className="h-auto w-full rounded-md" />
+          <div className="c-marker relative mx-auto w-full max-w-sm rotate-[1.5deg] p-3">
+            <Image src="/colorear/sample-2.webp" alt={c.samples.alts[1]!} width={480} height={720} priority className="h-auto w-full rounded-lg" />
           </div>
         </section>
 
@@ -74,7 +75,8 @@ export default async function Landing({ params, searchParams }: { params: Promis
           <h2 className="c-h c-rule text-3xl">{c.steps.title}</h2>
           <ol className="relative mt-8 grid gap-4 md:grid-cols-3">
             {c.steps.items.map((s, i) => (
-              <li key={s.t} className={`relative rounded-2xl border p-5 ${i === 1 ? "border-lapiz-teal bg-lapiz-tint" : "border-lapiz-line bg-white"}`}>
+              <li key={s.t} className={`relative rounded-2xl border p-5 ${i === 1 ? "border-[2.5px] border-lapiz-ink bg-lapiz-tint shadow-[4px_4px_0_0_#1b6b67]" : "border-lapiz-line bg-white"}`}>
+                {i === 1 && <span className="c-stamp absolute -top-3.5 right-4 rotate-2">{lang === "es" ? "La parte divertida" : "The fun part"}</span>}
                 <span aria-hidden className={`c-h grid h-9 w-9 place-items-center rounded-full border text-base ${i === 1 ? "border-lapiz-teal bg-lapiz-teal text-white" : "border-lapiz-ink/40"}`}>{i + 1}</span>
                 <h3 className="c-h mt-3 text-xl">{s.t}</h3>
                 <p className="mt-1 leading-relaxed text-lapiz-ink/90">{s.d}</p>
@@ -89,11 +91,14 @@ export default async function Landing({ params, searchParams }: { params: Promis
         </section>
 
         <section className="mx-auto max-w-5xl px-4 py-10">
-          <h2 className="c-h c-rule text-3xl">{c.samples.title}</h2>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <h2 className="c-h c-rule text-3xl">{c.samples.title}</h2>
+            <span className="c-stamp rotate-1">{lang === "es" ? "Pago único, sin suscripción" : "One-time, no subscription"}</span>
+          </div>
           <p className="mt-3 max-w-2xl">{c.samples.text}</p>
-          <div className="mt-5 grid grid-cols-3 gap-3 sm:gap-5">
+          <div className="mt-6 grid grid-cols-3 gap-4 pr-1 sm:gap-6">
             {[1, 2, 3].map((n) => (
-              <Image key={n} src={`/colorear/sample-${n}.webp`} alt={c.samples.alts[n - 1]!} width={480} height={720} className="h-auto w-full rounded-lg border border-lapiz-line bg-white" />
+              <Image key={n} src={`/colorear/sample-${n}.webp`} alt={c.samples.alts[n - 1]!} width={480} height={720} className={`c-marker-sm h-auto w-full ${["-rotate-1", "rotate-1", "-rotate-[0.5deg]"][n - 1]}`} />
             ))}
           </div>
           <p className="mt-3 text-sm text-lapiz-muted">{c.samples.caption}</p>

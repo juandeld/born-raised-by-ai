@@ -40,5 +40,21 @@ La edad queda como tarjeta sin número entre el paso 1 y el 2. El tema sigue sie
 - Semántica: radios nativos (teclado con flechas, lector de pantalla), clic en la ficha elegida la quita. Anillo de foco amarillo de 3 px.
 - Campo "O escribe la tuya" discreto debajo; escribir limpia la ficha y elegir una ficha rellena el campo (misma lógica y mismos ids que antes: `themeId` y `theme` en el POST).
 
+## Ingredientes recuperados (v2, 19-oct-2026)
+Juan pidió recuperar tres elementos del look "crayón" dentro de la línea "lápiz". Regla: el marcador es un acento "hecho a mano", no el sistema; el resto sigue en línea fina.
+
+| Ingrediente | Token / clase | Especificación | Dónde |
+|---|---|---|---|
+| Marcador | `.c-marker` | borde 3 px tinta `#23303B`, radio 22 px, sombra sólida 6 px 6 px 0 tinta, rotación 1,5 grados | portada del libro (hero) |
+| Marcador chico | `.c-marker-sm` | borde 2,5 px, radio 16 px, sombra 4 px 4 px, rotación alterna de -1, 1 y -0,5 grados | tres muestras; paso 2 de "Así funciona" (sombra teal) |
+| Ficha seleccionada | `.c-theme:has(input:checked)` | borde tinta 2,5 px, relleno `tint`, sombra teal 3 px 3 px 0 | selector de aventura |
+| Coral (acción) | `lapiz-coral` `#C8452F`, hover `lapiz-coral-dark` `#A53622` | texto blanco 4,8:1 | todo CTA primario: `.c-btn` (hero y pago), descarga, reembolso |
+| Botón principal | `.c-btn` | pastilla redonda, borde tinta 2,5 px, sombra 0 4 px 0 tinta, baja 2 px al pulsar, foco con anillo caléndula | un solo CTA por pantalla |
+| Píldora amarilla | `.c-stamp` | fondo `gold`, borde tinta 2,5 px, texto tinta (9:1), giro leve | eyebrow del hero (`hero.kicker`), sello "La parte divertida" en el paso 2, sello "Pago único, sin suscripción" en muestras |
+
+Reparto de color: coral = actuar; verde azulado = elegido, progreso y confianza (números de paso, checks, privacidad, selección); caléndula = voz y sello. Nunca dos CTA coral en la misma vista. Sin emoji; tipografía e iconos de línea sin cambios.
+
+Capturas: `docs/diseno/capturas/colorear-v2-*.png`.
+
 ## Checklist
 Contraste AA verificado con los hex de arriba · objetivos táctiles de 44 a 60 px · un solo CTA primario por pantalla · formulario sin cambios de campos · textos legales y consentimiento intactos.
