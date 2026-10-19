@@ -14,7 +14,7 @@ export class OpenAIImageProvider implements ImageProvider {
     private readonly apiKey: string,
     private readonly baseUrl = "https://api.openai.com",
     private readonly fetchFn: typeof fetch = fetch,
-    private readonly timeoutMs = 170_000,
+    private readonly timeoutMs = 100_000,
   ) {}
 
   static fromEnv(env: Record<string, string | undefined>): OpenAIImageProvider {
