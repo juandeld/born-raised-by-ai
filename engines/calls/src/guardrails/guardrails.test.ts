@@ -1,8 +1,9 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { SANTA } from "@lumen/config";
-import { ALLOWED_TOOLS, FORCED_CLOSE_RULES, INCIDENT_TYPES, buildAgentConfig, detectForcedClose } from "./config";
+import { ALLOWED_TOOLS, FORCED_CLOSE_RULES, INCIDENT_TYPES, SANTA_ES419_PROMPT_FILE, SANTA_ES419_VARIABLE_MAP, buildAgentConfig, detectForcedClose } from "./config";
 import { PHRASES, phrase } from "./phrases";
-import { assertAgentVariables, buildAgentVariables, sanitizeChildAge, sanitizeChildName, sanitizeOptionalField } from "./sanitize";
+import { AGENT_VARIABLE_NAMES, assertAgentVariables, buildAgentVariables, sanitizeChildAge, sanitizeChildName, sanitizeOptionalField } from "./sanitize";
 
 describe("sanitizer (A-06, T-14)", () => {
   it.each([
@@ -47,7 +48,8 @@ describe("agent payload (A-05)", () => {
 });
 
 describe("agent configuration from docs/legal/textos/07", () => {
-  const cfg = buildAgentConfig({ product: SANTA, character: "santa", language: "es-419", firstMessage: "hola" });
+  // Structural checks run on the generated prompt (es-ES). The santa es-419 prompt is the ElevenLabs file, checked in the D13 block below.
+  const cfg = buildAgentConfig({ product: SANTA, character: "santa", language: "es-ES", firstMessage: "hola" });
 
   it("A-04: exactly three tools", () => {
     expect([...ALLOWED_TOOLS]).toEqual(["end_call", "mark_optout", "flag_incident"]);
@@ -82,7 +84,7 @@ describe("agent configuration from docs/legal/textos/07", () => {
     for (const id of Object.keys(PHRASES) as Array<keyof typeof PHRASES>) {
       for (const lang of ["es-419", "es-ES", "en"] as const) expect(phrase(id, lang).length).toBeGreaterThan(10);
     }
-    expect(phrase("E-02", "en")).toContain("artificial intelligence");
+    expect(phrase("D-03b", "en")).toContain("artificial intelligence");
     expect(phrase("E-01", "es-ES")).toContain("Papá Noel");
   });
 
@@ -127,6 +129,47 @@ describe("agent configuration from docs/legal/textos/07", () => {
 
   it("es-ES fixed phrases approved in D11", () => {
     expect(phrase("D-06", "es-ES")).toContain("Alguien ha pedido");
-    expect(phrase("E-02", "es-ES")).toContain("voz de ordenador");
+    expect(phrase("E-02", "es-ES")).toContain("Papá Noel");
+  });
+});
+
+describe("D13: Santa is Santa with the child, AI disclosure goes to the adult", () => {
+  const forbidden = /computadora|ordenador|computer|inteligencia artificial|artificial intelligence|\bIA\b|\bAI\b|grabaci|record/i;
+
+  it("child-facing phrases E-01, E-02, E-03 never mention computer, AI or recording", () => {
+    for (const id of ["E-01", "E-02", "E-03"] as const) {
+      for (const lang of ["es-419", "es-ES", "en"] as const) expect(phrase(id, lang), `${id} ${lang}`).not.toMatch(forbidden);
+    }
+    expect(phrase("E-01", "es-419")).toBe("¡Claro que sí! Soy Santa, y te estoy llamando desde el Polo Norte. ¡Jo, jo, jo!");
+    expect(phrase("E-02", "es-419")).toBe("¡Jo, jo, jo! ¡Soy Santa! Los robots son los que ayudan en mi taller a envolver regalos.");
+    expect(phrase("E-03", "es-419")).toBe("¡Jo, jo, jo! Pues aquí estoy, hablando contigo desde el Polo Norte.");
+    expect(phrase("E-01", "en", "en-GB")).toContain("Father Christmas");
+  });
+
+  it("D-03b is the full AI disclosure to the adult and names Lumen Labs", () => {
+    expect(phrase("D-03b", "es-419")).toBe("Es una llamada automatizada con voz de inteligencia artificial de Lumen Labs, que pidió la familia de {{NOMBRE_NIÑO}}. ¿Quiere que terminemos o que continúe con el niño?");
+    expect(phrase("D-03b", "es-ES")).toContain("ha pedido la familia");
+    expect(phrase("D-03b", "en")).toContain("artificial intelligence voice from Lumen Labs");
+    expect(phrase("D-03", "es-419")).toBe("Hola. Soy la llamada de Santa que pidió para {{NOMBRE_NIÑO}}. ¿Quiere que terminemos o que continúe con el niño?");
+  });
+
+  it("santa es-419 prompt is the file loaded in ElevenLabs (only variable names adapted)", () => {
+    const file = readFileSync(SANTA_ES419_PROMPT_FILE, "utf8").trimEnd();
+    const cfg = buildAgentConfig({ product: SANTA, character: "santa", language: "es-419", firstMessage: "x" });
+    const adapted = file.replace(/\{\{(\w+)\}\}/g, (m, n: string) => SANTA_ES419_VARIABLE_MAP[n] ?? m);
+    expect(cfg.prompt).toBe(adapted);
+    expect(cfg.prompt).toContain('E-01: "¡Claro que sí! Soy Santa, y te estoy llamando desde el Polo Norte. ¡Jo, jo, jo!"');
+    expect(cfg.prompt).toContain("D-03b:");
+    expect(cfg.prompt).toContain("ERES SANTA. Nunca digas que eres una computadora");
+    // every remaining placeholder is one the engine sends (A-05)
+    const left = [...cfg.prompt.matchAll(/\{\{(\w+)\}\}/g)].map((m) => m[1]);
+    for (const v of left) expect(AGENT_VARIABLE_NAMES as readonly string[]).toContain(v);
+  });
+
+  it("generated prompt (other locales) keeps the character and has E-03 and D-03b", () => {
+    const cfg = buildAgentConfig({ product: SANTA, character: "santa", language: "en", firstMessage: "x" });
+    expect(cfg.prompt).not.toContain("voz de computadora");
+    expect(cfg.prompt).toContain("- E-03:");
+    expect(cfg.prompt).toContain("- D-03b:");
   });
 });
