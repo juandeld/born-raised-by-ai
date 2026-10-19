@@ -21,7 +21,7 @@ Estado: listo para enviar · 18-oct-2026 · Autor: `legal-compliance` · Origen:
 
 Hello,
 
-My name is Juan Lima. I am preparing to launch [BRAND], a one-time-purchase digital product built on ElevenLabs Agents, and before we sell anything I would like to ask for your written confirmation that our use case is permitted under your Prohibited Use Policy and Terms, or to learn what additional safeguards or approvals you require.
+My name is Juan Lima. I am preparing to launch Lumen Labs, a one-time-purchase digital product built on ElevenLabs Agents, and before we sell anything I would like to ask for your written confirmation that our use case is permitted under your Prohibited Use Policy and Terms, or to learn what additional safeguards or approvals you require.
 
 **The product**
 Parents or legal guardians buy a short phone call (about 2 to 3 minutes) from a fictional folklore character, such as Santa Claus, one of the Three Kings, the Tooth Fairy or an original dinosaur character, for their child. The call is scheduled by the parent for a date and time they choose. It is a one-time purchase: no subscription, no account for the child, no app.
@@ -38,7 +38,7 @@ Parents or legal guardians buy a short phone call (about 2 to 3 minutes) from a 
 - The characters are folklore or original. We do not imitate real people or actors and we do not clone any voice, including the child's or the adult's. We plan to use [a voice from your library / a designed voice] and would like to confirm it is licensed for this use.
 
 **Data**
-We send you only the child's first name, optional details we sanitize beforehand, and the call audio. We do not sell the data, use it for advertising or train models on it, and we delete recordings and transcripts 30 days after delivery (parents can download the recording and ask for earlier deletion). The data flows through ElevenLabs Agents and Twilio. Markets: Spain, the United Kingdom and Mexico first; the United States is conditional on your answer and on our own review.
+We send you only the child's first name, optional details we sanitize beforehand, and the call audio. We do not sell the data, use it for advertising or train models on it, and we delete recordings and transcripts 30 days after delivery (parents can download the recording and ask for earlier deletion). The data flows through ElevenLabs Agents and Twilio. Markets: Spain, the United Kingdom, Mexico and the United States (US calls only with the parent's prior express written consent captured at checkout, as described above).
 
 **Our questions**
 1. Is this use case (fictional characters for children, ordered and consented to by a parent, outbound AI-voice calls, recorded after an adult confirms) permitted under the Prohibited Use Policy sections on protection of minors, deception and impersonation, and AI transparency?
@@ -55,7 +55,7 @@ Thank you for your help.
 
 Best regards,
 Juan Lima
-[BRAND] · [website, if live] · [phone, optional]
+Lumen Labs · [website, if live] · [phone, optional]
 
 ---
 
