@@ -1,12 +1,12 @@
 # 02. Consentimiento TCPA, llamada con voz de IA y grabación
 
-Versión `legal-v1` · 18-oct-2026 · Aplica a todo producto de llamada: santa, rex, memorias, y las líneas de voz de dot y ciudadania cuando el sistema sea quien llama (si la persona llama a la línea, aplican solo C3 y el aviso inicial del archivo 03 adaptado).
+Versión `legal-v1` (casilla C3 en `legal-v1.2`, decisión D13) · 18-oct-2026 · Aplica a todo producto de llamada: santa, rex, memorias, y las líneas de voz de dot y ciudadania cuando el sistema sea quien llama (si la persona llama a la línea, aplican solo C3 y el aviso inicial del archivo 03 adaptado).
 
 ## Base (fuentes de `docs/investigacion/santa.md`)
 
 - La FCC aclaró en feb-2024 que la voz generada por IA es "voz artificial o pregrabada" bajo la TCPA; daños de $500 a $1,500 por llamada; se recomienda consentimiento previo expreso por escrito, identificar al emisor, revelar la IA al inicio y dar baja fácil (sección 5.3).
 - 12 estados exigen consentimiento de todas las partes para grabar: CA, CT, DE, FL, IL, MD, MA, MT, NV, NH, PA, WA (sección 5.2).
-- Art. 50 del AI Act: informar al inicio de que se habla con una IA (sección 5.4).
+- Art. 50 del AI Act: informar al inicio de que se habla con una IA (sección 5.4). Desde D13 (18-oct-2026) esa información se da al adulto responsable (casilla C3, correo y preludio, archivo 03) y no al niño; el riesgo residual está en `riesgos-y-mitigaciones.md` R5 y R24.
 - Limitación honesta: el consentimiento TCPA lo da, en rigor, la persona llamada (o el abonado del número). Aquí quien marca la casilla es el comprador. El diseño lo cubre con tres capas: (1) el comprador declara que el número es suyo o que el abonado está de acuerdo (C5), (2) el comprador programa la fecha y hora, (3) quien contesta confirma con la tecla 1 en el preludio y puede darse de baja con la tecla 2. La capa 3 no es consentimiento previo, es una salida inmediata; por eso EE. UU. queda condicionado (ver `riesgos-y-mitigaciones.md`). `[no verificado: si la capa 1 más la capa 3 bastan para llamadas a un tercero]`.
 
 ## A. Casillas del checkout
@@ -15,9 +15,9 @@ Texto exacto, una línea por casilla, sin marcar por defecto, botón de pago des
 
 ### C3. IA y grabación
 
-- es-419 (`02-C3-es-419-legal-v1`): [ ] Entiendo que la voz que hablará en la llamada es una inteligencia artificial, no una persona, y que la llamada se grabará para entregármela y para atender reclamos.
-- es-ES (`02-C3-es-ES-legal-v1`): [ ] Entiendo que la voz que hablará en la llamada es una inteligencia artificial, no una persona, y que la llamada se grabará para entregármela y para atender reclamaciones.
-- en (`02-C3-en-US-legal-v1`): [ ] I understand that the voice on the call is artificial intelligence, not a person, and that the call will be recorded to deliver it to me and to handle complaints.
+- es-419 (`02-C3-es-419-legal-v1.2`): [ ] Entiendo que la voz que hablará en la llamada es una inteligencia artificial de Lumen Labs, no una persona, y que la llamada se grabará para entregármela y para atender reclamos. Entiendo también que el personaje hablará con mi hijo o hija como el personaje que pedí (por ejemplo, Santa), sin decirle que es una inteligencia artificial, y que yo decido si se lo cuento.
+- es-ES (`02-C3-es-ES-legal-v1.2`): [ ] Entiendo que la voz que hablará en la llamada es una inteligencia artificial de Lumen Labs, no una persona, y que la llamada se grabará para entregármela y para atender reclamaciones. Entiendo también que el personaje hablará con mi hijo o hija como el personaje que he pedido (por ejemplo, Papá Noel), sin decirle que es una inteligencia artificial, y que yo decido si se lo cuento.
+- en (`02-C3-en-US-legal-v1.2`): [ ] I understand that the voice on the call is artificial intelligence from Lumen Labs, not a person, and that the call will be recorded to deliver it to me and to handle complaints. I also understand that the character will speak with my child as the character I ordered (for example, Santa) without telling my child that it is artificial intelligence, and that it is my decision whether to tell them.
 
 ### C4. Autorización expresa de la llamada automatizada
 
@@ -33,9 +33,9 @@ Texto exacto, una línea por casilla, sin marcar por defecto, botón de pago des
 
 ### Línea fija bajo las casillas (texto informativo, no casilla)
 
-- es-419: "Antes de la llamada le enviaremos un recordatorio con la hora. Quien conteste escuchará un aviso de que la voz es de IA y de que se graba, y podrá cancelar con la tecla 2."
-- es-ES: "Antes de la llamada le enviaremos un recordatorio con la hora. Quien conteste oirá un aviso de que la voz es de IA y de que se graba, y podrá cancelar con la tecla 2."
-- en: "Before the call we will email you a reminder with the time. Whoever answers will hear a notice that the voice is AI and that the call is recorded, and can cancel by pressing 2."
+- es-419: "Antes de la llamada le enviaremos un recordatorio con la hora. Quien conteste escuchará un aviso de que la voz es de IA y de que se graba, y podrá cancelar con la tecla 2. Con su hijo, el personaje no mencionará que es IA: ustedes deciden si se lo cuentan."
+- es-ES: "Antes de la llamada le enviaremos un recordatorio con la hora. Quien conteste oirá un aviso de que la voz es de IA y de que se graba, y podrá cancelar con la tecla 2. Con su hijo, el personaje no mencionará que es IA: ustedes deciden si se lo cuentan."
+- en: "Before the call we will email you a reminder with the time. Whoever answers will hear a notice that the voice is AI and that the call is recorded, and can cancel by pressing 2. With your child, the character will not mention that it is AI: you decide whether to tell them."
 
 ## B. Mensaje de baja (opt-out)
 

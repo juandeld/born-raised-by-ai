@@ -1,6 +1,6 @@
 # Textos legales finales: índice, variables y reglas de uso
 
-Versión del paquete: `legal-v1` · Fecha: 18-oct-2026 · Autor: `legal-compliance` · Decisión de origen: D6 (sin abogado; textos finales por `legal-compliance`, riesgo controlado por diseño conservador).
+Versión del paquete: `legal-v1` (archivos 02-C3, 03 y 07 en `legal-v1.2` por la decisión D13: Santa permanece en personaje con el niño y la revelación de IA se hace al adulto) · Fecha: 18-oct-2026 · Autor: `legal-compliance` · Decisión de origen: D6 (sin abogado; textos finales por `legal-compliance`, riesgo controlado por diseño conservador).
 
 Estado: FINAL para pegar en producto, sujeto a (1) llenar las variables de la sección 2, (2) la aprobación de Juan de los tres cambios de retención de la sección 5, y (3) aprobación escrita de `legal-compliance` en el PR de cada producto. Ningún texto fue revisado por un abogado humano. Lo marcado `[no verificado]` es una afirmación legal que no se pudo confirmar con fuente primaria en esta revisión; el texto al cliente no depende de ella, pero la decisión de vender en ese mercado sí (ver `docs/legal/riesgos-y-mitigaciones.md`).
 
@@ -48,7 +48,7 @@ El idioma del texto mostrado es el del navegador del comprador, con selector vis
 |---|---|---|
 | C1 Soy padre, madre o tutor y autorizo los datos del niño | Productos con datos de menores | 01 |
 | C2 Uso exclusivo y retención de 30 días | Productos con datos de menores | 01 |
-| C3 Entiendo que es IA y que se graba | Todo producto de llamada | 02 |
+| C3 Entiendo que es IA, que se graba y que el personaje hablará con mi hijo sin decirle que es IA | Todo producto de llamada | 02 |
 | C4 Autorizo expresamente la llamada automatizada con voz de IA | Todo producto de llamada | 02 |
 | C5 El número es mío o de alguien que está de acuerdo, y le avisaré | Todo producto de llamada | 02 |
 | C6 Acepto términos y política de privacidad | Todo producto | 05 y 04 |
@@ -67,7 +67,7 @@ Ninguna casilla nueva ni campo nuevo del formulario se agrega con estos textos.
 
 ## 6. Control de versiones y evidencia
 
-Cada texto lleva un identificador: `<archivo>-<casilla o bloque>-<idioma>-legal-v1` (ejemplo: `02-C4-es-419-legal-v1`). El checkout guarda el identificador y el hash SHA-256 del texto exacto mostrado. Cualquier cambio de palabra crea `legal-v2`; los pedidos viejos conservan su versión.
+Cada texto lleva un identificador: `<archivo>-<casilla o bloque>-<idioma>-legal-v1` (ejemplo: `02-C4-es-419-legal-v1`). El checkout guarda el identificador y el hash SHA-256 del texto exacto mostrado. Cualquier cambio de palabra crea `legal-v2`; los pedidos viejos conservan su versión. Excepción de numeración: los cambios de la decisión D13 (18-oct-2026) se identifican con el sufijo `-legal-v1.2` (por ejemplo `02-C3-es-419-legal-v1.2`, `03-SANTA-es-419-legal-v1.2`); el resto conserva `-legal-v1`.
 
 ## 7. Marcas
 
