@@ -13,8 +13,8 @@ export interface TwilioConfig {
   accountSid: string;
   authToken: string;
   publicBaseUrl: string;
-  /** Hard cap for the whole call, prelude included. */
-  timeLimitPaddingSeconds?: number;
+  /** Used only when the target carries no hard limit. Normally Twilio's TimeLimit is the product safety net (A-07b, 450 s). */
+  defaultHardLimitSeconds?: number;
 }
 
 const SAY_VOICES: Record<TextLocale, { language: string; voice: string }> = {
@@ -68,7 +68,7 @@ export class TwilioTelephonyProvider implements TelephonyProvider {
       MachineDetection: "Enable",
       MachineDetectionTimeout: "8",
       Timeout: "25",
-      TimeLimit: String(t.maxCallSeconds + (this.cfg.timeLimitPaddingSeconds ?? 180)),
+      TimeLimit: String(t.hardLimitSeconds ?? this.cfg.defaultHardLimitSeconds ?? t.maxCallSeconds + 150),
     });
     return { providerCallId: j.sid as string };
   }

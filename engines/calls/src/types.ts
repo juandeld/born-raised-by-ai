@@ -27,7 +27,10 @@ export interface CallTarget {
   from: string;
   locale: TextLocale;
   childFirstName: string;
+  /** Conversation cap, counted from the second key 1. */
   maxCallSeconds: number;
+  /** Absolute cap of the whole call from answer to cut (A-07b). */
+  hardLimitSeconds?: number;
 }
 
 export type Language = "es-419" | "es-ES" | "en";

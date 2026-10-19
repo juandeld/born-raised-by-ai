@@ -112,6 +112,7 @@ export class CallScheduler {
         locale: order.locale as TextLocale,
         childFirstName: order.child_first_name!,
         maxCallSeconds: d.product.maxCallSeconds,
+        hardLimitSeconds: d.product.safetyNetSeconds,
       });
       // In the mock the whole call may already have run inside placeCall: do not overwrite an ended call.
       const after = (await d.db.calls.get(call.id))!;

@@ -33,10 +33,11 @@ describe("legal texts match docs/legal/textos exactly", () => {
 
   it("prelude texts are verbatim (Santa)", () => {
     for (const [locale, t] of Object.entries(PRELUDES.santa!)) {
-      expect(f03, `${locale} id`).toContain(t.id.replace("-en-GB-", "-en-US-"));
+      expect(f03, `${locale} id`).toContain(t.id);
       expect(f03, `${locale} main`).toContain(t.main);
       expect(f03, `${locale} repeat`).toContain(t.repeat);
-      expect(f03, `${locale} handoff`).toContain(locale === "en-GB" ? t.handoff.replace("has the mobile", "has the phone") : t.handoff);
+      expect(f03, `${locale} handoff`).toContain(t.handoff);
+      expect(f03, `${locale} handoff reminder (step 7)`).toContain(t.handoffRepeat);
       expect(f03, `${locale} optout`).toContain(t.optout);
       expect(f03, `${locale} noResponse`).toContain(t.noResponse);
       expect(f03, `${locale} firstLine`).toContain(t.firstLine);

@@ -10,8 +10,9 @@ import type { Action, CallEvent, CallResult } from "./types";
  *  await_key1: 1 -> start recording, say(handoff), gather -> await_key2
  *              2 -> say(optout), suppress, hangup opted_out
  *              no input -> repeat once, then say(noResponse), hangup no_key
- *  await_key2: 1 -> connect agent (the character speaks only now)
- *              no input -> repeat once, then say(noResponse), delete recording, hangup handoff_timeout
+ *  await_key2: 1 -> connect agent (the character speaks only now; the conversation clock starts here)
+ *              no input after 30 s -> say the hand-off reminder once; after 30 s more (60 s total, step 7 of file 03)
+ *              say(noResponse), delete recording, hangup handoff_timeout
  */
 export type PreludeStep = "start" | "await_key1" | "await_key2" | "agent" | "done";
 
@@ -116,7 +117,9 @@ type DoneFn = (result: CallResult, actions: Action[], effects?: Effect[]) => Ste
 function noInput(state: PreludeState, t: PreludeTexts, cfg: PreludeConfig, out: OutFn, done: DoneFn, failResult: CallResult, failEffects: Effect[]): StepOutput {
   const timeout = state.step === "await_key2" ? cfg.handoffTimeoutSeconds : cfg.dtmfTimeoutSeconds;
   if (!state.repeated) {
-    return out({ repeated: true }, [{ type: "say", text: t.repeat }, { type: "gather", timeoutSeconds: timeout }]);
+    // Key 1 wait repeats "Pulse 1 para continuar o 2 para cancelar."; the key 2 wait repeats "Cuando X tenga el teléfono, pulse 1 otra vez."
+    const line = state.step === "await_key2" ? t.handoffRepeat : t.repeat;
+    return out({ repeated: true }, [{ type: "say", text: line }, { type: "gather", timeoutSeconds: timeout }]);
   }
   return done(failResult, [{ type: "say", text: t.noResponse }, { type: "hangup", result: failResult }], failEffects);
 }

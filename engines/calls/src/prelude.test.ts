@@ -66,10 +66,13 @@ describe("prelude state machine (docs/legal/textos/03)", () => {
     expect(r2.state.result).toBe("no_key");
   });
 
-  it("hand-off timeout deletes the recording", () => {
+  it("hand-off timeout (legal-v1.1): reminder once after the first wait, then give up, delete the recording, the character never speaks", () => {
     const r = run([human, key("1"), { type: "no_input" }, { type: "no_input" }]);
     expect(r.state.result).toBe("handoff_timeout");
     expect(r.effects).toEqual(["start_recording", "delete_recording"]);
+    expect(r.effects).not.toContain("connect_agent");
+    expect(r.said).toEqual([t.main, t.handoff, t.handoffRepeat, t.noResponse]);
+    expect(t.handoffRepeat).toBe("Cuando Leo tenga el móvil, pulse 1 otra vez.");
   });
 
   it("hanging up mid-way is classified by where the call was", () => {
