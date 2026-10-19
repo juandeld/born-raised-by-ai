@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { SANTA } from "@lumen/config";
-import { ALLOWED_TOOLS, FORCED_CLOSE_RULES, INCIDENT_TYPES, SANTA_ES419_PROMPT_FILE, SANTA_ES419_VARIABLE_MAP, buildAgentConfig, detectForcedClose } from "./config";
+import { ALLOWED_TOOLS, FORCED_CLOSE_RULES, INCIDENT_TYPES, SANTA_ES419_PROMPT_FILE, buildAgentConfig, detectForcedClose } from "./config";
 import { PHRASES, phrase } from "./phrases";
 import { AGENT_VARIABLE_NAMES, assertAgentVariables, buildAgentVariables, sanitizeChildAge, sanitizeChildName, sanitizeOptionalField } from "./sanitize";
 
@@ -153,11 +153,10 @@ describe("D13: Santa is Santa with the child, AI disclosure goes to the adult", 
     expect(phrase("D-03", "es-419")).toBe("Hola. Soy la llamada de Santa que pidió para {{NOMBRE_NIÑO}}. ¿Quiere que terminemos o que continúe con el niño?");
   });
 
-  it("santa es-419 prompt is the file loaded in ElevenLabs (only variable names adapted)", () => {
+  it("santa es-419 prompt is the file loaded in ElevenLabs, byte for byte", () => {
     const file = readFileSync(SANTA_ES419_PROMPT_FILE, "utf8").trimEnd();
     const cfg = buildAgentConfig({ product: SANTA, character: "santa", language: "es-419", firstMessage: "x" });
-    const adapted = file.replace(/\{\{(\w+)\}\}/g, (m, n: string) => SANTA_ES419_VARIABLE_MAP[n] ?? m);
-    expect(cfg.prompt).toBe(adapted);
+    expect(cfg.prompt).toBe(file);
     expect(cfg.prompt).toContain('E-01: "¡Claro que sí! Soy Santa, y te estoy llamando desde el Polo Norte. ¡Jo, jo, jo!"');
     expect(cfg.prompt).toContain("D-03b:");
     expect(cfg.prompt).toContain("ERES SANTA. Nunca digas que eres una computadora");

@@ -129,24 +129,12 @@ const CHARACTER_LABEL: Record<string, Record<Language, string>> = {
 
 /**
  * Santa es-419 prompt, exactly as loaded in the ElevenLabs agent (D13, products/santa/prompts/es-419.v3.txt). The file is the
- * source of truth: it is read, not copied. Only the dynamic variable names are adapted to the engine payload (A-05):
- * {{child_name}} -> {{child_first_name}}, {{age}} -> {{child_age}}; the order fields the engine does not collect separately
- * (pet, siblings, gift_wish, good_deed) read from {{details}}; avoid_topic is not collected, so it is "(sin dato)".
+ * source of truth and is sent byte for byte: the engine sends the agent-side variable names (child_name, age, pet, siblings,
+ * gift_wish, good_deed, avoid_topic, details), see buildAgentVariables (A-05).
  */
 export const SANTA_ES419_PROMPT_FILE = fileURLToPath(new URL("../../../../products/santa/prompts/es-419.v3.txt", import.meta.url));
-export const SANTA_ES419_VARIABLE_MAP: Record<string, string> = {
-  child_name: "{{child_first_name}}",
-  age: "{{child_age}}",
-  pet: "{{details}}",
-  siblings: "{{details}}",
-  gift_wish: "{{details}}",
-  good_deed: "{{details}}",
-  avoid_topic: "(sin dato)",
-};
-
 export function loadSantaEs419Prompt(file = SANTA_ES419_PROMPT_FILE): string {
-  const raw = readFileSync(file, "utf8").trimEnd();
-  return raw.replace(/\{\{(\w+)\}\}/g, (m, name: string) => SANTA_ES419_VARIABLE_MAP[name] ?? m);
+  return readFileSync(file, "utf8").trimEnd();
 }
 
 export function buildAgentPrompt(language: Language, character: string, product: CallProductConfig, brand = "Lumen Labs"): string {

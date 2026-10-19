@@ -95,17 +95,41 @@ export interface AgentVariables {
   details: string;
   character: string;
   language: string;
+  /** Names used by the ElevenLabs agent prompts (products/<slug>/prompts/*.txt). Same data, agent-side names. */
+  child_name: string;
+  age: string;
+  pet: string;
+  siblings: string;
+  gift_wish: string;
+  good_deed: string;
+  avoid_topic: string;
 }
 
-export const AGENT_VARIABLE_NAMES: ReadonlyArray<keyof AgentVariables> = ["child_first_name", "child_age", "details", "character", "language"];
+export const AGENT_VARIABLE_NAMES: ReadonlyArray<keyof AgentVariables> = [
+  "child_first_name", "child_age", "details", "character", "language",
+  "child_name", "age", "pet", "siblings", "gift_wish", "good_deed", "avoid_topic",
+];
+
+/** Value the agent prompt treats as "do not mention, do not invent" for a field the checkout does not collect. */
+export const NO_DATA = "(sin dato)";
 
 export function buildAgentVariables(input: { childFirstName: string; childAge: number | null; details: string | null; character: string; language: string }): AgentVariables {
+  const age = input.childAge ? String(input.childAge) : "";
+  const details = input.details ?? "";
   return {
     child_first_name: input.childFirstName,
-    child_age: input.childAge ? String(input.childAge) : "",
-    details: input.details ?? "",
+    child_age: age,
+    details,
     character: input.character,
     language: input.language,
+    child_name: input.childFirstName,
+    age: age || NO_DATA,
+    // The checkout collects one free-text "details" field (140 chars); the structured fields are not collected yet.
+    pet: NO_DATA,
+    siblings: NO_DATA,
+    gift_wish: NO_DATA,
+    good_deed: NO_DATA,
+    avoid_topic: NO_DATA,
   };
 }
 

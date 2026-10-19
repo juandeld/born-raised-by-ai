@@ -1,3 +1,4 @@
+import { AGENT_VARIABLE_NAMES } from "../engines/calls/src/guardrails/sanitize";
 import { describe, expect, it } from "vitest";
 import { ALL_BOXES, buyAndSchedule, enterWindow, makeHarness, mxCheckout, urls } from "./helpers";
 import { getPreludeTexts, renderPrelude } from "@lumen/legal";
@@ -63,7 +64,9 @@ describe("end to end in mock mode: order -> consent -> payment -> call with prel
     // A-05: the model only received the allowed variables
     expect(h.voice.registered).toHaveLength(1);
     const vars = h.voice.registered[0]!.variables as unknown as Record<string, string>;
-    expect(Object.keys(vars).sort()).toEqual(["character", "child_age", "child_first_name", "details", "language"]);
+    expect(Object.keys(vars).sort()).toEqual([...AGENT_VARIABLE_NAMES].sort());
+    expect(vars.child_name).toBe(vars.child_first_name);
+    expect(vars.pet).toBe("(sin dato)");
     expect(JSON.stringify(vars)).not.toMatch(/@|\+52|MX|19900/);
 
     // Delivery
