@@ -1,4 +1,5 @@
 import { PaymentConfigError, paymentProviderByName } from "@lumen/payments";
+import { handleColorearPayment, isColorearOrder } from "@/lib/colorear";
 import { getEngine, mockPaymentsAllowed } from "@/lib/engine";
 import { json } from "@/lib/request";
 
@@ -27,6 +28,11 @@ export async function POST(req: Request, ctx: { params: Promise<{ provider: stri
   } catch {
     return json({ ok: false, error: "invalid_signature" }, 400);
   }
-  if (event) await getEngine().handlePaymentEvent(event);
+  if (event) {
+    // colorear orders live in the same table; their payments go to the generate engine
+    const ids = event as { orderId?: string | null; checkoutId?: string | null };
+    if (await isColorearOrder(ids.orderId, ids.checkoutId)) await handleColorearPayment(event);
+    else await getEngine().handlePaymentEvent(event);
+  }
   return json({ ok: true });
 }

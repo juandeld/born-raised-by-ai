@@ -1,4 +1,5 @@
 import { LOCALE_SLUG, type Locale } from "@lumen/config";
+import { handleColorearPayment } from "@/lib/colorear";
 import { baseUrl, getEngine, mockPaymentsAllowed } from "@/lib/engine";
 import { json } from "@/lib/request";
 
@@ -28,7 +29,9 @@ export async function POST(req: Request) {
   if (!order || order.checkout_id !== b.checkout) return json({ ok: false }, 404);
   const type = b.outcome === "fail" ? "payment_failed" : "payment_succeeded";
   const event = await engine.deps.payments.parseWebhook(JSON.stringify({ type, orderId: order.id, checkoutId: order.checkout_id }), {});
-  if (event) await engine.handlePaymentEvent(event);
+  const isColorear = order.product === "colorear";
+  if (event) await (isColorear ? handleColorearPayment(event) : engine.handlePaymentEvent(event));
+  if (isColorear) return json({ ok: true, redirect: type === "payment_succeeded" ? `/colorear/confirmacion/${order.access_token}` : `/colorear/${order.language === "en" ? "en" : "es"}` });
   const slug = LOCALE_SLUG[order.language as Locale] ?? "es";
   return json({ ok: true, redirect: type === "payment_succeeded" ? `/${slug}/confirmacion/${order.access_token}` : `/${slug}/comprar` });
 }

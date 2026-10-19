@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { getColorear } from "@/lib/colorear";
 import { getEngine } from "@/lib/engine";
 import { json } from "@/lib/request";
 
@@ -28,8 +29,10 @@ async function handle(req: Request) {
   const engine = getEngine();
   const url = new URL(req.url);
   const report = await engine.tick();
+  // colorear: resume stalled books (the status page also does it), refund the ones that could not be made, erase photos and expired books
+  const colorear = await getColorear().sweep({ maxRuns: 1 }).catch((e) => ({ error: e instanceof Error ? e.message : "sweep_failed" }));
   const retention = url.searchParams.get("retention") === "1" ? await engine.retention.run() : undefined;
-  return json({ ok: report.errors.length === 0, ...report, retention });
+  return json({ ok: report.errors.length === 0, ...report, colorear, retention });
 }
 
 export const GET = handle;
