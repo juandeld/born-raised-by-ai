@@ -37,13 +37,14 @@ export function buildScenePrompt(visual: string, band: AgeBand, count: number): 
     count > 0
       ? `The reference images are the cartoon characters of this book (character 1${count > 1 ? ` to ${count}, in order` : ""}). Draw them in the scene keeping each face, hairstyle and clothing exactly the same as in its reference, in the same line style. `
       : "";
-  return `${STYLE} ${consistency}${AGE_RULES[band]} Composition: the characters and the action are the clear focus, filling most of the page, with white margins. Leave the bottom 15% of the page empty white (a caption is added there later). Scene: ${visual}`;
+  return `${STYLE} ${consistency}${AGE_RULES[band]} Pets and animals stay animals: on four legs, with no clothes, never standing or dressed like a person. Composition: the characters and the action are the clear focus, filling most of the page, with white margins. Leave the bottom 15% of the page empty white (a caption is added there later). Scene: ${visual}`;
 }
 
 export function buildCoverPrompt(visual: string, band: AgeBand, count: number): string {
   return (
     `${STYLE} The reference images are the cartoon characters of this book (character 1${count > 1 ? ` to ${count}, in order` : ""}). Draw all of them together happily, keeping each face, hairstyle and clothing exactly as in its reference. ` +
-    `${AGE_RULES[band]} This is the book cover: leave the top 25% of the page completely empty white (the title is added there later) and draw the scene in the lower 70%. Scene: ${visual}`
+    `Pets and animals stay animals: on four legs, with no clothes or backpacks, never standing or dressed like a person. ` +
+    `${AGE_RULES[band]} This is the book cover: leave the top 25% of the page completely empty white (the title is added there later) and draw the scene in the lower 70%, with the characters large and filling the width. Scene: ${visual}`
   );
 }
 

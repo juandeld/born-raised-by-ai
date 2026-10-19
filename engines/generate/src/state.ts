@@ -36,6 +36,8 @@ export interface GenState {
   pages: PageState[];
   /** Customer-visible notes, e.g. a photo that could not be used. Keys are translated by the web app. */
   notes: string[];
+  /** Internal diagnostics (never shown): why a page needed retries or fell back. No names, no photos. */
+  issues?: string[];
   photosDeletedAt?: string;
   /** Which image provider actually drew this book (the mock can replace a real one under mock payments). */
   effectiveProvider?: string;

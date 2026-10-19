@@ -6,6 +6,7 @@ import { COLOREAR, brandConfig } from "@lumen/config";
 import { MemoryStorage, MockDeliveryProvider } from "@lumen/calls";
 import { createMemoryDb } from "@lumen/db";
 import { MockPaymentProvider } from "@lumen/payments";
+import { composeCoverFromCharacters } from "@lumen/generate";
 import {
   ColorearEngine, ColorearValidationError, ImageProviderError, MockImageProvider, TemplateStoryProvider, mentionsBrand, signLink,
   type ColorearCheckoutInput, type ImageProvider, type ImageRequest,
@@ -225,5 +226,19 @@ describe("colorear failures", () => {
     await h.engine.runGeneration(b.id);
     expect(real.prompts.length).toBe(2 + 1 + COLOREAR.scenes);
     expect(mock.prompts.length).toBeGreaterThan(0);
+  });
+});
+
+
+describe("cover fallback from the real characters", () => {
+  it("composes a portrait cover with an empty title area and no stick figures", async () => {
+    const char = new Uint8Array(await sharp({ create: { width: 1024, height: 1024, channels: 3, background: "#ffffff" } }).composite([{ input: Buffer.from('<svg width="400" height="400"><circle cx="200" cy="200" r="180" fill="black"/></svg>'), left: 300, top: 300 }]).png().toBuffer());
+    const out = await composeCoverFromCharacters([char, char, char]);
+    expect(out).not.toBeNull();
+    const meta = await sharp(Buffer.from(out!)).metadata();
+    expect([meta.width, meta.height]).toEqual([1024, 1536]);
+    const top = await sharp(Buffer.from(out!)).extract({ left: 0, top: 0, width: 1024, height: 300 }).greyscale().raw().toBuffer();
+    expect(top.reduce((m, v) => Math.min(m, v), 255)).toBeGreaterThan(200);
+    expect(await composeCoverFromCharacters([])).toBeNull();
   });
 });

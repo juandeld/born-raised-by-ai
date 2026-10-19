@@ -87,7 +87,7 @@ export async function assembleBook(input: BookInput): Promise<Uint8Array> {
     const pad = 18;
     await drawImage(doc, page, input.cover, { x: pad, y: pad, w: W - pad * 2, h: H - pad * 2 });
     // white band behind the title so any art that reaches the top never collides with the hollow letters
-    page.drawRectangle({ x: 0, y: H * 0.7, width: W, height: H * 0.3, color: rgb(1, 1, 1) });
+    page.drawRectangle({ x: 0, y: H * 0.8, width: W, height: H * 0.2, color: rgb(1, 1, 1) });
     const names = winAnsiSafe(input.namesLine, bold);
     page.drawText(winAnsiSafe(t.coverTop, bold), { x: (W - bold.widthOfTextAtSize(t.coverTop, 20)) / 2, y: H - 70, size: 20, font: bold, color: INK });
     // names in hollow letters: the child can color them

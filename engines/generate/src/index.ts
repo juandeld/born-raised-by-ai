@@ -2,6 +2,7 @@ export * from "./types";
 export * from "./prompt";
 export * from "./story";
 export * from "./qa";
+export * from "./cover";
 export * from "./pdf";
 export * from "./link";
 export * from "./sanitize";

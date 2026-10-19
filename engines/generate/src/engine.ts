@@ -13,6 +13,7 @@ import { composeColorearMessage, type MailVars } from "./emails";
 import { signLink, verifyLink } from "./link";
 import { buildCharacterFromTextPrompt, buildCharacterPrompt, buildCoverPrompt, buildScenePrompt } from "./prompt";
 import { inspectLineArt, normalizeLineArt } from "./qa";
+import { composeCoverFromCharacters } from "./cover";
 import { assembleBook } from "./pdf";
 import { sanitizePersonName, sanitizeShortText } from "./sanitize";
 import { charPath, pagePath, pdfPath, photoPath, statePath, type GenState, type PageState } from "./state";
@@ -385,13 +386,13 @@ export class ColorearEngine {
     if (real.name === "mock" || this.d.payments.name !== "mock") return real;
     const allow = (this.d.env.COLOREAR_TEST_EMAILS ?? "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
     if (order.email && allow.includes(order.email.toLowerCase())) return real;
-    const cap = Number(this.d.env.COLOREAR_MOCK_REAL_DAILY_CAP ?? 5);
+    const cap = Number(this.d.env.COLOREAR_MOCK_REAL_DAILY_CAP ?? 3);
     const dayStart = new Date(this.d.now());
     dayStart.setUTCHours(0, 0, 0, 0);
     const today = await this.d.db.orders.find({ product: COLOREAR.slug, test_mode: true, paid_at: { gte: iso(dayStart) } });
     const sorted = today.sort((a, b) => (a.paid_at! < b.paid_at! ? -1 : a.paid_at! > b.paid_at! ? 1 : a.id < b.id ? -1 : 1));
     const index = sorted.findIndex((o) => o.id === order.id) + 1;
-    return index >= 1 && index <= (Number.isFinite(cap) ? cap : 5) ? real : this.d.mockImage;
+    return index >= 1 && index <= (Number.isFinite(cap) ? cap : 3) ? real : this.d.mockImage;
   }
 
   private async initState(order: OrderRow, det: OrderDetails): Promise<GenState> {
@@ -434,7 +435,7 @@ export class ColorearEngine {
   async runGeneration(orderId: string, opts: { budgetMs?: number; concurrency?: number } = {}): Promise<RunResult> {
     const startedAt = Date.now();
     const budgetMs = opts.budgetMs ?? Number(this.d.env.COLOREAR_RUN_BUDGET_MS ?? 230_000);
-    const concurrency = opts.concurrency ?? 4;
+    const concurrency = opts.concurrency ?? Math.max(1, Math.min(16, Number(this.d.env.COLOREAR_CONCURRENCY ?? 8) || 8));
     const remaining = () => budgetMs - (Date.now() - startedAt);
     const order = await this.d.db.orders.get(orderId);
     if (!order || order.product !== COLOREAR.slug || order.pii_purged_at) return { status: "skipped" };
@@ -495,6 +496,7 @@ export class ColorearEngine {
           } else lastReason = "unknown";
         }
         state.retries++;
+        (state.issues ??= []).push(`${label}#${attempt + 1}:${lastReason}`.slice(0, 80));
         await this.d.tracker.track("generation_page_retried", { ...this.props(order), page_index: -1, attempt: attempt + 1, reason: `${label}:${lastReason}` });
       }
       // local fallback so one bad page never blocks the book
@@ -578,7 +580,7 @@ export class ColorearEngine {
           const req = { prompt, width: 1024, height: 1536, quality, refs, kind: isCover ? ("cover" as const) : ("scene" as const), ageBand: band, hints: { roles: present.map((k) => roles[k - 1] ?? "person"), setting: scene?.visual ?? "", seed: p.n + 7 } };
           let result;
           try {
-            result = await render(`page${p.n}`, req, { emptyTop: 0 }, p);
+            result = await render(`page${p.n}`, req, { emptyTop: isCover ? 0.2 : 0 }, p);
           } catch (err) {
             if (!(err instanceof ModerationError)) throw err;
             // refused: ask again with a plain, safe description of the same scene
@@ -587,6 +589,14 @@ export class ColorearEngine {
               const fb = await this.d.mockImage.render(req);
               return { img: fb, bytes: fb.bytes, ext: "svg" as const, fallback: true };
             });
+          }
+          if (isCover && result.fallback) {
+            // never a stick-figure cover: compose it from the real characters of this book
+            const collage = await composeCoverFromCharacters([...charRefs.values()].map((r) => r.bytes));
+            if (collage) {
+              result = { ...result, bytes: collage, ext: "png" as const, fallback: false };
+              (state.issues ??= []).push("cover:collage");
+            }
           }
           await this.d.storage.put(pagePath(orderId, p.n, result.ext), result.bytes, result.ext === "svg" ? "image/svg+xml" : "image/png");
           p.ext = result.ext;
