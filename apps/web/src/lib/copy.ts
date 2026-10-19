@@ -112,7 +112,7 @@ const es419: Copy = {
     title: "Preguntas frecuentes",
     items: [
       { q: "¿Es una suscripción? ¿Necesito una app?", a: "No. Es un pago único, sin app y sin suscripción. No se renueva nada." },
-      { q: "¿Quién habla en la llamada?", a: "Una voz de inteligencia artificial que interpreta a Santa. Se lo decimos al adulto que contesta antes de empezar y el niño lo escucha al inicio: es una llamada mágica con voz de computadora." },
+      { q: "¿Quién habla en la llamada?", a: "Una voz de inteligencia artificial que interpreta a Santa. Se lo decimos a usted antes de pagar, en el correo y en el aviso hablado que escucha el adulto al contestar, antes de grabar. Con su hijo, Santa habla como Santa, sin decirle que es una inteligencia artificial: la familia decide si se lo cuenta." },
       { q: "¿Cómo funciona con mi teléfono?", a: "Santa llama al número que indiques, en la ventana de dos horas que elijas. Un aviso breve te pide pulsar 1 para continuar; después pulsas 1 otra vez cuando tu peque tenga el teléfono. Puedes escuchar la llamada." },
       { q: "¿Qué pasa si no contestamos?", a: "Hacemos hasta dos intentos dentro de tu ventana. Si no logramos hablar contigo, te reembolsamos todo de forma automática." },
       { q: "¿Qué datos guardan de mi hijo o hija?", a: "Su primer nombre, lo que escribas y su voz durante la llamada. Los usamos solo para esta experiencia, no se venden ni entrenan IA, y se borran a los 30 días." },
@@ -243,7 +243,7 @@ const esES: Copy = {
     title: "Preguntas frecuentes",
     items: [
       { q: "¿Es una suscripción? ¿Necesito una app?", a: "No. Es un pago único, sin app y sin suscripción. No se renueva nada." },
-      { q: "¿Quién habla en la llamada?", a: "Una voz de inteligencia artificial que interpreta a Papá Noel. Se lo decimos a la persona adulta que contesta antes de empezar y el niño lo oye al inicio: es una llamada mágica con voz de ordenador." },
+      { q: "¿Quién habla en la llamada?", a: "Una voz de inteligencia artificial que interpreta a Papá Noel. Se lo decimos antes de pagar, en el correo y en el aviso hablado que oye la persona adulta al contestar, antes de grabar. Con tu hijo, Papá Noel habla como Papá Noel, sin decirle que es una inteligencia artificial: la familia decide si se lo cuenta." },
       { q: "¿Cómo funciona con mi móvil?", a: "Papá Noel llama al número que indiques, en la franja de dos horas que elijas. Un aviso breve te pide pulsar 1 para continuar; después pulsas 1 otra vez cuando tu peque tenga el móvil. Puedes escuchar la llamada." },
       { q: "¿Qué pasa si no contestamos?", a: "Hacemos hasta dos intentos dentro de tu franja. Si no logramos hablar contigo, te reembolsamos el importe íntegro de forma automática." },
       { q: "¿Qué datos guardáis de mi hijo o hija?", a: "Su nombre de pila, lo que escribas y su voz durante la llamada. Los usamos solo para esta experiencia, no se venden ni entrenan IA, y se suprimen a los 30 días." },
@@ -297,7 +297,7 @@ const en: Copy = {
     title: "Frequently asked questions",
     items: [
       { q: "Is it a subscription? Do I need an app?", a: "No. It is a one-time payment, with no app and no subscription. Nothing renews." },
-      { q: "Who is speaking on the call?", a: "An artificial intelligence voice playing Santa. We tell the adult who answers before it starts, and the child hears it at the beginning: it is a magical call with a computer voice." },
+      { q: "Who is speaking on the call?", a: "An artificial intelligence voice playing Santa. We tell you before you pay, in the email, and in the spoken notice the adult hears on answering, before recording starts. With your child, Santa speaks as Santa, without saying that he is artificial intelligence: the family decides whether to tell them." },
       { q: "How does it work with my phone?", a: "Santa calls the number you give, inside the two-hour slot you choose. A short notice asks you to press 1 to continue; then you press 1 again when your child has the phone. You can listen in." },
       { q: "What if nobody answers?", a: "We make up to two attempts inside your slot. If we cannot reach you, we refund everything automatically." },
       { q: "What do you keep about my child?", a: "Their first name, what you type, and their voice during the call. We use it only for this experience, never sell it or train AI with it, and delete it after 30 days." },

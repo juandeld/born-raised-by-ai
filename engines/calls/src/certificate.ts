@@ -16,17 +16,17 @@ const COPY: Record<Language, { title: string; body: (d: CertificateData) => stri
   "es-419": {
     title: "Certificado de llamada",
     body: (d) => [`${d.character} llamó a ${d.childFirstName}.`, `Fecha de la llamada: ${d.callDateLocal}.`, `Duración aproximada: ${d.durationMinutes} min.`],
-    ai: "Una llamada mágica con voz de computadora. La voz fue generada con inteligencia artificial. Es un recuerdo de fantasía, no un documento oficial.",
+    ai: "La voz de esta llamada fue generada con inteligencia artificial por Lumen Labs. Es un recuerdo de fantasía, no un documento oficial.",
   },
   "es-ES": {
     title: "Certificado de llamada",
     body: (d) => [`${d.character} llamó a ${d.childFirstName}.`, `Fecha de la llamada: ${d.callDateLocal}.`, `Duración aproximada: ${d.durationMinutes} min.`],
-    ai: "Una llamada mágica con voz de ordenador. La voz fue generada con inteligencia artificial. Es un recuerdo de fantasía, no un documento oficial.",
+    ai: "La voz de esta llamada fue generada con inteligencia artificial por Lumen Labs. Es un recuerdo de fantasía, no un documento oficial.",
   },
   en: {
     title: "Call certificate",
     body: (d) => [`${d.character} called ${d.childFirstName}.`, `Call date: ${d.callDateLocal}.`, `Approximate length: ${d.durationMinutes} min.`],
-    ai: "A magical call with a computer voice. The voice was generated with artificial intelligence. A keepsake of make-believe, not an official document.",
+    ai: "The voice on this call was generated with artificial intelligence by Lumen Labs. A keepsake of make-believe, not an official document.",
   },
 };
 
