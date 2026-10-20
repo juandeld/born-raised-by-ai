@@ -13,8 +13,13 @@ export interface ColorearCopy {
   faq: { title: string; items: Array<{ q: string; a: string }> };
   form: {
     title: string; intro: string;
-    photos: { label: string; hint: string; add: string; remove: string; tooLarge: string; tooMany: string; badType: string; heic: string; count: (n: number) => string };
-    people: { label: string; hint: string; name: string; role: string; protagonist: string; protagonistHint: string; companion: string; otherLabel: string; otherPh: string; add: string; remove: string };
+    photos: { label: string; hint: string; tooLarge: string; badType: string; heic: string };
+    people: {
+      name: string; role: string; protagonist: string; protagonistHint: string; companion: string; otherLabel: string; otherPh: string; remove: string;
+      protagonistCard: string; card: (n: number) => string; photoAdd: string; photoChange: string; photoAlt: (who: string) => string;
+      addCard: (next: number) => string; max: string; removed: (n: number) => string;
+      missing: { photo: string; name: string; role: string; protagonistRole: string; join: (parts: string[]) => string };
+    };
     age: { label: string; hint: string };
     theme: { label: string; hint: string; ph: string; own: string; picked: string };
     email: { label: string; hint: string };
@@ -91,19 +96,13 @@ const ES: ColorearCopy = {
     title: "Crea tu libro",
     intro: "Tarda unos 2 minutos. Pagas al final y el libro empieza a hacerse al instante.",
     photos: {
-      label: "Sube las fotos (de 1 a 5)",
-      hint: "Una persona o mascota por foto, con la cara visible. JPG o PNG, hasta 10 MB cada una.",
-      add: "Agregar fotos",
-      remove: "Quitar",
+      label: "Fotos y nombres (de 1 a 5)",
+      hint: "Empieza con quien protagoniza el libro. Después puedes agregar hasta 4 personas o mascotas más. Una por foto, con la cara visible. JPG o PNG, hasta 10 MB.",
       tooLarge: "Esa foto pesa más de 10 MB.",
-      tooMany: "Máximo 5 fotos.",
       badType: "Solo JPG o PNG.",
       heic: "Las fotos HEIC no se pueden leer aquí. En el iPhone elige \"Más compatible\" o envíate la foto por mensaje para convertirla a JPG.",
-      count: (n) => `${n} de 5 fotos`,
     },
     people: {
-      label: "¿Quiénes salen?",
-      hint: "Un nombre y quién es, para cada foto. La primera foto es siempre quien protagoniza el libro. Los nombres se quedan en nuestro servidor.",
       name: "Nombre",
       role: "Quién es",
       protagonist: "Protagonista del libro",
@@ -111,8 +110,19 @@ const ES: ColorearCopy = {
       companion: "Quién es para el protagonista",
       otherLabel: "Cuéntanos quién es (opcional)",
       otherPh: "vecina, maestro...",
-      add: "Agregar persona",
       remove: "Quitar",
+      protagonistCard: "Protagonista",
+      card: (n) => `Persona ${n}`,
+      photoAdd: "Subir foto",
+      photoChange: "Cambiar foto",
+      photoAlt: (who) => `Foto de ${who}`,
+      addCard: (next) => `+ Agregar otra persona o mascota (${next} de 5)`,
+      max: "Máximo 5",
+      removed: (n) => `Persona ${n} quitada.`,
+      missing: {
+        photo: "la foto", name: "el nombre", role: "quién es", protagonistRole: "Niña o Niño",
+        join: (parts) => `Falta ${parts.length > 1 ? parts.slice(0, -1).join(", ") + " y " + parts[parts.length - 1] : parts[0]}.`,
+      },
     },
     age: { label: "Edad de quien va a colorear", hint: "Ajusta la dificultad de los dibujos." },
     theme: { label: "Elige la aventura", hint: "Toda la historia gira en torno a este tema. Si no eliges ninguno, te sorprendemos.", ph: "dinosaurios, mi ciudad, el cumpleaños de Sofía...", own: "O escribe la tuya", picked: "Elegida" },
@@ -123,8 +133,8 @@ const ES: ColorearCopy = {
     pay: (p) => `Pagar ${p} y crear el libro`,
     paying: "Preparando el pago...",
     errors: {
-      photos: "Agrega de 1 a 5 fotos.",
-      persons: "Escribe un nombre (solo letras) y elige quién es para cada foto.",
+      persons: "Completa las tarjetas marcadas: cada una necesita foto, nombre y quién es. Si no quieres agregar a alguien, usa Quitar.",
+      photos: "Sube la foto del protagonista.",
       theme: "Ese tema no se puede usar. Prueba con otro.",
       email: "Revisa tu correo.",
       age: "Elige una edad de 3 a 8 años.",
@@ -224,19 +234,13 @@ const EN: ColorearCopy = {
     title: "Create your book",
     intro: "It takes about 2 minutes. You pay at the end and the book starts right away.",
     photos: {
-      label: "Upload the photos (1 to 5)",
-      hint: "One person or pet per photo, face visible. JPG or PNG, up to 10 MB each.",
-      add: "Add photos",
-      remove: "Remove",
+      label: "Photos and names (1 to 5)",
+      hint: "Start with the main character of the book. Then you can add up to 4 more people or pets. One per photo, face visible. JPG or PNG, up to 10 MB.",
       tooLarge: "That photo is larger than 10 MB.",
-      tooMany: "Up to 5 photos.",
       badType: "JPG or PNG only.",
       heic: "HEIC photos cannot be read here. On iPhone choose \"Most Compatible\", or message the photo to yourself to convert it to JPG.",
-      count: (n) => `${n} of 5 photos`,
     },
     people: {
-      label: "Who is in the book?",
-      hint: "A name and who they are, for each photo. The first photo is always the main character of the book. Names stay on our server.",
       name: "Name",
       role: "Who they are",
       protagonist: "Main character of the book",
@@ -244,8 +248,19 @@ const EN: ColorearCopy = {
       companion: "Who they are to the main character",
       otherLabel: "Tell us who they are (optional)",
       otherPh: "neighbor, teacher...",
-      add: "Add person",
       remove: "Remove",
+      protagonistCard: "Main character",
+      card: (n) => `Person ${n}`,
+      photoAdd: "Add photo",
+      photoChange: "Change photo",
+      photoAlt: (who) => `Photo of ${who}`,
+      addCard: (next) => `+ Add another person or pet (${next} of 5)`,
+      max: "Maximum 5",
+      removed: (n) => `Person ${n} removed.`,
+      missing: {
+        photo: "the photo", name: "the name", role: "who they are", protagonistRole: "Girl or Boy",
+        join: (parts) => `Missing ${parts.length > 1 ? parts.slice(0, -1).join(", ") + " and " + parts[parts.length - 1] : parts[0]}.`,
+      },
     },
     age: { label: "Age of the child who will color", hint: "Adjusts how detailed the drawings are." },
     theme: { label: "Choose the adventure", hint: "The whole story is built around this theme. If you pick none, we surprise you.", ph: "dinosaurs, my city, Sofia's birthday...", own: "Or write your own", picked: "Selected" },
@@ -256,8 +271,8 @@ const EN: ColorearCopy = {
     pay: (p) => `Pay ${p} and create the book`,
     paying: "Preparing payment...",
     errors: {
-      photos: "Add 1 to 5 photos.",
-      persons: "Type a name (letters only) and choose who they are for each photo.",
+      persons: "Complete the marked cards: each needs a photo, a name and who they are. If you do not want to add someone, use Remove.",
+      photos: "Add the main character's photo.",
       theme: "That theme cannot be used. Try another one.",
       email: "Check your email address.",
       age: "Choose an age from 3 to 8.",

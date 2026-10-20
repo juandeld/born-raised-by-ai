@@ -15,7 +15,8 @@ export interface CountryLegal {
 
 interface Item {
   id: number;
-  blob: Blob;
+  /** null until the buyer uploads a photo for this card. */
+  blob: Blob | null;
   preview: string;
   name: string;
   /** Closed role chosen with the chips; "" until the buyer picks one. */
@@ -25,6 +26,9 @@ interface Item {
 }
 
 const MAX = 5;
+const blankItem = (id: number): Item => ({ id, blob: null, preview: "", name: "", roleId: "", roleText: "" });
+/** An added card the buyer never touched: it is ignored on submit instead of blocking the payment. */
+const isBlank = (i: Item) => !i.blob && !i.name.trim() && !i.roleId;
 const MAX_INPUT_BYTES = 10 * 1024 * 1024;
 /** Each photo must stay under the server limit (900 KB); 5 of them plus the form must fit Vercel's 4.5 MB body. */
 const TARGET_BYTES = 640_000;
@@ -87,7 +91,14 @@ function RolePicker({ idx, item, lang, c, onChange }: { idx: number; item: Item;
 
 export function ColorearForm({ lang, countries, defaultCountry, themes, creative }: { lang: ColorearLang; countries: Record<string, CountryLegal>; defaultCountry: string; themes: Array<{ id: string; label: string }>; creative: string }) {
   const c = COLOREAR_COPY[lang].form;
-  const [items, setItems] = useState<Item[]>([]);
+  const [items, setItems] = useState<Item[]>(() => [blankItem(0)]);
+  const [tried, setTried] = useState(false);
+  const [focusId, setFocusId] = useState<number | null>(null);
+  const [live, setLive] = useState("");
+  const cardRefs = useRef<Record<number, HTMLLIElement | null>>({});
+  const addBtn = useRef<HTMLButtonElement>(null);
+  const itemsRef = useRef<Item[]>([]);
+  itemsRef.current = items;
   const [country, setCountry] = useState(defaultCountry);
   const [email, setEmail] = useState("");
   const [age, setAge] = useState("");
@@ -114,52 +125,78 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
     }
   };
   useEffect(() => beacon("landing_view"), []); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => () => items.forEach((i) => URL.revokeObjectURL(i.preview)), []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => itemsRef.current.forEach((i) => i.preview && URL.revokeObjectURL(i.preview)), []);
+  useEffect(() => {
+    if (focusId === null) return;
+    const el = cardRefs.current[focusId];
+    el?.focus();
+    el?.scrollIntoView({ block: "center", behavior: "smooth" });
+    setFocusId(null);
+  }, [focusId]);
 
-  async function addFiles(list: FileList | null) {
-    if (!list) return;
+  const markStarted = () => {
+    if (started.current) return;
+    started.current = true;
+    beacon("form_started");
+  };
+  /** Validates, compresses and stores the photo of one card (new or replacement). */
+  async function setPhoto(id: number, list: FileList | null) {
+    const f = list?.[0];
+    if (!f) return;
     setPhotoMsg("");
-    if (!started.current) {
-      started.current = true;
-      beacon("form_started");
+    markStarted();
+    if (/heic|heif/i.test(f.type) || /\.(heic|heif)$/i.test(f.name)) { setPhotoMsg(c.photos.heic); return; }
+    if (!/^image\/(jpeg|png|webp)$/.test(f.type)) { setPhotoMsg(c.photos.badType); return; }
+    if (f.size > MAX_INPUT_BYTES) { setPhotoMsg(c.photos.tooLarge); return; }
+    try {
+      const blob = await compress(f);
+      const preview = URL.createObjectURL(blob);
+      const old = itemsRef.current.find((i) => i.id === id);
+      if (!old) { URL.revokeObjectURL(preview); return; }
+      if (old.preview) URL.revokeObjectURL(old.preview);
+      setItems((prev) => prev.map((i) => (i.id === id ? { ...i, blob, preview } : i)));
+    } catch {
+      setPhotoMsg(c.errors.unreadable!);
     }
-    const room = MAX - items.length;
-    const files = Array.from(list);
-    if (files.length > room) setPhotoMsg(c.photos.tooMany);
-    const added: Item[] = [];
-    for (const f of files.slice(0, Math.max(0, room))) {
-      if (/heic|heif/i.test(f.type) || /\.(heic|heif)$/i.test(f.name)) { setPhotoMsg(c.photos.heic); continue; }
-      if (!/^image\/(jpeg|png|webp)$/.test(f.type)) { setPhotoMsg(c.photos.badType); continue; }
-      if (f.size > MAX_INPUT_BYTES) { setPhotoMsg(c.photos.tooLarge); continue; }
-      try {
-        const blob = await compress(f);
-        added.push({ id: nextId.current++, blob, preview: URL.createObjectURL(blob), name: "", roleId: "", roleText: "" });
-      } catch {
-        setPhotoMsg(c.errors.unreadable!);
-      }
-    }
-    if (added.length) setItems((prev) => fitRoles([...prev, ...added].slice(0, MAX)));
   }
-  /** Photo 1 is always the protagonist and the others never are: whatever no longer fits its position is cleared so the buyer picks again. */
-  const fitRoles = (list: Item[]): Item[] =>
-    list.map((i, idx) => {
-      const isProt = (PROTAGONIST_ROLE_IDS as readonly string[]).includes(i.roleId);
-      return i.roleId && isProt !== (idx === 0) ? { ...i, roleId: "", roleText: "" } : i;
-    });
-  const patch = (id: number, p: Partial<Item>) => setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...p } : i)));
-  const remove = (id: number) =>
-    setItems((prev) => {
-      const gone = prev.find((i) => i.id === id);
-      if (gone) URL.revokeObjectURL(gone.preview);
-      return fitRoles(prev.filter((i) => i.id !== id));
-    });
+  const patch = (id: number, p: Partial<Item>) => {
+    markStarted();
+    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...p } : i)));
+  };
+  const addCard = () => {
+    if (items.length >= MAX) return;
+    markStarted();
+    const id = nextId.current++;
+    setItems((prev) => (prev.length >= MAX ? prev : [...prev, blankItem(id)]));
+    setFocusId(id);
+  };
+  const remove = (id: number) => {
+    const idx = items.findIndex((i) => i.id === id);
+    if (idx < 1) return; // the protagonist card cannot be removed
+    const gone = items[idx]!;
+    if (gone.preview) URL.revokeObjectURL(gone.preview);
+    setItems((prev) => prev.filter((i) => i.id !== id));
+    setLive(c.people.removed(idx + 1));
+    setTimeout(() => addBtn.current?.focus(), 0);
+  };
+  /** What is still missing on a card; the protagonist always counts, an added card only counts once the buyer touched it. */
+  const missingOf = (it: Item, idx: number): string[] => {
+    if (idx > 0 && isBlank(it)) return [];
+    const m: string[] = [];
+    if (!it.blob) m.push(c.people.missing.photo);
+    if (!it.name.trim()) m.push(c.people.missing.name);
+    if (!it.roleId) m.push(idx === 0 ? c.people.missing.protagonistRole : c.people.missing.role);
+    return m;
+  };
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (busy) return;
     const local: Record<string, string> = {};
-    if (!items.length) local.photos = c.errors.photos!;
-    if (items.some((i) => !i.name.trim() || !i.roleId)) local.persons = c.errors.persons!;
+    const send = items.filter((it, i) => i === 0 || !isBlank(it));
+    if (!items[0]!.blob) local.photos = c.errors.photos!;
+    if (items.some((it, i) => (i === 0 ? !it.name.trim() || !it.roleId : missingOf(it, i).length > 0))) local.persons = c.errors.persons!;
+    setTried(true);
     if (!age) local.age = c.errors.age!;
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) local.email = c.errors.email!;
     if (!allChecked) local.consent = c.errors.consent!;
@@ -175,8 +212,8 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
     fd.set("themeId", themeId);
     fd.set("creative", creative);
     fd.set("checkboxIds", JSON.stringify(legal.checkboxes.filter((k) => k.id === payNotice.id || checked[k.id]).map((k) => k.id)));
-    items.forEach((it, i) => {
-      fd.set(`photo${i + 1}`, new File([it.blob], `photo-${i + 1}.jpg`, { type: "image/jpeg" }));
+    send.forEach((it, i) => {
+      fd.set(`photo${i + 1}`, new File([it.blob!], `photo-${i + 1}.jpg`, { type: "image/jpeg" }));
       fd.set(`name${i + 1}`, it.name.trim());
       fd.set(`roleId${i + 1}`, it.roleId);
       if (it.roleId === "other" && it.roleText.trim()) fd.set(`roleText${i + 1}`, it.roleText.trim());
@@ -221,39 +258,62 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
 
       <div className={card}>
         {stepHead(1, c.photos.label, c.photos.hint)}
-        <label className={`mt-4 flex min-h-[64px] cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-lapiz-teal/70 bg-lapiz-tint px-4 text-center font-semibold text-lapiz-teal-dark transition-colors hover:bg-lapiz-tint/60 focus-within:ring-4 focus-within:ring-lapiz-gold/60 ${items.length >= MAX ? "pointer-events-none opacity-50" : ""}`}>
-          <svg aria-hidden viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M10 4v12M4 10h12" /></svg>
-          {c.photos.add} · {c.photos.count(items.length)}
-          <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="sr-only" onChange={(e) => { void addFiles(e.target.files); e.target.value = ""; }} />
-        </label>
-        {photoMsg && <p role="alert" className="mt-2 font-semibold text-lapiz-error">{photoMsg}</p>}
-        {err("photos")}
-
-        {items.length > 0 && (
-          <div className="mt-6 border-t border-lapiz-line pt-5">
-            <p className="c-h text-lg">{c.people.label}</p>
-            <p className="text-sm text-lapiz-muted">{c.people.hint}</p>
-            <ul className="mt-3 space-y-4">
-              {items.map((it, idx) => (
-                <li key={it.id} className="rounded-xl border border-lapiz-line bg-lapiz-paper p-3">
-                  <div className="flex gap-3">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={it.preview} alt="" className="h-24 w-24 shrink-0 rounded-lg border border-lapiz-line object-cover" />
-                  <div className="min-w-0 flex-1 space-y-2">
+        <ul className="mt-4 space-y-4">
+          {items.map((it, idx) => {
+            const miss = tried ? missingOf(it, idx) : [];
+            const who = it.name.trim() || (idx === 0 ? c.people.protagonistCard : c.people.card(idx + 1));
+            return (
+              <li
+                key={it.id}
+                ref={(el) => { cardRefs.current[it.id] = el; }}
+                tabIndex={-1}
+                aria-label={idx === 0 ? c.people.protagonistCard : c.people.card(idx + 1)}
+                className={`rounded-xl border bg-lapiz-paper p-3 outline-none focus-visible:ring-4 focus-visible:ring-lapiz-gold/60 ${miss.length ? "border-lapiz-error" : "border-lapiz-line"}`}
+              >
+                <p className="c-h mb-2 text-base">{idx === 0 ? c.people.protagonistCard : c.people.card(idx + 1)}</p>
+                <div className="flex gap-3">
+                  <label className="relative flex h-24 w-24 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 overflow-hidden rounded-lg border-2 border-dashed border-lapiz-teal/70 bg-lapiz-tint text-center text-[13px] font-semibold leading-tight text-lapiz-teal-dark focus-within:ring-4 focus-within:ring-lapiz-gold/60">
+                    {it.preview ? (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={it.preview} alt={c.people.photoAlt(who)} className="absolute inset-0 h-full w-full object-cover" />
+                        <span className="absolute inset-x-0 bottom-0 bg-white/90 py-1">{c.people.photoChange}</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg aria-hidden viewBox="0 0 20 20" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M10 4v12M4 10h12" /></svg>
+                        <span>{c.people.photoAdd}</span>
+                      </>
+                    )}
+                    <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" aria-label={`${it.preview ? c.people.photoChange : c.people.photoAdd}: ${who}`} onChange={(e) => { void setPhoto(it.id, e.target.files); e.target.value = ""; }} />
+                  </label>
+                  <div className="min-w-0 flex-1">
                     <label className="block text-sm font-semibold">
-                      {c.people.name} {idx + 1}
+                      {c.people.name}
                       <input className={input} value={it.name} maxLength={30} autoComplete="off" onChange={(e) => patch(it.id, { name: e.target.value })} />
                     </label>
-                    <button type="button" className="inline-flex min-h-[44px] items-center text-sm font-semibold underline underline-offset-4" onClick={() => remove(it.id)}>{c.people.remove}</button>
+                    {idx > 0 && (
+                      <button type="button" className="mt-1 inline-flex min-h-[44px] items-center text-sm font-semibold underline underline-offset-4" aria-label={`${c.people.remove}: ${who}`} onClick={() => remove(it.id)}>{c.people.remove}</button>
+                    )}
                   </div>
-                  </div>
-                  <RolePicker idx={idx} item={it} lang={lang} c={c.people} onChange={(p) => patch(it.id, p)} />
-                </li>
-              ))}
-            </ul>
-            {err("persons")}
-          </div>
+                </div>
+                <RolePicker idx={idx} item={it} lang={lang} c={c.people} onChange={(p) => patch(it.id, p)} />
+                {miss.length > 0 && <p role="alert" className="mt-3 text-sm font-semibold text-lapiz-error">{c.people.missing.join(miss)}</p>}
+              </li>
+            );
+          })}
+        </ul>
+        {photoMsg && <p role="alert" className="mt-2 font-semibold text-lapiz-error">{photoMsg}</p>}
+        {err("photos")}
+        {err("persons")}
+        {items.length < MAX ? (
+          <button ref={addBtn} type="button" onClick={addCard} className="mt-4 flex min-h-[56px] w-full items-center justify-center text-balance rounded-xl border-2 border-dashed border-lapiz-teal/70 bg-lapiz-tint px-4 text-center font-semibold text-lapiz-teal-dark transition-colors hover:bg-lapiz-tint/60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-lapiz-gold/60">
+            {c.people.addCard(items.length + 1)}
+          </button>
+        ) : (
+          <p className="mt-4 text-center text-sm font-semibold text-lapiz-muted">{c.people.max}</p>
         )}
+        <p className="sr-only" role="status" aria-live="polite">{live}</p>
       </div>
 
       <div className={card}>
