@@ -38,7 +38,7 @@ Vigente desde {{FECHA_VIGENCIA}}.
 
 **10. Seguridad.** Los datos viajan cifrados, el acceso a ellos está limitado y las grabaciones se almacenan con borrado automático. Ningún sistema es perfecto; si hubiera una filtración que le afecte, se lo comunicaremos sin demora.
 
-**11. Analítica.** Medimos el uso con PostHog sin cookies publicitarias y sin identificar a personas. En el checkout no se envía a PostHog ningún nombre, voz ni teléfono `[no verificado: si se usan cookies de analítica en UE/UK, se debe pedir consentimiento; arquitecto configura PostHog sin cookies en las páginas públicas]`.
+**11. Analítica y publicidad.** Medimos el uso con PostHog sin cookies publicitarias y sin identificar a personas; en el checkout no se envía a PostHog ningún nombre, voz ni teléfono. Si usted llegó desde un anuncio y lo permite (en España y el Reino Unido, solo si pulsa "Aceptar"; en México, si no pulsa "No, gracias" en el aviso de la página), medimos el resultado de ese anuncio con el píxel de Meta (Facebook e Instagram): Meta recibe que visitó la página, inició o completó una compra, el identificador de su navegador y, solo al comprar, una huella cifrada (hash) de su correo y el importe; nunca el nombre, la edad ni la voz del niño ni su teléfono. Puede cambiar su decisión en cualquier momento con el enlace "Preferencias de publicidad" al pie de la página. Sin su permiso donde la ley lo exige no se carga ningún script publicitario `[no verificado: revisar con el contador/asesor la base de Meta como corresponsable (RGPD art. 26) antes de activar en España y Reino Unido]`.
 
 **12. Cambios.** Si cambiamos esta política de forma que afecte a los datos de niños, se lo avisaremos por correo antes y no aplicaremos el cambio a pedidos ya hechos sin su permiso.
 
@@ -78,7 +78,7 @@ Effective {{FECHA_VIGENCIA}}.
 
 **10. Security.** Data travels encrypted, access is limited and recordings are stored with automatic deletion. No system is perfect; if a breach affects you, we will tell you without delay.
 
-**11. Analytics.** We measure usage with PostHog without advertising cookies and without identifying people. No name, voice or phone number is sent to PostHog at checkout `[not verified: analytics cookies may need consent in the EU/UK; architect configures PostHog cookieless on public pages]`.
+**11. Analytics and advertising.** We measure usage with PostHog without advertising cookies and without identifying people; no name, voice or phone number is sent to PostHog at checkout. If you came from an ad and you allow it (in Spain and the UK only if you press "Accept"; in Mexico unless you press "No, thanks" on the page notice), we measure that ad's result with the Meta Pixel (Facebook and Instagram): Meta receives that you visited the page, started or completed a purchase, your browser identifier and, only on purchase, a hashed version of your email and the amount; never the child's name, age or voice, or your phone number. You can change your choice at any time with the "Advertising preferences" link at the bottom of the page. Where the law requires your permission, no advertising script is loaded without it `[not verified: have the adviser review Meta as joint controller (GDPR art. 26) before activating in Spain and the UK]`.
 
 **12. Changes.** If we change this policy in a way that affects children's data, we will email you first and will not apply the change to existing orders without your permission.
 
@@ -163,7 +163,7 @@ Se publica la sección A con estos cambios y adiciones. Id `04-POLITICA-es-ES-le
 4. Sección 7 (derechos): acceso, rectificación, supresión, limitación, oposición y portabilidad; derecho a retirar el consentimiento en cualquier momento sin efecto retroactivo; derecho a reclamar ante la Agencia Española de Protección de Datos `[no verificado]`. Plazo de respuesta: un mes como máximo.
 5. Sección 8 (menores): el consentimiento por menores lo da quien ejerce la patria potestad. Edad de consentimiento digital en España: 14 años `[no verificado]`; como el producto lo contrata siempre una persona adulta, no se tratan datos de menores sobre la base de su propio consentimiento.
 6. Sección 9 (transferencias): "Algunos proveedores tratan datos en EE. UU. Lo hacemos con cláusulas contractuales tipo de la Comisión Europea o con proveedores adheridos al Marco de Privacidad de Datos UE-EE. UU., según el caso `[no verificado: mecanismo por proveedor]`."
-7. Sección 11 (analítica): PostHog sin cookies en las páginas públicas; si en el futuro se activan, se pedirá consentimiento previo.
+7. Sección 11 (analítica y publicidad): PostHog sin cookies en las páginas públicas; el píxel de Meta solo con permiso previo (Aceptar) en España y Reino Unido, y con aviso y "No, gracias" en México (`META_PIXEL_ID`, `docs/marketing/meta-pixel-paso-a-paso.md`).
 8. Se agrega "Decisiones automatizadas": no tomamos decisiones que produzcan efectos jurídicos sobre usted solo con IA.
 9. Se agrega "Aviso de inteligencia artificial" (art. 50 del AI Act): "Las llamadas de este servicio las realiza una voz generada por inteligencia artificial, no una persona. Se lo decimos antes de pagar y al comienzo de cada llamada."
 

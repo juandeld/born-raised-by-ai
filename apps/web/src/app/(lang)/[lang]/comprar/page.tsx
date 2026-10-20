@@ -64,6 +64,8 @@ export default async function Comprar({ params, searchParams }: { params: Promis
                 termsHref={`/${slug}/terminos`}
                 defaultChildName={childName}
                 maxDate={SEASON.lastCallDate}
+                metaValue={p.amountMinor / 100}
+                metaCurrency={p.currency}
               />
             </div>
             <p className="mt-6 text-center text-sm"><Link href={`/${slug}`} className="underline underline-offset-2">&larr; {copy.refundPage.back}</Link></p>

@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { MockPaymentProvider, PolarPaymentProvider, RecurrentePaymentProvider, convertForProvider, createPaymentProvider, signStandardWebhook, verifyStandardWebhook } from "./index";
+import { checkProductMap, polarCatalog, reconcile, webhookKeys, MockPaymentProvider, PolarPaymentProvider, RecurrentePaymentProvider, convertForProvider, createPaymentProvider, signStandardWebhook, verifyStandardWebhook } from "./index";
 
 const checkout = { orderId: "o1", productSlug: "santa", variant: "single" as const, country: "MX" as const, productName: "Santa", amountMinor: 19900, currency: "MXN" as const, customerEmail: "a@b.co", successUrl: "https://x/ok", cancelUrl: "https://x/no", testMode: true };
 
@@ -72,7 +72,8 @@ describe("payment providers", () => {
     const polar = new PolarPaymentProvider({ accessToken: "t", webhookSecret: "whs", productMap: {}, server: "production" }, fetchFn);
     expect(await polar.refund({ paymentId: "ord_9", currency: "USD", reason: "customer_request" })).toEqual({ refundId: "ref_1" });
     expect(calls[0]!.url).toBe("https://api.polar.sh/v1/orders/ord_9");
-    expect(calls[1]!.body).toMatchObject({ order_id: "ord_9", amount: 1000, tax_amount: 80, reason: "customer_request" });
+    expect(calls[1]!.body).toMatchObject({ order_id: "ord_9", amount: 1000, reason: "customer_request" });
+    expect(calls[1]!.body).not.toHaveProperty("tax_amount");
     await polar.refund({ paymentId: "ord_9", currency: "USD", reason: "partial", amountMinor: 300 });
     expect(calls[2]!.body.amount).toBe(300);
     expect(calls).toHaveLength(3);
@@ -105,5 +106,47 @@ describe("payment providers", () => {
     expect(convertForProvider(rec, 19900, "MXN", {})).toEqual({ amountMinor: 1095, currency: "USD", converted: true });
     expect(convertForProvider(rec, 1499, "USD", {})).toEqual({ amountMinor: 1499, currency: "USD", converted: false });
     expect(convertForProvider(new MockPaymentProvider(), 19900, "MXN", {}).converted).toBe(false);
+  });
+
+  it("Polar: accepts both secret formats (Standard Webhooks whsec_<base64> and legacy UTF-8 key)", async () => {
+    const body = JSON.stringify({ type: "order.paid", data: { id: "ord_1", checkout_id: "c", metadata: { order_id: "o1" } } });
+    const ts = String(Math.floor(Date.now() / 1000));
+    const secret = `whsec_${Buffer.from("raw-key-bytes").toString("base64")}`;
+    const polar = new PolarPaymentProvider({ accessToken: "t", webhookSecret: secret, productMap: {}, server: "production" });
+    const std = { "webhook-id": "m", "webhook-timestamp": ts, "webhook-signature": signStandardWebhook(Buffer.from("raw-key-bytes"), "m", ts, body) };
+    const legacy = { "webhook-id": "m", "webhook-timestamp": ts, "webhook-signature": signStandardWebhook(Buffer.from(secret, "utf8"), "m", ts, body) };
+    expect((await polar.parseWebhook(body, std))?.type).toBe("payment_succeeded");
+    expect((await polar.parseWebhook(body, legacy))?.type).toBe("payment_succeeded");
+    await expect(polar.parseWebhook(body, { ...std, "webhook-signature": signStandardWebhook(Buffer.from("other"), "m", ts, body) })).rejects.toThrow(/signature/);
+    expect(webhookKeys("plain")).toHaveLength(1);
+  });
+
+  it("Polar: an already refunded order is success (idempotent), not an error", async () => {
+    const fetchFn = (async (url: string) => (url.includes("/v1/orders/") ? new Response(JSON.stringify({ net_amount: 1000 }), { status: 200 }) : new Response('{"error":"RefundedAlready"}', { status: 403 }))) as unknown as typeof fetch;
+    const polar = new PolarPaymentProvider({ accessToken: "t", webhookSecret: "x", productMap: {}, server: "production" }, fetchFn);
+    expect(await polar.refund({ paymentId: "o", currency: "MXN", reason: "r" })).toEqual({ refundId: "already_refunded" });
+  });
+
+  it("catalog: Jinglo MX single is required, the package only when BUNDLE_ENABLED=1; Colorear shares the same map", () => {
+    const env = { ENABLED_COUNTRIES: "MX", COLOREAR_COUNTRIES: "MX" };
+    const cat = polarCatalog(env);
+    expect(cat.map((c) => [c.key, c.required, c.amountMinor])).toEqual([["santa:MX:single", true, 19900], ["santa:MX:bundle", false, 34900], ["colorear:MX:single", true, 22900]]);
+    expect(polarCatalog({ ...env, BUNDLE_ENABLED: "1" }).find((c) => c.key === "santa:MX:bundle")!.required).toBe(true);
+    const u = "123e4567-e89b-12d3-a456-426614174000";
+    expect(checkProductMap({ "santa:MX:single": u }, env).missing).toEqual(["colorear:MX:single"]);
+    expect(checkProductMap({ "santa:MX:single": u, "colorear:MX:single": u }, env).ok).toBe(true);
+    expect(checkProductMap({ "santa:MX:single": "x", "colorear:MX:single": u }, env).malformed).toEqual(["santa:MX:single"]);
+  });
+
+  it("reconcile: finds paid/refunded mismatches both ways and ignores test orders", () => {
+    const db = (o: Partial<import("./reconcile").DbOrderLite>) => ({ id: "a", status: "scheduled", paymentId: null, checkoutId: "c1", amountMinor: 19900, currency: "MXN", testMode: false, ...o });
+    const ok = reconcile([{ id: "p1", status: "paid", netAmount: 17000, currency: "MXN", checkoutId: "c1", orderId: "a" }], [db({})]);
+    expect(ok.mismatches).toEqual([]);
+    expect(ok.polarPaid).toBe(1);
+    const bad = reconcile(
+      [{ id: "p1", status: "paid", netAmount: 17000, currency: "MXN", checkoutId: "c1", orderId: "a" }, { id: "p2", status: "refunded", netAmount: 17000, currency: "MXN", checkoutId: "c2", orderId: "b" }, { id: "p3", status: "paid", netAmount: 1, currency: "MXN", checkoutId: null, orderId: null }],
+      [db({ status: "created" }), db({ id: "b", checkoutId: "c2", status: "scheduled" }), db({ id: "z", checkoutId: "c9", status: "scheduled" }), db({ id: "t", testMode: true, status: "scheduled", checkoutId: "ct" })],
+    );
+    expect(bad.mismatches.map((m) => m.kind).sort()).toEqual(["orphan_polar_order", "paid_in_db_not_in_polar", "paid_in_polar_not_in_db", "refunded_in_polar_not_in_db"]);
   });
 });

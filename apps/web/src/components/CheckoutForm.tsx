@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useRef, useState } from "react";
+import { metaTrack } from "./MetaPixel";
 import { send } from "./Track";
 import type { FieldKey, FormCopy } from "@/lib/copy";
 
@@ -26,6 +27,9 @@ export interface FormProps {
   defaultChildName?: string;
   /** Last day a call can be scheduled (YYYY-MM-DD), from SEASON.lastCallDate. */
   maxDate?: string;
+  /** Price in major units for the Meta InitiateCheckout event. */
+  metaValue?: number;
+  metaCurrency?: string;
 }
 
 const FIRST_HOUR = 8;
@@ -86,6 +90,7 @@ export function CheckoutForm(p: FormProps) {
     const f = new FormData(e.currentTarget);
     setBusy(true);
     setErrors({});
+    metaTrack("InitiateCheckout", { value: p.metaValue, currency: p.metaCurrency, country: p.country });
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",

@@ -33,6 +33,7 @@ export const API_ROUTES: ReadonlyArray<readonly [pattern: string, load: () => Pr
   ["entrega/:token/:kind", () => import("./api/entrega-token-kind")],
   ["health", () => import("./api/health")],
   ["inngest", () => import("./api/inngest")],
+  ["meta", () => import("./api/meta")],
   ["mock-pay", () => import("./api/mock-pay")],
   ["optout", () => import("./api/optout")],
   ["refund", () => import("./api/refund")],

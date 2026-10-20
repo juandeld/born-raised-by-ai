@@ -1,6 +1,6 @@
 import { PaymentConfigError } from "./types";
 import type { CheckoutRequest, CheckoutSession, PaymentEvent, PaymentProvider, RefundRequest } from "./types";
-import { verifyStandardWebhook } from "./standard-webhooks";
+import { verifyStandardWebhookAny, webhookKeys } from "./standard-webhooks";
 
 /**
  * Polar (merchant of record). Real adapter over fetch; needs POLAR_ACCESS_TOKEN, POLAR_WEBHOOK_SECRET and
@@ -66,8 +66,7 @@ export class PolarPaymentProvider implements PaymentProvider {
   }
 
   async parseWebhook(rawBody: string, headers: Record<string, string | undefined>): Promise<PaymentEvent | null> {
-    const ok = verifyStandardWebhook({
-      key: Buffer.from(this.cfg.webhookSecret, "utf8"),
+    const ok = verifyStandardWebhookAny(webhookKeys(this.cfg.webhookSecret), {
       id: headers["webhook-id"],
       timestamp: headers["webhook-timestamp"],
       signatureHeader: headers["webhook-signature"],
@@ -83,20 +82,20 @@ export class PolarPaymentProvider implements PaymentProvider {
   }
 
   /**
-   * Full refund by default. Polar's refund endpoint needs the amount, so without `amountMinor` we read the order first and
-   * refund its whole net amount plus tax. [no verificado: field names net_amount / tax_amount; confirm in sandbox]
+   * Full refund by default. Polar refunds the NET amount (without tax) and returns the matching tax by itself, so without
+   * `amountMinor` we read the order and refund its `net_amount`; `tax_amount` is not a request field.
+   * An order that is already fully refunded answers 403 (RefundedAlready): that is success for us (idempotent).
    */
   async refund(req: RefundRequest): Promise<{ refundId: string }> {
     const headers = { authorization: `Bearer ${this.cfg.accessToken}`, "content-type": "application/json" };
     let amount = req.amountMinor;
-    let taxAmount: number | undefined;
     if (amount === undefined) {
       const o = await this.fetchFn(`${this.base}/v1/orders/${req.paymentId}`, { headers });
       if (!o.ok) throw new Error(`Polar get order ${o.status}: ${await o.text()}`);
-      const order = (await o.json()) as { net_amount?: number; tax_amount?: number; total_amount?: number; amount?: number };
-      amount = order.net_amount ?? order.amount ?? order.total_amount;
-      taxAmount = order.tax_amount;
-      if (amount === undefined) throw new Error("Polar order has no amount; cannot refund automatically");
+      const order = (await o.json()) as { net_amount?: number; amount?: number; subtotal_amount?: number; status?: string };
+      if (order.status === "refunded") return { refundId: "already_refunded" };
+      amount = order.net_amount ?? order.subtotal_amount ?? order.amount;
+      if (amount === undefined) throw new Error("Polar order has no net amount; cannot refund automatically");
     }
     const res = await this.fetchFn(`${this.base}/v1/refunds/`, {
       method: "POST",
@@ -106,10 +105,14 @@ export class PolarPaymentProvider implements PaymentProvider {
         reason: "customer_request",
         comment: req.reason.slice(0, 200),
         amount,
-        ...(taxAmount !== undefined ? { tax_amount: taxAmount } : {}),
         revoke_benefits: true,
       }),
     });
+    if (res.status === 403) {
+      const text = await res.text();
+      if (/RefundedAlready|already/i.test(text)) return { refundId: "already_refunded" };
+      throw new Error(`Polar refund 403: ${text}`);
+    }
     if (!res.ok) throw new Error(`Polar refund ${res.status}: ${await res.text()}`);
     const j = (await res.json()) as { id: string };
     return { refundId: j.id };

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { COUNTRIES, type CountryCode } from "@lumen/config";
 import { AutoRefresh } from "@/components/AutoRefresh";
+import { MetaPurchase } from "@/components/MetaPixel";
 import { DevRunCall } from "@/components/DevRunCall";
 import { Footer, Header } from "@/components/SiteChrome";
 import { getEngine, mockPaymentsAllowed } from "@/lib/engine";
@@ -45,6 +46,7 @@ export default async function Confirmacion({ params }: { params: Promise<{ lang:
 
   return shell(
     <>
+      {!order.test_mode && <MetaPurchase orderId={order.id} token={token} value={order.amount_minor / 100} currency={order.currency} country={order.country} />}
       <p className="text-5xl" aria-hidden>&#127876;</p>
       <h1 className="mt-2 font-display text-3xl font-bold">{copy.confirm.title(order.child_first_name ?? "")}</h1>
       <div className="mt-5 rounded-3xl border-2 border-gold-500 bg-paper p-5">

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { parseExperiment, tagCreative } from "@lumen/analytics";
 import { COUNTRIES, SEASON, formatPrice, priceFor, type CountryCode } from "@lumen/config";
+import { MetaEvent } from "@/components/MetaPixel";
 import { Landing } from "@/components/jinglo/Landing";
 import { getLandingCopy, longDate } from "@/lib/landing-copy";
 import { expVariant } from "@/lib/landing-experiments";
@@ -65,6 +66,8 @@ export default async function LandingPage({ params, searchParams }: { params: Pr
   ];
 
   return (
+    <>
+    <MetaEvent name="ViewContent" value={single.amountMinor / 100} currency={single.currency} country={country} />
     <Landing
       slug={slug}
       country={country}
@@ -82,5 +85,6 @@ export default async function LandingPage({ params, searchParams }: { params: Pr
       countries={countries.map((c: CountryCode) => ({ code: c, href: `/${slug}?c=${c}${cr}`, current: c === country }))}
       initialName={rawName}
     />
+    </>
   );
 }

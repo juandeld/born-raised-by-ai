@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { MetaPixel } from "@/components/MetaPixel";
 import { fontVars } from "@/lib/fonts";
 import { SLUGS, resolveSlug } from "@/lib/slugs";
 import { brandConfig } from "@lumen/config";
@@ -25,10 +26,13 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
 }
 
 export default async function LangLayout({ children, params }: { children: React.ReactNode; params: Promise<{ lang: string }> }) {
-  const { copy } = resolveSlug((await params).lang);
+  const { slug, copy } = resolveSlug((await params).lang);
   return (
     <html lang={copy.htmlLang} className={fontVars}>
-      <body className="jl-body">{children}</body>
+      <body className="jl-body">
+        {children}
+        <MetaPixel id={process.env.META_PIXEL_ID} slug={slug} />
+      </body>
     </html>
   );
 }

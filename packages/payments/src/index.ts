@@ -6,6 +6,8 @@ import { PaymentConfigError, type PaymentProvider } from "./types";
 
 export * from "./types";
 export * from "./standard-webhooks";
+export * from "./catalog";
+export * from "./reconcile";
 export { MockPaymentProvider } from "./mock";
 export { PolarPaymentProvider } from "./polar";
 export { RecurrentePaymentProvider } from "./recurrente";

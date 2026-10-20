@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { brandConfig } from "@lumen/config";
+import { ConsentLink } from "./MetaPixel";
 import type { Copy } from "@/lib/copy";
 import type { Slug } from "@/lib/slugs";
 
@@ -31,6 +32,7 @@ export function Footer({ slug, copy }: { slug: Slug; copy: Copy }) {
           <Link href={`/${slug}/privacidad`} className="underline underline-offset-4">{copy.nav.privacy}</Link>
           <Link href={`/${slug}/terminos`} className="underline underline-offset-4">{copy.nav.terms}</Link>
           <a href={`mailto:${b.supportEmail}`} className="underline underline-offset-4">{copy.nav.support}</a>
+          <ConsentLink id={process.env.META_PIXEL_ID} slug={slug} />
         </div>
         <p>
           {b.brand}, {copy.footer.operator}. {copy.footer.rights}

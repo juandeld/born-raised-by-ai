@@ -32,3 +32,23 @@ export function verifyStandardWebhook(opts: {
 export function signStandardWebhook(key: Buffer, id: string, timestamp: string, body: string): string {
   return `v1,${createHmac("sha256", key).update(`${id}.${timestamp}.${body}`).digest("base64")}`;
 }
+
+/**
+ * Candidate HMAC keys for a webhook secret. Polar signs with Standard Webhooks (key = base64 payload after "whsec_") for
+ * secrets created on or after 2026-09-08, and with its legacy HMAC (key = UTF-8 bytes of the whole secret string) before.
+ * Trying both makes the integration work whichever secret the dashboard hands out. Svix (Recurrente) uses the first form.
+ */
+export function webhookKeys(secret: string): Buffer[] {
+  const keys: Buffer[] = [];
+  if (secret.startsWith("whsec_")) {
+    const b = Buffer.from(secret.slice(6), "base64");
+    if (b.length > 0) keys.push(b);
+  }
+  keys.push(Buffer.from(secret, "utf8"));
+  return keys;
+}
+
+/** True when the signature matches any of the candidate keys. */
+export function verifyStandardWebhookAny(keys: Buffer[], opts: Omit<Parameters<typeof verifyStandardWebhook>[0], "key">): boolean {
+  return keys.some((key) => verifyStandardWebhook({ ...opts, key }));
+}
