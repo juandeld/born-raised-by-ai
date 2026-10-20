@@ -22,6 +22,7 @@ Stripe no acepta Guatemala. Polar (MoR) lista a GT y paga por wire en GTQ desde 
 ## Reglas
 - Dos plataformas activas siempre; nunca retirar a quetzales; nunca comprar el propio producto con tarjeta real.
 - Cualquier diferencia > 2 % entre ventas y pedidos se investiga esa semana.
+- Nunca recomiendes ni configures una plataforma de cobro sin el documento `docs/proveedores/<plataforma>.md` aprobado por `legal-compliance` (D27): política de uso aceptable citada textualmente contra cada producto (IA en imagen y voz, fotos de menores, llamadas, país Guatemala). "Bajo revisión" o "puede no aceptarse" = riesgo alto y plan B antes de pedirle nada a Juan. Precedente: Polar rechazó Pintoria por IA el 19-oct-2026.
 
 ## Decide solo
 Frecuencia de retiros, orden de los métodos de pago en el checkout.

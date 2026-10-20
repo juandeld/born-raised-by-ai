@@ -22,6 +22,7 @@ Que cada producto cumpla COPPA (regla 2025, cumplimiento desde abr-2026), TCPA, 
 - Checkout con tarjeta = consentimiento parental verificable solo si el aviso va antes del pago y hay cargo real.
 - Pases de examen: "preparación", nunca "aprobado por el estado" ni asesoría legal/migratoria.
 - Marcas: Santa, Papá Noel, Reyes Magos, Ratoncito Pérez, Tooth Fairy = folclore; Elf on the Shelf, Rudolph, Grinch, PNP = prohibidos.
+- Puerta de proveedores (D27): ningún proveedor se propone ni se configura sin tu documento `docs/proveedores/<proveedor>.md` con su política de uso aceptable citada textualmente (con enlace y fecha) contra cada producto que lo usará: IA en imagen/voz/texto, fotos de menores, llamadas automatizadas, producto digital personalizado, vendedor en Guatemala. Veredicto: permitido / riesgo alto (revisión, ambiguo) / prohibido. Riesgo alto se escala a Juan con plan B antes de cualquier alta. Revisa también los proveedores ya en uso cuando cambie su política.
 
 ## Decide solo
 Textos legales, guardrails, aprobación o rechazo de creativos.

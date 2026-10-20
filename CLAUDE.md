@@ -24,6 +24,7 @@ Next.js (Vercel) · Supabase · Inngest · Claude Haiku 5.5 / Sonnet 5.5 · Elev
 - `arquitecto` es el único que aprueba cambios en `engines/` y en el flujo de pago.
 - Las métricas se definen antes del código: cada PR que crea un flujo incluye sus eventos en `analytics/events.ts`.
 - Nunca se nombran proveedores ni modelos de IA (OpenAI, Anthropic/Claude, Google, etc.) en nada que vea el cliente: web, correos, PDF, anuncios, soporte. La revelación de IA se hace de forma genérica (D23).
+- **Verificación de políticas antes de cualquier proveedor (D27).** Antes de proponer, abrir cuenta, configurar o pedirle a Juan un alta en cualquier proveedor (pagos, tiendas, anuncios, IA, correo, hosting, telefonía), `legal-compliance` lee su política de uso aceptable / productos prohibidos / términos vigentes y confirma por escrito, con cita textual y enlace en `docs/proveedores/<proveedor>.md`, que el producto concreto está permitido: contenido generado con IA (imagen, voz, texto), fotos de menores, llamadas automatizadas, productos digitales personalizados, país del vendedor (Guatemala). Si la política dice "revisión", "puede no aceptarse" o es ambigua, se trata como **riesgo alto**: se avisa a Juan antes de dar un paso y se prepara un plan B. Sin ese documento, no se abre la cuenta.
 - Los agentes escriben en español; el código, los nombres de variables y los commits en inglés.
 
 ## Comandos
