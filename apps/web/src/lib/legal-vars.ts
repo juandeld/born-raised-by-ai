@@ -20,3 +20,20 @@ export function legalReady(env: Record<string, string | undefined> = process.env
 export function documentVars(price: string): Record<string, string> {
   return { ...legalVars(), DOMICILIO: process.env.LEGAL_ADDRESS ?? "[DOMICILIO PENDIENTE]", FECHA_VIGENCIA: process.env.LEGAL_EFFECTIVE_DATE ?? "[FECHA PENDIENTE]", PRECIO: price };
 }
+
+/**
+ * Colorear is sold as Pintoria, never under the Santa/Jinglo brand: {{MARCA}} in every colorear text (notice, privacy, terms, emails, PDF)
+ * is COLOREAR_BRAND_NAME (default "Pintoria"). The generate engine builds its legal variables the same way, so the consent text the
+ * buyer sees is byte-identical to the one stored as evidence.
+ */
+export function colorearBrandName(env: Record<string, string | undefined> = process.env): string {
+  return env.COLOREAR_BRAND_NAME || "Pintoria";
+}
+
+export function colorearLegalVars(env: Record<string, string | undefined> = process.env): Record<string, string> {
+  return { ...legalVars(), MARCA: colorearBrandName(env) };
+}
+
+export function colorearDocumentVars(price: string): Record<string, string> {
+  return { ...documentVars(price), MARCA: colorearBrandName() };
+}

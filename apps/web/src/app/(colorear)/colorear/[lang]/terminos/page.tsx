@@ -3,7 +3,7 @@ import { isColorearLang } from "@lumen/config";
 import { CFooter, CHeader } from "@/components/colorear/Chrome";
 import { COLOREAR_COPY } from "@/lib/colorear-copy";
 import { COLOREAR_TERMS } from "@/lib/colorear-legal-pages";
-import { documentVars } from "@/lib/legal-vars";
+import { colorearDocumentVars } from "@/lib/legal-vars";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +11,7 @@ export default async function Terminos({ params }: { params: Promise<{ lang: str
   const { lang } = await params;
   if (!isColorearLang(lang)) notFound();
   const t = COLOREAR_TERMS[lang];
-  const vars = documentVars("");
+  const vars = colorearDocumentVars("");
   const sub = (s: string) => s.replace(/\{(\w+)\}/g, (m, k: string) => vars[k] ?? m);
   return (
     <>

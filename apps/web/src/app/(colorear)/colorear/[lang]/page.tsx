@@ -6,7 +6,7 @@ import { CFooter, CHeader } from "@/components/colorear/Chrome";
 import { ColorearForm, type CountryLegal } from "@/components/colorear/ColorearForm";
 import { COLOREAR_COPY } from "@/lib/colorear-copy";
 import { ThemeIcon } from "@/components/colorear/ThemeIcon";
-import { legalVars } from "@/lib/legal-vars";
+import { colorearLegalVars } from "@/lib/legal-vars";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +27,7 @@ export default async function Landing({ params, searchParams }: { params: Promis
   if (!isColorearLang(lang)) notFound();
   const sp = await searchParams;
   const c = COLOREAR_COPY[lang];
-  const vars = legalVars();
+  const vars = colorearLegalVars();
   const countries = colorearCountriesFor(lang);
   const perCountry: Record<string, CountryLegal> = {};
   for (const code of countries) {

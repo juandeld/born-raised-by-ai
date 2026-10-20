@@ -3,7 +3,7 @@ import { colorearLegalLocale, colorearCountriesFor, isColorearLang } from "@lume
 import { fill, renderColorearAviso } from "@lumen/legal";
 import { CFooter, CHeader } from "@/components/colorear/Chrome";
 import { COLOREAR_COPY } from "@/lib/colorear-copy";
-import { documentVars } from "@/lib/legal-vars";
+import { colorearDocumentVars } from "@/lib/legal-vars";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +11,7 @@ export default async function Privacidad({ params }: { params: Promise<{ lang: s
   const { lang } = await params;
   if (!isColorearLang(lang)) notFound();
   const c = COLOREAR_COPY[lang];
-  const vars = documentVars("");
+  const vars = colorearDocumentVars("");
   const country = colorearCountriesFor(lang)[0]!;
   const a = renderColorearAviso(colorearLegalLocale(country), vars, { gb: country === "GB" });
   return (
