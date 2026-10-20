@@ -2,7 +2,9 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ColorearLang } from "@lumen/config";
+import { COLOREAR_THEMES } from "@lumen/config";
 import { COLOREAR_COPY } from "@/lib/colorear-copy";
+import { ThemeIcon } from "./ThemeIcon";
 
 export interface StatusDto {
   phase: "awaiting_payment" | "working" | "ready" | "failed" | "refunded" | "gone";
@@ -15,10 +17,46 @@ export interface StatusDto {
   pages: number[];
   notes: string[];
   expiresAt: string | null;
+  variant: string;
+  kind: "main" | "add" | "credit";
+  parentToken: string | null;
+  credits: { left: number; total: number; until: string } | null;
+  creditsExpired: boolean;
+  books: Array<{ token: string; label: string; phase: "working" | "ready"; kind: "credit" | "add" }>;
+  offer: { price: string; until: string; sig: string; hoursLeft: number; payNotice: string } | null;
+  legal: { characters: string | null; offerTerms: string | null; deleteButton: string | null };
 }
 
 const box = "rounded-2xl border border-lapiz-line bg-white p-6";
 const btn = "inline-flex min-h-[56px] items-center justify-center rounded-xl px-8 text-lg font-semibold transition-colors hover:opacity-90";
+
+/** Theme tiles (same look as the form) plus a free-text field. Reports the choice upward; the parent button does the work. */
+function AdventurePicker({ lang, name, value, onChange }: { lang: ColorearLang; name: string; value: { themeId: string; theme: string }; onChange: (v: { themeId: string; theme: string }) => void }) {
+  const c = COLOREAR_COPY[lang].status.more;
+  const [all, setAll] = useState(false);
+  const list = all ? COLOREAR_THEMES : COLOREAR_THEMES.slice(0, 9);
+  return (
+    <div>
+      <div role="radiogroup" aria-label={c.pick} className="grid grid-cols-3 gap-2">
+        {list.map((t) => {
+          const on = value.themeId === t.id;
+          return (
+            <label key={t.id} className={`relative flex min-h-[88px] cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border bg-white px-1.5 py-2.5 text-center transition-colors focus-within:ring-4 focus-within:ring-lapiz-gold/60 hover:bg-lapiz-mist ${on ? "border-[2.5px] border-lapiz-teal bg-lapiz-tint" : "border-lapiz-line"}`}>
+              <input type="radio" name={name} value={t.id} checked={on} className="sr-only" onChange={() => onChange({ themeId: t.id, theme: t[lang] })} onClick={() => { if (on) onChange({ themeId: "", theme: "" }); }} />
+              <ThemeIcon id={t.id} className={`h-9 w-9 ${on ? "text-lapiz-teal-dark" : "text-lapiz-ink"}`} />
+              <span className="text-[13px] font-semibold leading-tight">{t[lang]}</span>
+            </label>
+          );
+        })}
+      </div>
+      {!all && <button type="button" onClick={() => setAll(true)} className="mt-2 inline-flex min-h-[44px] items-center text-sm font-bold underline underline-offset-4">{c.showAll}</button>}
+      <label className="mt-3 block text-sm font-semibold">
+        {c.own}
+        <input className="c-field" value={value.themeId ? "" : value.theme} maxLength={50} placeholder={c.ph} onChange={(e) => onChange({ themeId: "", theme: e.target.value })} />
+      </label>
+    </div>
+  );
+}
 
 export function StatusView({ token, initial }: { token: string; initial: StatusDto }) {
   const [st, setSt] = useState<StatusDto>(initial);
@@ -28,6 +66,12 @@ export function StatusView({ token, initial }: { token: string; initial: StatusD
   const c = COLOREAR_COPY[st.lang].status;
   const lang = st.lang;
   const stopped = useRef(false);
+  const [pick, setPick] = useState({ themeId: "", theme: "" });
+  const [busy, setBusy] = useState<"" | "credit" | "offer" | "del">("");
+  const [moreErr, setMoreErr] = useState("");
+  const [delMsg, setDelMsg] = useState("");
+  const [now, setNow] = useState(() => Date.now());
+  const viewed = useRef(false);
 
   const poll = useCallback(async () => {
     try {
@@ -56,6 +100,40 @@ export function StatusView({ token, initial }: { token: string; initial: StatusD
     setSurvey("sent");
     await fetch("/api/colorear/survey", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ t: token, answer: a }) }).catch(() => undefined);
   }
+  const offerUntil = st.offer?.until;
+  useEffect(() => {
+    if (!offerUntil) return;
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    if (!viewed.current) {
+      viewed.current = true;
+      void fetch("/api/colorear/track", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ event: "upsell_viewed", t: token }) }).catch(() => undefined);
+    }
+    return () => clearInterval(id);
+  }, [offerUntil, token]);
+
+  async function post(path: string, body: unknown) {
+    const r = await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }).catch(() => null);
+    return { ok: !!r?.ok, json: (await r?.json().catch(() => ({}))) as { token?: string; url?: string; message?: string } };
+  }
+  async function useCredit() {
+    setBusy("credit"); setMoreErr("");
+    const r = await post("/api/colorear/credito", { t: token, theme: pick.theme, themeId: pick.themeId });
+    if (r.ok && r.json.token) { window.location.assign(`/colorear/confirmacion/${r.json.token}`); return; }
+    setMoreErr(c.more.error); setBusy("");
+  }
+  async function buyOffer() {
+    if (!st.offer) return;
+    setBusy("offer"); setMoreErr("");
+    const r = await post("/api/colorear/oferta", { t: token, s: st.offer.sig, theme: pick.theme, themeId: pick.themeId });
+    if (r.ok && r.json.url) { window.location.assign(r.json.url); return; }
+    setMoreErr(c.offer.error); setBusy("");
+  }
+  async function deleteCharacters() {
+    setBusy("del");
+    const r = await post("/api/colorear/personajes", { t: token });
+    setBusy("");
+    if (r.ok) { setDelMsg(r.json.message ?? c.offer.deleteDone); void poll(); }
+  }
   async function doRefund() {
     setRefund("busy");
     const r = await fetch("/api/colorear/refund", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ t: token }) }).catch(() => null);
@@ -65,7 +143,7 @@ export function StatusView({ token, initial }: { token: string; initial: StatusD
 
   const stageKey = st.stage === "scenes" ? "pages" : st.stage;
   const pct = Math.round(st.progress * 100);
-  const date = st.expiresAt ? new Date(st.expiresAt).toLocaleDateString(lang === "en" ? "en-US" : "es-MX", { day: "numeric", month: "long", year: "numeric" }) : "";
+  const date = st.expiresAt ? new Date(st.expiresAt).toLocaleDateString(lang === "en" ? "en-US" : "es-MX", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }) : "";
 
   return (
     <div className="space-y-5">
@@ -117,6 +195,13 @@ export function StatusView({ token, initial }: { token: string; initial: StatusD
           <p className="mt-1 text-sm">{c.ready.email}</p>
           <p className="mt-1 text-sm">{c.ready.print}</p>
           {st.notes.some((n) => n.startsWith("photo_")) && <p className="mt-3 rounded-2xl bg-lapiz-gold-tint p-3 text-sm font-semibold">{lang === "es" ? "No pudimos usar alguna foto y dibujamos a esa persona a partir de su descripción." : "We could not use one of the photos, so that person was drawn from the description."}</p>}
+          {st.legal.characters && <p className="mt-3 text-sm">{st.legal.characters}</p>}
+          {st.legal.deleteButton && (
+            <div className="mt-2">
+              {delMsg ? <p className="text-sm font-bold">{delMsg}</p> : <button type="button" disabled={busy === "del"} onClick={() => void deleteCharacters()} className="inline-flex min-h-[44px] items-center text-sm font-bold underline underline-offset-4">{st.legal.deleteButton}</button>}
+            </div>
+          )}
+          {st.kind === "credit" && st.parentToken && <a href={`/colorear/entrega/${st.parentToken}`} className="mt-4 inline-flex min-h-[44px] items-center font-bold underline underline-offset-4">{c.more.all}</a>}
           <div className="mt-6 border-t-2 border-lapiz-line pt-4">
             {survey ? <p className="font-bold">{c.ready.thanks}</p> : (
               <>
@@ -131,7 +216,7 @@ export function StatusView({ token, initial }: { token: string; initial: StatusD
           </div>
           <div className="mt-5 flex flex-wrap items-center gap-4 text-sm">
             <Link href={`/colorear/${lang}`} className="font-bold underline">{c.ready.again}</Link>
-            {refund === "" && <button type="button" onClick={() => void doRefund()} className="font-bold underline">{c.ready.refund}</button>}
+            {refund === "" && st.kind !== "credit" && <button type="button" onClick={() => void doRefund()} className="font-bold underline">{c.ready.refund}</button>}
             {refund === "busy" && <span>...</span>}
             {refund === "done" && <span className="font-bold">{c.ready.refundDone}</span>}
             {refund === "fail" && <span className="font-bold text-lapiz-error">{c.ready.refundFail}</span>}
@@ -139,7 +224,52 @@ export function StatusView({ token, initial }: { token: string; initial: StatusD
         </div>
       )}
 
-      {st.phase === "failed" && <div className={box}><h1 className="text-2xl font-bold">{c.failed.title}</h1><p className="mt-2">{c.failed.text}</p></div>}
+      {st.phase === "ready" && st.credits && (
+        <section className={`${box} border-[2.5px] border-lapiz-teal`} aria-labelledby="more-title">
+          <h2 id="more-title" className="c-h text-2xl">{c.more.left(st.credits.left)}</h2>
+          <p className="mt-1">{c.more.text(new Date(st.credits.until).toLocaleDateString(lang === "en" ? "en-US" : "es-MX", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }))}</p>
+          <p className="c-h mt-4 text-lg">{c.more.pick}</p>
+          <div className="mt-2"><AdventurePicker lang={lang} name="credit-theme" value={pick} onChange={setPick} /></div>
+          {moreErr && <p role="alert" className="mt-3 font-semibold text-lapiz-error">{moreErr}</p>}
+          <button type="button" disabled={busy !== ""} onClick={() => void useCredit()} className={`${btn} mt-4 w-full bg-lapiz-coral text-white`}>{busy === "credit" ? c.more.creating : c.more.create}</button>
+        </section>
+      )}
+      {st.phase === "ready" && st.creditsExpired && !st.credits && <p className={box}>{c.more.expired}</p>}
+      {st.phase === "ready" && st.offer && (
+        <section className={`${box} border-[2.5px] border-lapiz-teal`} aria-labelledby="offer-title">
+          <h2 id="offer-title" className="c-h text-2xl">{c.offer.title}</h2>
+          <p className="mt-1">{c.offer.text(st.offer.price)}</p>
+          <p className="mt-2 text-sm font-bold">{c.offer.until(new Date(st.offer.until).toLocaleString(lang === "en" ? "en-US" : "es-MX", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }))} · {c.offer.left(Math.max(0, Math.ceil((new Date(st.offer.until).getTime() - now) / 3_600_000)))}</p>
+          <p className="c-h mt-4 text-lg">{c.more.pick}</p>
+          <div className="mt-2"><AdventurePicker lang={lang} name="offer-theme" value={pick} onChange={setPick} /></div>
+          {st.legal.offerTerms && <p className="mt-3 text-sm">{st.legal.offerTerms}</p>}
+          {moreErr && <p role="alert" className="mt-3 font-semibold text-lapiz-error">{moreErr}</p>}
+          <p className="mt-3 text-sm">{st.offer.payNotice}</p>
+          <button type="button" disabled={busy !== ""} onClick={() => void buyOffer()} className={`${btn} mt-3 w-full bg-lapiz-coral text-white`}>{busy === "offer" ? c.offer.paying : c.offer.pay(st.offer.price)}</button>
+        </section>
+      )}
+      {st.phase === "ready" && st.books.length > 0 && (
+        <section className={box} aria-labelledby="books-title">
+          <h2 id="books-title" className="c-h text-xl">{c.more.books}</h2>
+          <ul className="mt-3 divide-y divide-lapiz-line">
+            {st.books.map((b, i) => (
+              <li key={b.token} className="flex min-h-[56px] items-center justify-between gap-3 py-2">
+                <span className="min-w-0"><span className="block font-semibold">{c.more.adventure(i + 2)}</span><span className="block truncate text-sm text-lapiz-muted">{b.label}</span></span>
+                <a href={`/colorear/${b.phase === "ready" ? "entrega" : "confirmacion"}/${b.token}`} className="inline-flex min-h-[44px] shrink-0 items-center rounded-xl border border-lapiz-ink/30 bg-white px-4 font-bold">{b.phase === "ready" ? c.more.ready : c.more.working} · {c.more.open}</a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {st.phase === "failed" && st.kind === "credit" && (
+        <div className={box}>
+          <h1 className="text-2xl font-bold">{c.more.failedCredit.title}</h1>
+          <p className="mt-2">{c.more.failedCredit.text}</p>
+          {st.parentToken && <a href={`/colorear/entrega/${st.parentToken}`} className={`${btn} mt-4 bg-lapiz-coral text-white`}>{c.more.all}</a>}
+        </div>
+      )}
+      {st.phase === "failed" && st.kind !== "credit" && <div className={box}><h1 className="text-2xl font-bold">{c.failed.title}</h1><p className="mt-2">{c.failed.text}</p></div>}
       {st.phase === "refunded" && <div className={box}><h1 className="text-2xl font-bold">{c.refunded.title}</h1><p className="mt-2">{c.refunded.text}</p></div>}
       {st.phase === "gone" && <div className={box}><h1 className="text-2xl font-bold">{c.gone.title}</h1><p className="mt-2">{c.gone.text}</p></div>}
     </div>

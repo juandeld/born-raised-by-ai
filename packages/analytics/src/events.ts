@@ -37,6 +37,13 @@ export const OPS_EVENTS = [
   "content_blocked",
   "book_downloaded",
   "photos_deleted",
+  // colorear ladder (19-oct): Trio, "otra aventura con las mismas fotos", character retention, day-25 reminder
+  "bundle_selected",
+  "credit_used",
+  "upsell_viewed",
+  "upsell_purchased",
+  "characters_deleted",
+  "expiry_reminder_sent",
 ] as const;
 
 export type FunnelEventName = (typeof FUNNEL)[number];
@@ -54,6 +61,8 @@ export interface BaseProps {
   device: Device;
   /** Random order UUID, when the event belongs to an order. */
   order_id?: string;
+  /** Colorear: variant of the order (single | bundle3 | add1 | credit), to cut costs and deliveries by offer. */
+  variant?: string;
   /** True for test-mode payments and team purchases: excluded from "venta real entregada". */
   test_mode?: boolean;
 }
@@ -70,8 +79,8 @@ export interface EventPropsMap {
   /** Landing: the sample call was played for the first time in this visit. */
   audio_play: BaseProps;
   consent_given: BaseProps & { checkbox_ids: string[]; text_version_ids: string[] };
-  checkout_started: BaseProps & { variant: "single" | "bundle"; amount_usd_cents: number; currency: string; payment_provider: string };
-  paid: BaseProps & { variant: "single" | "bundle"; amount_usd_cents: number; currency: string; payment_provider: string };
+  checkout_started: BaseProps & { variant: "single" | "bundle" | "bundle3" | "add1" | "credit"; amount_usd_cents: number; currency: string; payment_provider: string };
+  paid: BaseProps & { variant: "single" | "bundle" | "bundle3" | "add1" | "credit"; amount_usd_cents: number; currency: string; payment_provider: string };
   call_scheduled: BaseProps & { window_start_utc: string; window_end_utc: string };
   call_started: BaseProps & { attempt: number };
   call_completed: BaseProps & { attempt: number; agent_seconds: number; telephony_seconds: number; ended_by: string };
@@ -99,6 +108,18 @@ export interface EventPropsMap {
   book_downloaded: BaseProps & { kind: "pdf" };
   /** Photos of the order were erased (reason: characters_ready | unpaid | refund | retention). Counts only. */
   photos_deleted: BaseProps & { count: number; reason: string };
+  /** Colorear landing: the buyer picked an option in the selector (1 adventure / Trio). Sent only when the choice changes. */
+  bundle_selected: BaseProps & { variant: "single" | "bundle3"; previous: "single" | "bundle3" | "none" };
+  /** Colorear: one of the Trio's 2 extra adventures was requested with 1 click (characters reused, no photos). */
+  credit_used: BaseProps & { variant: "credit"; credits_left: number; credits_total: number };
+  /** Colorear: the delivery page showed "otra aventura con las mismas fotos" for the first time (hours_left of the 48 h window). */
+  upsell_viewed: BaseProps & { offer: "add1"; hours_left: number };
+  /** Colorear: the "otra aventura" order was paid. Sent together with `paid` (variant add1). */
+  upsell_purchased: BaseProps & { offer: "add1"; amount_usd_cents: number; currency: string };
+  /** Colorear: character drawings kept for the Trio/upsell were erased (reason: window_ended | credits_used | refund). Counts only. */
+  characters_deleted: BaseProps & { count: number; reason: string };
+  /** Colorear: day-25 email "your book is deleted on <date>" (has_credits: it also reminded unused Trio adventures). */
+  expiry_reminder_sent: BaseProps & { days_left: number; has_credits: boolean; sent: boolean };
 }
 
 export type EventProps<N extends EventName> = EventPropsMap[N];

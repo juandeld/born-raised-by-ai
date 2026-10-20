@@ -2,10 +2,12 @@ import type { Viewport } from "next";
 import "@fontsource-variable/bricolage-grotesque/opsz.css";
 import "@fontsource-variable/figtree";
 import "../globals.css";
+import { colorearPublicUrl } from "@lumen/config";
 import { LangSetter } from "@/components/colorear/LangSetter";
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#fbfaf7" };
 export const metadata = {
+  metadataBase: new URL(colorearPublicUrl()),
   title: "Pintoria",
   description: "Tu familia para colorear / Your family to color",
   icons: { icon: [{ url: "/pintoria/mark-a.svg", type: "image/svg+xml" }, { url: "/pintoria/favicon-32.png", sizes: "32x32", type: "image/png" }], apple: [{ url: "/pintoria/apple-touch-icon.png", sizes: "180x180" }] },

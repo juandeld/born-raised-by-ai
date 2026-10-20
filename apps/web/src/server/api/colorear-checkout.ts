@@ -1,7 +1,6 @@
-import { COLOREAR, colorearCountries, isColorearLang, type CountryCode } from "@lumen/config";
+import { COLOREAR, colorearCountries, colorearPublicUrl, isColorearLang, isSelectableVariant, type CountryCode } from "@lumen/config";
 import { ColorearValidationError, type PersonSubmission } from "@lumen/generate";
 import { getColorear } from "@/lib/colorear";
-import { baseUrl } from "@/lib/engine";
 import { legalReady } from "@/lib/legal-vars";
 import { clientIp, deviceOf, json, rateLimited } from "@/lib/request";
 
@@ -45,7 +44,7 @@ export async function POST(req: Request) {
     /* empty */
   }
   const engine = getColorear();
-  const base = baseUrl();
+  const base = colorearPublicUrl();
   try {
     const { order, checkoutUrl } = await engine.createCheckout(
       {
@@ -59,10 +58,11 @@ export async function POST(req: Request) {
         age: String(form.get("age") ?? ""),
         checkboxIds,
         ip,
+        variant: isSelectableVariant(String(form.get("variant") ?? "")) ? (String(form.get("variant")) as "single" | "bundle3") : "single",
         creative: String(form.get("creative") ?? "none").slice(0, 40).replace(/[^\w.-]/g, "") || "none",
         device: deviceOf(req.headers.get("user-agent")),
       },
-      { successUrl: (o) => `${base}/colorear/confirmacion/${o.access_token}`, cancelUrl: `${base}/colorear/${langRaw}` },
+      { successUrl: (o) => `${base}/colorear/confirmacion/${o.access_token}`, cancelUrl: `${base}${langRaw === "en" ? "/en" : "/"}` },
     );
     void order;
     return json({ ok: true, url: checkoutUrl });

@@ -23,18 +23,51 @@ export const COLOREAR = {
   retentionDays: RETENTION_DAYS.order,
   /** Photos are deleted as soon as the characters exist, and never later than this many hours after upload. */
   photoMaxHours: 24,
+  /** "Otra aventura con las mismas fotos" is offered this many hours after delivery; the character drawings (never the photos) are kept until then. */
+  upsellHours: 48,
+  /** Trio credits (the 2 adventures created after delivery) expire this many days after delivery: same as the book (RETENTION_DAYS.order). */
+  creditDays: RETENTION_DAYS.order,
+  /** The "your book is deleted on <date>" reminder goes out this many days before the deletion. */
+  reminderDaysBefore: 5,
 } as const;
 
-/** Price of the 24-page book in minor units of the local currency ($12.99 per Juan, 18-oct; docs/planes/colorear-precios.md). */
-export const COLOREAR_PRICES: Record<CountryCode, { amountMinor: number; currency: Currency }> = {
-  US: { amountMinor: 1299, currency: "USD" },
-  ES: { amountMinor: 1199, currency: "EUR" },
-  GB: { amountMinor: 999, currency: "GBP" },
-  MX: { amountMinor: 22900, currency: "MXN" },
+/**
+ * Sellable variants (docs/pricing/colorear.md, decision of 19-oct): `single` = 1 adventure, `bundle3` = Trio (3 adventures),
+ * `add1` = "otra aventura con las mismas fotos" (post-delivery offer, 48 h). `credit` is not sold: it is one of the 2 adventures
+ * of a Trio, created for free after delivery. The Cinco and the 48-page book are NOT launched.
+ */
+export type ColorearVariant = "single" | "bundle3" | "add1";
+export type ColorearOrderVariant = ColorearVariant | "credit";
+export const COLOREAR_SELECTABLE: readonly ColorearVariant[] = ["single", "bundle3"];
+
+export function isSelectableVariant(v: string | undefined | null): v is "single" | "bundle3" {
+  return v === "single" || v === "bundle3";
+}
+
+/** Number of books (adventures) a purchase of this variant gives. */
+export function booksIn(variant: ColorearOrderVariant): number {
+  return variant === "bundle3" ? 3 : 1;
+}
+
+/** Public base URL of colorear (links in emails, success_url, delivery and refund pages, canonical). */
+export function colorearPublicUrl(env: Record<string, string | undefined> = process.env): string {
+  return (env.COLOREAR_PUBLIC_URL || "https://www.pintoria.app").replace(/\/$/, "");
+}
+
+/**
+ * Prices in minor units of the local currency (docs/pricing/colorear.md, section 1.1; approved by Juan on 19-oct).
+ * They must match the Polar products (4 currencies each). The Trio is one step below the price of two single books in every
+ * currency, so "3 for less than the price of 2" is literally true.
+ */
+export const COLOREAR_PRICES: Record<CountryCode, Record<ColorearVariant, { amountMinor: number; currency: Currency }>> = {
+  US: { single: { amountMinor: 1299, currency: "USD" }, bundle3: { amountMinor: 2499, currency: "USD" }, add1: { amountMinor: 949, currency: "USD" } },
+  ES: { single: { amountMinor: 1199, currency: "EUR" }, bundle3: { amountMinor: 2299, currency: "EUR" }, add1: { amountMinor: 849, currency: "EUR" } },
+  GB: { single: { amountMinor: 999, currency: "GBP" }, bundle3: { amountMinor: 1899, currency: "GBP" }, add1: { amountMinor: 749, currency: "GBP" } },
+  MX: { single: { amountMinor: 22900, currency: "MXN" }, bundle3: { amountMinor: 42900, currency: "MXN" }, add1: { amountMinor: 16900, currency: "MXN" } },
 };
 
-export function colorearPrice(country: CountryCode): { amountMinor: number; currency: Currency } {
-  return COLOREAR_PRICES[country];
+export function colorearPrice(country: CountryCode, variant: ColorearVariant = "single"): { amountMinor: number; currency: Currency } {
+  return COLOREAR_PRICES[country][variant];
 }
 
 /** Countries where the book is sold. No calls are involved, so US is open (organic channels; ads there stay gated by marketing rules). */

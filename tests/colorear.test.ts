@@ -105,9 +105,10 @@ describe("colorear end to end with the mock provider", () => {
     expect(pdf).not.toBeNull();
     const doc = await PDFDocument.load(pdf!.bytes);
     expect(doc.getPageCount()).toBe(COLOREAR.pagesTotal);
-    // intermediates deleted, only state + pdf remain
+    // intermediate pages deleted; the book, the state and the two CHARACTER drawings (never the photos) remain for the 48 h offer
     const keys = [...h.storage.files.keys()].sort();
-    expect(keys).toEqual([`colorear/${paid.id}/book.pdf`, `colorear/${paid.id}/state.json`]);
+    expect(keys.filter((k) => !k.includes("/char-"))).toEqual([`colorear/${paid.id}/book.pdf`, `colorear/${paid.id}/state.json`]);
+    expect(keys.filter((k) => k.includes("/char-")).length).toBe(2);
     // emails: receipt then delivery with the entrega link
     expect(h.delivery.sent.map((m) => m.kind)).toEqual(["receipt", "delivery"]);
     expect(h.delivery.sent[0]!.text).not.toMatch(/openai|anthropic/i); // D22: vendor names live only in the privacy policy

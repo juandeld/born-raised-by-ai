@@ -33,3 +33,20 @@ Costo variable de referencia: ~$1.05 por pedido (investigación b2c).
 Decisión de duración (Vercel Hobby): la generación corre en `/api/colorear/run` con `maxDuration = 300` y se ejecuta después de responder 202 (`after`). El motor se detiene solo a los 235 s, guarda el estado en Storage y pide otra invocación; la página de estado (cada 3 s) y el cron barrido la reanudan si se cae. Medido: 104 s en una sola invocación, así que normalmente no hace falta dividir.
 
 Velocidad: medido en producción 104 s y 110 s (meta <90 s, no alcanzada). El tiempo lo dominan la portada (reintentos de QA, ahora relajados) y la cola de 23 páginas con 12 imágenes en paralelo (`COLOREAR_CONCURRENCY`). Una tercera corrida tuvo una petición a OpenAI colgada (~150 s); se bajó el timeout a 100 s. Para llegar a <90 s de forma fiable: calidad `low` o verificar el límite de imágenes por minuto del tier de OpenAI.
+
+
+## Actualización 19-oct-2026 (noche): escalera, dominio y retención
+
+Decisiones de Juan (D25): escalera de **1 aventura** y **Trío** más la oferta **"otra aventura con las mismas fotos"** (48 h); el Cinco y el libro de 48 págs no se lanzan; dominio **pintoria.app**. Retención y reembolso del Trío: D26 (`legal-compliance`).
+
+| Pieza | Estado | Evidencia |
+|---|---|---|
+| Dominio | Hecho y verificado en producción: `pintoria.app`/`www.pintoria.app` sirven Pintoria (`/` es, `/en` en), las rutas de Santa dan 404 en esos hosts; `COLOREAR_PUBLIC_URL` en enlaces y canonical | `apps/web/src/middleware.ts`, `lib/colorear-host.ts`, commit 09a30fe |
+| Marca | Aviso, privacidad y términos de colorear usan "Pintoria"; prueba que falla con "Jinglo" | `tests/colorear-brand.test.ts`, commit 7509139 |
+| Selector 1 aventura / Trío | Hecho: dos tarjetas, Trío destacado y preseleccionado ("3 por menos que el precio de 2", tachado 3 × precio sencillo), líneas legales del Trío y del correo | `ColorearForm.tsx`, capturas `docs/diseno/capturas/colorear-trio-selector-*-movil.png` |
+| Trío con créditos | Hecho con pago simulado: la 1.ª aventura al comprar; "Te quedan 2 aventuras" en la página de entrega; cada libro con 1 clic reutilizando los dibujos (sin fotos); créditos caducan a los 30 días; un libro fallido devuelve su crédito | `engine.useCredit`, `tests/colorear-ladder.test.ts`, captura `colorear-trio-entrega-creditos-movil.png` |
+| Otra aventura | Hecho con pago simulado: oferta de 48 h con enlace firmado y cuenta atrás real, checkout propio con K2 visible, reembolso propio de 7 días | `engine.createUpsellCheckout` |
+| Retención | Hecho: fotos ≤ 24 h (sin cambio); dibujos 48 h (una aventura) o hasta la última aventura y máx. 30 días (Trío); botón "Borrar mis personajes"; borrado por cron | `sweep`, pruebas de borrado |
+| Recordatorio día 25 | Hecho: correo transaccional (texto de `legal-compliance`) 5 días antes del borrado; bloque comercial solo sin aventuras sin usar, sin baja y con menos de 3 correos comerciales; baja de un clic | `engine.sweep`, `/api/colorear/baja` |
+| Eventos | `bundle_selected`, `credit_used`, `upsell_viewed`, `upsell_purchased`, `characters_deleted`, `expiry_reminder_sent` | `packages/analytics/src/events.ts` |
+| Pendiente | Migración 0004 en Supabase; productos de Polar en `POLAR_PRODUCT_MAP` (ver `pendientes-cuentas.md`); probar el reembolso parcial en Polar; usar aventuras del Trío subiendo las fotos otra vez cuando se borraron los dibujos (hoy no existe ese camino: el botón de borrado solo se ofrece a quien compró una aventura); segundo correo comercial a las 30 h de la entrega | |

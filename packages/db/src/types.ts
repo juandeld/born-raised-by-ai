@@ -4,7 +4,10 @@ export interface OrderRow {
   id: string;
   access_token: string;
   product: string;
-  variant: "single" | "bundle";
+  /** Santa: single | bundle. Colorear: single | bundle3 | add1 | credit (see packages/config/src/colorear.ts). */
+  variant: "single" | "bundle" | "bundle3" | "add1" | "credit";
+  /** Colorear: the order this one was made from (a Trio credit or an "otra aventura" purchase reuse its characters). */
+  parent_order_id?: string | null;
   calls_included: number;
   country: "US" | "ES" | "GB" | "MX";
   locale: string;

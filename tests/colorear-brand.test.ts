@@ -26,8 +26,8 @@ describe("colorear brand", () => {
     for (const lang of COLOREAR_LANGS) {
       for (const s of COLOREAR_TERMS[lang].sections) texts.push(s.h, s.p.replace(/\{(\w+)\}/g, (m, key: string) => vars[key] ?? m));
       texts.push(JSON.stringify(COLOREAR_COPY[lang].faq), COLOREAR_COPY[lang].siteTitle, COLOREAR_COPY[lang].siteDescription);
-      for (const kind of ["receipt", "delivery", "refund"] as const) {
-        const m = composeColorearMessage(kind, lang, "a@b.co", { names: "Ana", price: "$1", statusLink: "s", deliveryLink: "d", refundLink: "r", deleteDate: "2026-11-30", holder: "T", privacyEmail: "p@x", supportEmail: "s@x", brand: vars.MARCA!});
+      for (const kind of ["receipt", "receipt_add", "delivery", "refund", "reminder"] as const) {
+        const m = composeColorearMessage(kind, lang, "a@b.co", { names: "Ana", price: "$1", statusLink: "s", deliveryLink: "d", refundLink: "r", deleteDate: "2026-11-30", holder: "T", privacyEmail: "p@x", supportEmail: "s@x", brand: vars.MARCA!, address: "Calle 1", stopLink: "x", landingLink: "l", commercialOk: true, offerPrice: "$9", offerUntil: "u", offerLink: "o", creditsLeft: 0 });
         texts.push(m.subject, m.text);
       }
     }

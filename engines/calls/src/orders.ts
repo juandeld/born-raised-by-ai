@@ -148,7 +148,7 @@ export class OrderService {
     const session = await this.d.payments.createCheckout({
       orderId: order.id,
       productSlug: order.product,
-      variant: order.variant,
+      variant: order.variant as "single" | "bundle",
       country: order.country,
       productName: `${this.d.brand.brand} - ${order.product}`,
       amountMinor: charge.amountMinor,

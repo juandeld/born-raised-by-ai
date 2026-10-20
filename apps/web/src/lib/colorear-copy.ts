@@ -20,6 +20,7 @@ export interface ColorearCopy {
       addCard: (next: number) => string; max: string; removed: (n: number) => string;
       missing: { photo: string; name: string; role: string; protagonistRole: string; join: (parts: string[]) => string };
     };
+    bundle: { title: string; hint: string; one: { name: string; text: string }; trio: { name: string; badge: string; tagline: string; text: string }; anchor: (total: string) => string; firstTheme: string };
     age: { label: string; hint: string };
     theme: { label: string; hint: string; ph: string; own: string; picked: string };
     email: { label: string; hint: string };
@@ -34,6 +35,11 @@ export interface ColorearCopy {
     pendingPay: { title: string; text: string };
     working: { title: (n: string) => string; text: string; stages: Record<string, string>; keep: string };
     ready: { title: (n: string) => string; text: string; download: string; expires: (d: string) => string; email: string; print: string; survey: string; loved: string; ok: string; bad: string; thanks: string; refund: string; refundDone: string; refundFail: string; again: string };
+    more: {
+      left: (n: number) => string; text: (date: string) => string; pick: string; create: string; creating: string; own: string; ph: string; error: string;
+      showAll: string; expired: string; books: string; open: string; working: string; ready: string; all: string; failedCredit: { title: string; text: string }; adventure: (n: number) => string;
+    };
+    offer: { title: string; text: (price: string) => string; left: (h: number) => string; until: (d: string) => string; pay: (price: string) => string; paying: string; error: string; deleteDone: string };
     failed: { title: string; text: string };
     refunded: { title: string; text: string };
     gone: { title: string; text: string };
@@ -55,7 +61,7 @@ const ES: ColorearCopy = {
     text: "Sube de 1 a 5 fotos, cuéntanos cómo se llaman y creamos una aventura de 24 páginas en la que ellos son los protagonistas. Lista en minutos, para imprimir en casa.",
     cta: "Crear mi libro",
     price: (p) => `${p} una sola vez. Sin suscripción.`,
-    badges: ["24 páginas", "Para niños de 3 a 8 años", "Las fotos se borran al terminar"],
+    badges: ["24 páginas", "Para niños de 3 a 8 años", "Fotos borradas en menos de 24 h"],
   },
   steps: {
     title: "Así funciona",
@@ -76,7 +82,7 @@ const ES: ColorearCopy = {
     items: [
       "Las fotos se borran en cuanto los personajes están listos, y siempre antes de 24 horas.",
       "Nunca las usamos para entrenar modelos ni para reconocer a nadie.",
-      "Los nombres se quedan en nuestros servidores: los ponemos nosotros en el libro.",
+      "Los nombres se quedan en nuestros servidores. Los dibujos de los personajes se guardan 48 h (30 días en el Trío) solo para pedir otra aventura sin subir fotos; puedes borrarlos antes.",
       "El libro terminado se borra a los 30 días. Reembolso automático por 7 días.",
     ],
   },
@@ -86,7 +92,8 @@ const ES: ColorearCopy = {
       { q: "¿Cómo lo hacen?", a: "Detrás de cada libro hay un proceso con varias etapas: convertimos cada foto en un personaje de dibujo que se mantiene reconocible en las 24 páginas, escribimos una historia con principio, aventura y final pensada para la edad del niño, y cada página pasa por revisión automática de calidad (trazo limpio, sin color ni sombreados, apto para colorear) y se vuelve a dibujar si no la supera. Al final maquetamos todo en un PDF listo para imprimir en Carta o A4. Todo con privacidad por diseño: las fotos se borran en cuanto los personajes están listos, siempre antes de 24 horas. Las ilustraciones y la historia se crean con nuestro proceso propio asistido por inteligencia artificial y pueden tener imperfecciones." },
       { q: "¿Cuánto tarda?", a: "Normalmente entre 5 y 15 minutos. Verás cómo van apareciendo los personajes y las páginas, y te lo enviamos por correo." },
       { q: "¿Qué fotos funcionan mejor?", a: "Fotos claras, con buena luz y la cara visible, de una sola persona o mascota por foto. Se aceptan JPG y PNG de hasta 10 MB." },
-      { q: "¿Qué pasa con las fotos?", a: "Se usan solo para generar los dibujos de tu libro y se borran en cuanto están listos, siempre antes de 24 horas. Nunca se usan para entrenar modelos. Lo único que guardamos son los dibujos, durante 30 días, para que puedas volver a descargar tu libro." },
+      { q: "¿Qué pasa con las fotos?", a: "Se usan solo para generar los dibujos de tu libro y se borran en cuanto están listos, siempre antes de 24 horas. Nunca se usan para entrenar modelos. Los dibujos de los personajes (no las fotos) se guardan solo para que puedas pedir otra aventura sin subir fotos: 48 horas después de la entrega, o hasta 30 días si compras el Trío; puedes borrarlos antes. El libro terminado se guarda 30 días para que puedas volver a descargarlo, y luego se borra." },
+      { q: "¿Qué es el Trío?", a: "Tres aventuras con un solo pago, por menos que el precio de dos libros sueltos. Eliges la primera al comprar; las otras dos las pides después desde la página de entrega, con un clic y sin subir fotos, hasta 30 días después de recibir la primera." },
       { q: "¿Y si no me gusta el resultado?", a: "Reembolso completo y automático hasta 7 días después de recibirlo, desde el enlace de tu recibo. Sin preguntas." },
       { q: "¿Es una suscripción?", a: "No. Es un pago único por libro." },
       { q: "¿Los dibujos son de personajes de películas?", a: "No. Los personajes son tu familia y la aventura es original. No usamos marcas ni personajes con derechos de autor." },
@@ -126,6 +133,14 @@ const ES: ColorearCopy = {
     },
     age: { label: "Edad de quien va a colorear", hint: "Ajusta la dificultad de los dibujos." },
     theme: { label: "Elige la aventura", hint: "Toda la historia gira en torno a este tema. Si no eliges ninguno, te sorprendemos.", ph: "dinosaurios, mi ciudad, el cumpleaños de Sofía...", own: "O escribe la tuya", picked: "Elegida" },
+    bundle: {
+      title: "Elige cuántas aventuras",
+      hint: "Pago único. El libro de cada aventura tiene 24 páginas.",
+      one: { name: "1 aventura", text: "Un libro de 24 páginas con la aventura que elijas." },
+      trio: { name: "Trío", badge: "Mejor valor", tagline: "3 por menos que el precio de 2", text: "3 aventuras con los mismos personajes. Eliges la primera ahora y las otras 2 después, con un clic y sin subir fotos." },
+      anchor: (t) => `3 aventuras sueltas: ${t}`,
+      firstTheme: "Elige la primera aventura",
+    },
     email: { label: "¿A dónde te enviamos el libro?", hint: "Tu correo. Ahí llegan el libro y el recibo." },
     country: { label: "País" },
     aviso: "Aviso para madres, padres y tutores",
@@ -172,8 +187,23 @@ const ES: ColorearCopy = {
       refundFail: "No pudimos reembolsar desde aquí. Escríbenos y lo resolvemos.",
       again: "Hacer otro libro",
     },
+    more: {
+      left: (n) => (n === 1 ? "Te queda 1 aventura" : `Te quedan ${n} aventuras`),
+      text: (d) => `Elige la siguiente: usamos los mismos personajes y no tienes que subir fotos. No cuesta nada más. Caducan el ${d}.`,
+      pick: "Elige la aventura", create: "Crear esta aventura", creating: "Preparando...", own: "O escribe la tuya", ph: "dinosaurios, mi ciudad...", error: "No pudimos crear la aventura. Prueba con otro tema.",
+      showAll: "Ver todos los temas", expired: "Las aventuras sin usar de tu Trío ya caducaron.", books: "Tus aventuras", open: "Abrir", working: "Creándose", ready: "Lista", all: "Ver todas mis aventuras",
+      failedCredit: { title: "No pudimos terminar esta aventura", text: "No se descontó de tu Trío: sigue disponible para que elijas otra." },
+      adventure: (n) => `Aventura ${n}`,
+    },
+    offer: {
+      title: "Otra aventura con los mismos personajes",
+      text: (p) => `Por ${p}, sin subir fotos otra vez. Es una compra aparte.`,
+      left: (h) => (h <= 1 ? "Queda menos de 1 hora" : `Quedan ${h} horas`),
+      until: (d) => `Oferta válida hasta el ${d}`,
+      pay: (p) => `Pagar ${p} y crear la aventura`, paying: "Preparando el pago...", error: "No pudimos continuar. La oferta pudo haber terminado.", deleteDone: "Listo.",
+    },
     failed: { title: "No pudimos terminar el libro", text: "Te devolvemos el dinero automáticamente. Te avisamos por correo." },
-    refunded: { title: "Pedido reembolsado", text: "Ya devolvimos el pago y borramos tus fotos y el libro." },
+    refunded: { title: "Pedido reembolsado", text: "Ya devolvimos el pago y borramos tus fotos, los dibujos de los personajes y el libro." },
     gone: { title: "Este libro ya no está disponible", text: "Borramos los libros a los 30 días para cuidar tu privacidad." },
     notFound: "No encontramos este pedido.",
     test: "Modo de prueba: no se cobró nada.",
@@ -193,7 +223,7 @@ const EN: ColorearCopy = {
     text: "Upload 1 to 5 photos, tell us their names, and we create a 24-page adventure starring them. Ready in minutes, to print at home.",
     cta: "Create my book",
     price: (p) => `${p} one time. No subscription.`,
-    badges: ["24 pages", "For kids aged 3 to 8", "Photos deleted when done"],
+    badges: ["24 pages", "For kids aged 3 to 8", "Photos deleted within 24 h"],
   },
   steps: {
     title: "How it works",
@@ -214,7 +244,7 @@ const EN: ColorearCopy = {
     items: [
       "Photos are deleted as soon as the characters are ready, and always within 24 hours.",
       "We never use them to train models or to recognize anyone.",
-      "Names stay on our servers: we add them to the book ourselves.",
+      "Names stay on our servers. The character drawings are kept 48 h (30 days with the Trio) only to order another adventure without uploading photos; you can delete them sooner.",
       "The finished book is deleted after 30 days. Automatic refund for 7 days.",
     ],
   },
@@ -224,7 +254,8 @@ const EN: ColorearCopy = {
       { q: "How does it work?", a: "Behind every book is a multi-stage process: we turn each photo into a cartoon character that stays recognizable across all 24 pages, write a story with a beginning, an adventure and an ending suited to the child's age, and every page goes through automatic quality review (clean linework, no color or shading, ready to color) and is redrawn if it does not pass. Finally we lay everything out as a print-ready PDF for Letter or A4. Privacy by design throughout: photos are deleted as soon as the characters are ready, always within 24 hours. The illustrations and the story are created with our own illustration process assisted by artificial intelligence and may have imperfections." },
       { q: "How long does it take?", a: "Usually 5 to 15 minutes. You will see the characters and pages appear, and we also email it to you." },
       { q: "Which photos work best?", a: "Clear photos with good light and the face visible, one person or pet per photo. JPG and PNG up to 10 MB." },
-      { q: "What happens to the photos?", a: "They are used only to create the drawings for your book and are deleted as soon as they are ready, always within 24 hours. They are never used to train models. The only thing we keep is the drawings, for 30 days, so you can download your book again." },
+      { q: "What happens to the photos?", a: "They are used only to create the drawings for your book and are deleted as soon as they are ready, always within 24 hours. They are never used to train models. The drawings of the characters (not the photos) are kept only so you can order another adventure without uploading photos: 48 hours after delivery, or up to 30 days if you buy the Trio; you can delete them sooner. The finished book is kept 30 days so you can download it again, then deleted." },
+      { q: "What is the Trio?", a: "Three adventures for one payment, for less than the price of two single books. You choose the first when you buy; you order the other two later from your delivery page, with one click and no new photos, up to 30 days after you receive the first." },
       { q: "What if I do not like it?", a: "Full automatic refund up to 7 days after you receive it, from the link in your receipt. No questions asked." },
       { q: "Is it a subscription?", a: "No. It is a one-time payment per book." },
       { q: "Are the drawings of movie characters?", a: "No. The characters are your family and the adventure is original. We do not use brands or copyrighted characters." },
@@ -264,6 +295,14 @@ const EN: ColorearCopy = {
     },
     age: { label: "Age of the child who will color", hint: "Adjusts how detailed the drawings are." },
     theme: { label: "Choose the adventure", hint: "The whole story is built around this theme. If you pick none, we surprise you.", ph: "dinosaurs, my city, Sofia's birthday...", own: "Or write your own", picked: "Selected" },
+    bundle: {
+      title: "Choose how many adventures",
+      hint: "One-time payment. Each adventure is a 24-page book.",
+      one: { name: "1 adventure", text: "One 24-page book with the adventure you choose." },
+      trio: { name: "Trio", badge: "Best value", tagline: "3 for less than the price of 2", text: "3 adventures with the same characters. Pick the first now and the other 2 later, with one click and no new photos." },
+      anchor: (t) => `3 single adventures: ${t}`,
+      firstTheme: "Choose the first adventure",
+    },
     email: { label: "Where should we send the book?", hint: "Your email. The book and the receipt arrive there." },
     country: { label: "Country" },
     aviso: "Notice to parents and guardians",
@@ -310,8 +349,23 @@ const EN: ColorearCopy = {
       refundFail: "We could not refund from here. Write to us and we will fix it.",
       again: "Make another book",
     },
+    more: {
+      left: (n) => (n === 1 ? "You have 1 adventure left" : `You have ${n} adventures left`),
+      text: (d) => `Pick the next one: we use the same characters and you do not upload photos. It costs nothing more. They expire on ${d}.`,
+      pick: "Choose the adventure", create: "Create this adventure", creating: "Preparing...", own: "Or write your own", ph: "dinosaurs, my city...", error: "We could not create the adventure. Try another theme.",
+      showAll: "See all themes", expired: "The unused adventures of your Trio have expired.", books: "Your adventures", open: "Open", working: "Being created", ready: "Ready", all: "See all my adventures",
+      failedCredit: { title: "We could not finish this adventure", text: "It was not deducted from your Trio: it is still available so you can pick another one." },
+      adventure: (n) => `Adventure ${n}`,
+    },
+    offer: {
+      title: "Another adventure with the same characters",
+      text: (p) => `For ${p}, no need to upload photos again. It is a separate purchase.`,
+      left: (h) => (h <= 1 ? "Less than 1 hour left" : `${h} hours left`),
+      until: (d) => `Offer valid until ${d}`,
+      pay: (p) => `Pay ${p} and create the adventure`, paying: "Preparing payment...", error: "We could not continue. The offer may have ended.", deleteDone: "Done.",
+    },
     failed: { title: "We could not finish the book", text: "We refund you automatically. We will email you." },
-    refunded: { title: "Order refunded", text: "We returned the payment and deleted your photos and the book." },
+    refunded: { title: "Order refunded", text: "We returned the payment and deleted your photos, the character drawings and the book." },
     gone: { title: "This book is no longer available", text: "We delete books after 30 days to protect your privacy." },
     notFound: "We could not find this order.",
     test: "Test mode: nothing was charged.",

@@ -43,14 +43,24 @@ Borrar antes el registro A de "parking" de GoDaddy y el CNAME `www` existente. P
 - ElevenLabs: agente es-419 creado (agent_2601m58wfve0fdc9j1dbfm0v5fy8) con voz LykVXmiL9G4zV1CJHN2o. Faltan: ELEVENLABS_API_KEY en Vercel, agentes es-ES / en-US / en-GB, confirmación escrita del caso de uso.
 - Pendientes de Juan: Twilio (SID, token, número), Resend (API key), lumen-labs.co DNS → Vercel, Polar y Recurrente (KYC), cuenta USD.
 
-## Polar: producto de colorear (Pintoria)
+## Polar: productos de colorear (Pintoria)
 
-Un solo producto con precios en 4 monedas (USD 12.99, GBP 9.99, EUR 11.99, MXN 229). `createCheckout` envía `currency` en minúsculas (`usd`, `gbp`, `eur`, `mxn`) según la moneda del pedido (`COLOREAR_PRICES`).
+Tres productos privados, cada uno con precios en 4 monedas (el checkout envía `currency` en minúsculas según el pedido, de `COLOREAR_PRICES`). Escalera aprobada por Juan el 19-oct (D25): 1 aventura, Trío y "otra aventura"; el Cinco no se lanza.
+
+| Variante | Producto Polar | USD | GBP | EUR | MXN |
+|---|---|---|---|---|---|
+| `single` (1 aventura) | 3ccd6b75-f151-4c78-8910-9745523f410e | 12.99 | 9.99 | 11.99 | 229 |
+| `bundle3` (Trío) | 75dae2e6-3d80-44e9-a956-f3683c876968 | 24.99 | 18.99 | 22.99 | 429 |
+| `add1` (otra aventura, 48 h) | 3ec7f55e-eedd-4f37-b279-f33a72383216 | 9.49 | 7.49 | 8.49 | 169 |
 
 ```
-POLAR_PRODUCT_MAP={"colorear:US:single":"3ccd6b75-f151-4c78-8910-9745523f410e","colorear:GB:single":"3ccd6b75-f151-4c78-8910-9745523f410e","colorear:ES:single":"3ccd6b75-f151-4c78-8910-9745523f410e","colorear:MX:single":"3ccd6b75-f151-4c78-8910-9745523f410e"}
+POLAR_PRODUCT_MAP={"colorear:US:single":"3ccd6b75-f151-4c78-8910-9745523f410e","colorear:GB:single":"3ccd6b75-f151-4c78-8910-9745523f410e","colorear:ES:single":"3ccd6b75-f151-4c78-8910-9745523f410e","colorear:MX:single":"3ccd6b75-f151-4c78-8910-9745523f410e","colorear:US:bundle3":"75dae2e6-3d80-44e9-a956-f3683c876968","colorear:GB:bundle3":"75dae2e6-3d80-44e9-a956-f3683c876968","colorear:ES:bundle3":"75dae2e6-3d80-44e9-a956-f3683c876968","colorear:MX:bundle3":"75dae2e6-3d80-44e9-a956-f3683c876968","colorear:US:add1":"3ec7f55e-eedd-4f37-b279-f33a72383216","colorear:GB:add1":"3ec7f55e-eedd-4f37-b279-f33a72383216","colorear:ES:add1":"3ec7f55e-eedd-4f37-b279-f33a72383216","colorear:MX:add1":"3ec7f55e-eedd-4f37-b279-f33a72383216"}
 ```
 
-- Webhook de Polar ya creado: formato Raw, API 2026-10, eventos `order.paid` y `order.refunded`, URL `/api/webhooks/polar`.
-- Firma: `polar.ts` usa los bytes utf-8 del secreto completo (incluido `whsec_`), igual que el SDK de Polar (`Buffer.from(secret,'utf-8').toString('base64')` antes de standardwebhooks). Cubierto por prueba.
+- Los ejemplos de claves de Santa (`santa:<PAÍS>:single|bundle`) se mantienen en el mismo mapa. Las aventuras gratis del Trío (`credit`) no pasan por Polar: no hay producto.
+- **Migración `packages/db/migrations/0004_colorear_variants.sql` (pendiente de aplicar en Supabase ANTES de cobrar el Trío o la oferta)**: amplía el `check` de `variant` (`bundle3`, `add1`, `credit`), agrega `parent_order_id` y un índice único para que dos clics no tomen el mismo crédito.
+- Impuesto "incluido" en ES, UK y MX y precio visible igual a `COLOREAR_PRICES` en cada producto: `[no verificado]` en el panel de Polar.
+- **Reembolso parcial del Trío** (un tercio por aventura no usada, D26): `polar.ts` envía `amount` sin `tax_amount` en reembolsos parciales `[no verificado]`; probar en sandbox. Si Polar lo rechaza, el motor no cambia nada y responde "escríbenos" (plan B de legal: reembolso total o nulo).
+- Webhook `order.refunded`: un reembolso parcial iniciado por el motor llega de vuelta como ese evento; el motor lo ignora porque ya marcó `refunded_at` (no lo lee como reembolso total).
+- Dominio: `pintoria.app` y `www.pintoria.app` (apex redirige 308 a www en Vercel). `COLOREAR_PUBLIC_URL` (por defecto https://www.pintoria.app) es la base de enlaces de correos, `success_url`, entrega y reembolso, y del canonical. `COLOREAR_HOSTS` (opcional) cambia los hosts que sirven Pintoria en la raíz.
 - `PAYMENT_PROVIDER` sigue en `mock` hasta decisión de Juan.

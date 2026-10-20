@@ -7,7 +7,12 @@ import { PencilIcon, ThemeIcon } from "./ThemeIcon";
 export interface CountryLegal {
   country: string;
   label: string;
-  price: string;
+  /** Formatted prices of the options in this country, and the struck-through reference "3 single adventures" total. */
+  prices: { single: string; bundle3: string; threeSingles: string };
+  /** Legal lines shown next to the Trio option (credits, expiry, refund) and under the email field. */
+  trioLine: string;
+  trioRefundLine: string;
+  emailLine: string;
   checkboxes: Array<{ id: string; text: string }>;
   aviso: { title: string; intro: string; sections: Array<{ heading: string; body: string }>; privacyLink: string };
   refundLine: string;
@@ -100,6 +105,9 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
   const itemsRef = useRef<Item[]>([]);
   itemsRef.current = items;
   const [country, setCountry] = useState(defaultCountry);
+  /** Trio is the highlighted default (docs/pricing/colorear.md 1.3). */
+  const [variant, setVariant] = useState<"single" | "bundle3">("bundle3");
+  const variantSent = useRef<"single" | "bundle3" | "none">("none");
   const [email, setEmail] = useState("");
   const [age, setAge] = useState("");
   const [theme, setTheme] = useState("");
@@ -116,9 +124,9 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
   const allChecked = !!checked[consentBox.id];
   const detailLabel = lang === "es" ? "Ver detalle" : "See details";
 
-  const beacon = (event: "landing_view" | "form_started") => {
+  const beacon = (event: "landing_view" | "form_started" | "bundle_selected", extra: Record<string, string> = {}) => {
     try {
-      const body = JSON.stringify({ event, lang, country, creative });
+      const body = JSON.stringify({ event, lang, country, creative, ...extra });
       if (navigator.sendBeacon) navigator.sendBeacon("/api/colorear/track", new Blob([body], { type: "application/json" }));
     } catch {
       /* analytics must never break the page */
@@ -134,6 +142,13 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
     setFocusId(null);
   }, [focusId]);
 
+  const chooseVariant = (v: "single" | "bundle3") => {
+    if (v === variant) return;
+    beacon("bundle_selected", { variant: v, previous: variantSent.current === "none" ? variant : variantSent.current });
+    variantSent.current = v;
+    setVariant(v);
+    markStarted();
+  };
   const markStarted = () => {
     if (started.current) return;
     started.current = true;
@@ -206,6 +221,7 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
     const fd = new FormData();
     fd.set("lang", lang);
     fd.set("country", country);
+    fd.set("variant", variant);
     fd.set("email", email.trim());
     fd.set("age", age);
     fd.set("theme", theme.trim());
@@ -330,7 +346,7 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
 
       <fieldset className="rounded-2xl border border-lapiz-teal/50 bg-white p-5 sm:p-6" aria-describedby="theme-hint">
         <legend className="sr-only">{c.theme.label}</legend>
-        {stepHead(2, c.theme.label, undefined)}
+        {stepHead(2, variant === "bundle3" ? c.bundle.firstTheme : c.theme.label, undefined)}
         <p id="theme-hint" className="mt-1 pl-12 text-sm text-lapiz-muted">{c.theme.hint}</p>
         <div role="radiogroup" aria-label={c.theme.label} className="mt-5 grid grid-cols-3 gap-2 sm:gap-2.5 md:grid-cols-4">
           {themes.map((t) => {
@@ -363,10 +379,44 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
         {err("theme")}
       </fieldset>
 
+      <fieldset className={card}>
+        <legend className="sr-only">{c.bundle.title}</legend>
+        {stepHead(3, c.bundle.title, c.bundle.hint)}
+        <div role="radiogroup" aria-label={c.bundle.title} className="mt-4 grid gap-3 sm:grid-cols-2">
+          {([
+            { id: "single" as const, name: c.bundle.one.name, text: c.bundle.one.text, price: legal.prices.single },
+            { id: "bundle3" as const, name: c.bundle.trio.name, text: c.bundle.trio.text, price: legal.prices.bundle3 },
+          ]).map((o) => {
+            const on = variant === o.id;
+            const trio = o.id === "bundle3";
+            return (
+              <label
+                key={o.id}
+                className={`c-option relative flex min-h-[44px] cursor-pointer flex-col rounded-2xl border bg-white p-4 transition-colors focus-within:ring-4 focus-within:ring-lapiz-gold/60 ${trio ? "order-first sm:order-none" : ""} ${on ? "border-[2.5px] border-lapiz-teal bg-lapiz-tint" : "border-lapiz-line hover:border-lapiz-teal/60"}`}
+              >
+                <input type="radio" name="variant" value={o.id} checked={on} className="sr-only" onChange={() => chooseVariant(o.id)} />
+                {trio && <span className="c-stamp absolute -top-3 right-3 rotate-2">{c.bundle.trio.badge}</span>}
+                <span className="flex items-start justify-between gap-3">
+                  <span className="c-h text-xl">{o.name}</span>
+                  <span aria-hidden className={`mt-1 grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 ${on ? "border-lapiz-teal bg-lapiz-teal" : "border-lapiz-line bg-white"}`}>
+                    {on && <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="#fff" strokeWidth="2.200" strokeLinecap="round" strokeLinejoin="round"><path d="M3 8.500l3.200 3L13 4.500" /></svg>}
+                  </span>
+                </span>
+                <span className="c-h mt-1 text-3xl">{o.price}</span>
+                {trio && <span className="mt-1 text-sm font-bold text-lapiz-teal-dark">{c.bundle.trio.tagline}</span>}
+                {trio && <span className="mt-0.5 text-sm text-lapiz-muted line-through decoration-1">{c.bundle.anchor(legal.prices.threeSingles)}</span>}
+                <span className="mt-2 text-sm leading-snug">{o.text}</span>
+              </label>
+            );
+          })}
+        </div>
+        {variant === "bundle3" && <p className="mt-3 text-sm leading-snug">{legal.trioLine}</p>}
+      </fieldset>
+
       <div className={card}>
         <label className="block">
           <span className="flex items-start gap-3">
-            <span aria-hidden className="c-h grid h-9 w-9 shrink-0 place-items-center rounded-full bg-lapiz-teal text-base text-white">3</span>
+            <span aria-hidden className="c-h grid h-9 w-9 shrink-0 place-items-center rounded-full bg-lapiz-teal text-base text-white">4</span>
             <span>
               <span className="c-h block text-xl">{c.email.label}</span>
               <span className="block text-sm text-lapiz-muted">{c.email.hint}</span>
@@ -374,12 +424,13 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
           </span>
           <input type="email" inputMode="email" autoComplete="email" className={input} value={email} onChange={(e) => setEmail(e.target.value)} />
         </label>
+        <p className="mt-2 text-sm text-lapiz-muted">{legal.emailLine}</p>
         {err("email")}
         {Object.keys(countries).length > 1 && (
           <label className="mt-4 block text-sm font-semibold">
             {c.country.label}
             <select className={input} value={country} onChange={(e) => setCountry(e.target.value)}>
-              {Object.values(countries).map((k) => <option key={k.country} value={k.country}>{k.label} ({k.price})</option>)}
+              {Object.values(countries).map((k) => <option key={k.country} value={k.country}>{k.label} ({k.prices[variant]})</option>)}
             </select>
           </label>
         )}
@@ -402,7 +453,7 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
         {err("consent")}
       </div>
 
-      <p className="text-sm font-semibold">{legal.refundLine}</p>
+      <p className="text-sm font-semibold">{variant === "bundle3" ? legal.trioRefundLine : legal.refundLine}</p>
       <p className="text-sm">
         {payNotice.text}{" "}
         <a className="font-semibold underline" href={`/colorear/${lang}/terminos`} target="_blank" rel="noreferrer">{lang === "es" ? "Términos" : "Terms"}</a>
@@ -411,7 +462,7 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
       </p>
       {Object.entries(errors).filter(([k]) => !["photos", "persons", "age", "email", "theme", "consent"].includes(k)).map(([k, v]) => <p key={k} role="alert" className="font-semibold text-lapiz-error">{v}</p>)}
       <button type="submit" disabled={busy} className="c-btn c-btn-block min-h-[60px]">
-        {busy ? c.paying : c.pay(legal.price)}
+        {busy ? c.paying : c.pay(legal.prices[variant])}
       </button>
     </form>
   );

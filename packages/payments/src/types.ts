@@ -1,9 +1,10 @@
-import type { Currency, CountryCode, Variant } from "@lumen/config";
+import type { ColorearVariant, Currency, CountryCode, Variant } from "@lumen/config";
 
 export interface CheckoutRequest {
   orderId: string;
   productSlug: string;
-  variant: Variant;
+  /** Santa: single | bundle. Colorear: single | bundle3 | add1. The Polar product key is `<slug>:<country>:<variant>`. */
+  variant: Variant | ColorearVariant;
   country: CountryCode;
   productName: string;
   /** Amount in minor units of `currency`. The caller already converted if the provider needs it. */

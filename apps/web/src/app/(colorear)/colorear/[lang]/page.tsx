@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { COLOREAR_DEFAULT_COUNTRY, COLOREAR_THEMES, colorearCountriesFor, colorearLegalLocale, colorearPrice, COUNTRIES, formatPrice, isColorearLang, type CountryCode } from "@lumen/config";
-import { COLOREAR_REFUND_LINE, renderColorearAviso, resolveAllColorearCheckboxes } from "@lumen/legal";
+import { COLOREAR_DEFAULT_COUNTRY, COLOREAR_THEMES, colorearCountriesFor, colorearLegalLocale, colorearPrice, colorearPublicUrl, COUNTRIES, formatPrice, isColorearLang, type CountryCode } from "@lumen/config";
+import { COLOREAR_EMAIL_LINE, COLOREAR_REFUND_LINE, COLOREAR_TRIO_LINE, COLOREAR_TRIO_REFUND_LINE, renderColorearAviso, resolveAllColorearCheckboxes } from "@lumen/legal";
 import { CFooter, CHeader } from "@/components/colorear/Chrome";
 import { ColorearForm, type CountryLegal } from "@/components/colorear/ColorearForm";
 import { COLOREAR_COPY } from "@/lib/colorear-copy";
@@ -19,7 +19,9 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   const { lang } = await params;
   if (!isColorearLang(lang)) return {};
   const c = COLOREAR_COPY[lang];
-  return { title: c.siteTitle, description: c.siteDescription, alternates: { languages: { es: "/colorear/es", en: "/colorear/en" } } };
+  const base = colorearPublicUrl();
+  // Canonical is always the clean Pintoria URL, whichever host served the page (vercel.app, lumen-labs.co, pintoria.app).
+  return { title: c.siteTitle, description: c.siteDescription, alternates: { canonical: `${base}${lang === "en" ? "/en" : "/"}`, languages: { es: `${base}/`, en: `${base}/en` } }, openGraph: { title: c.siteTitle, description: c.siteDescription, url: `${base}${lang === "en" ? "/en" : "/"}`, siteName: "Pintoria" } };
 }
 
 export default async function Landing({ params, searchParams }: { params: Promise<{ lang: string }>; searchParams: Promise<Record<string, string | undefined>> }) {
@@ -32,18 +34,22 @@ export default async function Landing({ params, searchParams }: { params: Promis
   const perCountry: Record<string, CountryLegal> = {};
   for (const code of countries) {
     const legal = colorearLegalLocale(code);
-    const p = colorearPrice(code);
+    const fmt = (v: "single" | "bundle3") => { const q = colorearPrice(code, v); return formatPrice(q.amountMinor, q.currency, COUNTRIES[code].priceFormatLocale); };
+    const one = colorearPrice(code, "single");
     perCountry[code] = {
       country: code,
       label: COUNTRY_NAMES[lang][code],
-      price: formatPrice(p.amountMinor, p.currency, COUNTRIES[code].priceFormatLocale),
+      prices: { single: fmt("single"), bundle3: fmt("bundle3"), threeSingles: formatPrice(one.amountMinor * 3, one.currency, COUNTRIES[code].priceFormatLocale) },
+      trioLine: COLOREAR_TRIO_LINE[legal],
+      trioRefundLine: COLOREAR_TRIO_REFUND_LINE[legal],
+      emailLine: COLOREAR_EMAIL_LINE[legal],
       checkboxes: resolveAllColorearCheckboxes(legal, vars).map((k) => ({ id: k.checkboxId, text: k.text })),
       aviso: renderColorearAviso(legal, vars, { gb: code === "GB" }),
       refundLine: COLOREAR_REFUND_LINE[legal],
     };
   }
   const first = (countries.includes(COLOREAR_DEFAULT_COUNTRY[lang]) ? COLOREAR_DEFAULT_COUNTRY[lang] : countries[0]) as CountryCode;
-  const price = perCountry[first]!.price;
+  const price = perCountry[first]!.prices.single;
   const themes = COLOREAR_THEMES.map((t) => ({ id: t.id, label: t[lang] }));
   const stepIcons = ["dinosaurs", "space", "castles", "pirates"];
   return (

@@ -2,12 +2,12 @@ import { randomBytes, randomUUID } from "node:crypto";
 import type { Tracker } from "@lumen/analytics";
 import type { BaseProps } from "@lumen/analytics";
 import {
-  COLOREAR, COUNTRIES, IMAGE_COST_USD_CENTS, ageBandOf, colorearCountries, colorearLegalLocale, colorearPrice, formatPrice, isThemeId, isValidAge, paperFor, themeLabel, toUsdCents,
-  addDays, type AgeBand, type BrandConfig, type ColorearLang, type CountryCode,
+  COLOREAR, COUNTRIES, IMAGE_COST_USD_CENTS, ageBandOf, colorearCountries, colorearLegalLocale, colorearPrice, colorearPublicUrl, formatPrice, isSelectableVariant, isThemeId, isValidAge, paperFor, themeLabel, toUsdCents,
+  addDays, DAY_MS, type AgeBand, type BrandConfig, type ColorearLang, type ColorearVariant, type CountryCode,
 } from "@lumen/config";
 import type { DeliveryProvider, Storage } from "@lumen/calls";
 import type { Db, OrderRow } from "@lumen/db";
-import { COLOREAR_REFUND_LINE, resolveAllColorearCheckboxes, COLOREAR_CHECKBOX_ORDER } from "@lumen/legal";
+import { COLOREAR_DELIVERY_LEGAL, COLOREAR_LEGAL_RULES, COLOREAR_REFUND_LINE, colorearTrioRefund, resolveAllColorearCheckboxes, COLOREAR_CHECKBOX_ORDER } from "@lumen/legal";
 import { convertForProvider, type PaymentEvent, type PaymentProvider } from "@lumen/payments";
 import { composeColorearMessage, type MailVars } from "./emails";
 import { signLink, verifyLink } from "./link";
@@ -51,9 +51,11 @@ export interface ColorearCheckoutInput {
   ip: string | null;
   creative?: string;
   device?: string;
+  /** What the buyer chose in the selector: 1 adventure (default) or the Trio. */
+  variant?: "single" | "bundle3";
 }
 
-export type ColorearErrors = Partial<Record<"email" | "country" | "persons" | "photos" | "theme" | "age" | "consent", string>>;
+export type ColorearErrors = Partial<Record<"email" | "country" | "persons" | "photos" | "theme" | "age" | "consent" | "variant", string>>;
 
 export class ColorearValidationError extends Error {
   constructor(readonly errors: ColorearErrors) {
@@ -68,6 +70,22 @@ export interface OrderDetails {
   themeId: string;
   age: number;
   lang: ColorearLang;
+  /**
+   * Orders made from another one (Trio credit, "otra aventura"): the character drawings copied from the parent. They replace
+   * stage 1 of the run, so no photo is needed. Names and roles in `persons` are the parent's.
+   */
+  seed?: Array<{ k: number; ext: "png" | "svg" }>;
+  /** Parent orders (single, Trio): until when the character drawings are kept for the Trio credits / the 48 h offer (never photos). */
+  charsUntil?: string;
+  charsDeletedAt?: string;
+  /** Day-25 reminder sent. */
+  reminderSentAt?: string;
+  /** The delivery page showed the 48 h offer (first time). */
+  upsellViewedAt?: string;
+  /** Trio: unused adventures were cancelled by a partial refund. */
+  creditsCancelledAt?: string;
+  /** Emails with commercial content sent for this order (limit: COLOREAR_LEGAL_RULES.maxCommercialEmails). */
+  commercialEmails?: number;
 }
 
 export type RunStatus = "done" | "partial" | "failed" | "locked" | "skipped";
@@ -120,7 +138,7 @@ export class ColorearEngine {
   // ------------------------------------------------------------------ helpers
 
   private props(o: OrderRow): BaseProps {
-    return { product: o.product, country: o.country, language: o.language, creative: o.creative, device: (o.device as BaseProps["device"]) ?? "unknown", order_id: o.id, test_mode: o.test_mode };
+    return { product: o.product, country: o.country, language: o.language, creative: o.creative, device: (o.device as BaseProps["device"]) ?? "unknown", order_id: o.id, test_mode: o.test_mode, variant: o.variant };
   }
 
   private details(o: OrderRow): OrderDetails | null {
@@ -202,6 +220,7 @@ export class ColorearEngine {
     if (!isValidAge(age)) errors.age = "Age must be 3 to 8";
     const checked = new Set(input.checkboxIds);
     if (!COLOREAR_CHECKBOX_ORDER.every((id) => checked.has(id))) errors.consent = "All consent boxes are required";
+    if (input.variant !== undefined && !isSelectableVariant(input.variant)) errors.variant = "Unknown option";
     return { errors, persons, theme, age };
   }
 
@@ -219,7 +238,8 @@ export class ColorearEngine {
     }
     const now = this.d.now();
     const id = randomUUID();
-    const price = colorearPrice(input.country);
+    const variant: "single" | "bundle3" = input.variant === "bundle3" ? "bundle3" : "single";
+    const price = colorearPrice(input.country, variant);
     const lang = input.lang;
     const languageCode = lang === "en" ? "en" : input.country === "ES" ? "es-ES" : "es-419";
     const names = joinNames(v.persons.map((p) => p.name), lang);
@@ -229,7 +249,7 @@ export class ColorearEngine {
       id,
       access_token: token(),
       product: COLOREAR.slug,
-      variant: "single",
+      variant,
       calls_included: 0,
       country: input.country,
       locale: colorearLegalLocale(input.country),
@@ -266,7 +286,7 @@ export class ColorearEngine {
     const session = await this.d.payments.createCheckout({
       orderId: order.id,
       productSlug: COLOREAR.slug,
-      variant: "single",
+      variant,
       country: order.country,
       productName: `${this.d.brand.brand} - ${COLOREAR.slug}`,
       amountMinor: charge.amountMinor,
@@ -280,7 +300,7 @@ export class ColorearEngine {
     const base = this.props(updated);
     const resolved = resolveAllColorearCheckboxes(lang === "en" ? "en" : input.country === "ES" ? "es-ES" : "es-419", this.legalVars());
     await this.d.tracker.track("consent_given", { ...base, checkbox_ids: [...COLOREAR_CHECKBOX_ORDER], text_version_ids: resolved.map((c) => c.textVersionId) });
-    await this.d.tracker.track("checkout_started", { ...base, variant: "single", amount_usd_cents: updated.amount_usd_cents, currency: updated.currency, payment_provider: session.provider });
+    await this.d.tracker.track("checkout_started", { ...base, variant, amount_usd_cents: updated.amount_usd_cents, currency: updated.currency, payment_provider: session.provider });
     return { order: updated, checkoutUrl: session.url };
   }
 
@@ -290,7 +310,8 @@ export class ColorearEngine {
     if (event.type === "payment_succeeded") return this.confirmPayment(event);
     if (event.type === "refunded") {
       const o = await this.findOrder(event.orderId, event.checkoutId);
-      if (o && o.status !== "refunded") await this.markRefunded(o, "provider_refund", false, false);
+      // A partial refund we started (Trio, unused adventures) comes back as this webhook too: `refunded_at` is already set, so it is not a full refund.
+      if (o && o.status !== "refunded" && !o.refunded_at) await this.markRefunded(o, "provider_refund", false, false);
     }
     return null;
   }
@@ -329,8 +350,16 @@ export class ColorearEngine {
       });
     }
     const paid = await this.d.db.orders.update(order.id, { status: "paid", payment_id: event.paymentId, paid_at: iso(now), consent_draft: null });
-    await this.d.tracker.track("paid", { ...this.props(paid), variant: "single", amount_usd_cents: paid.amount_usd_cents, currency: paid.currency, payment_provider: paid.payment_provider ?? this.d.payments.name });
-    await this.sendMail("receipt", paid);
+    const paidVariant = paid.variant === "bundle3" || paid.variant === "add1" ? paid.variant : "single";
+    await this.d.tracker.track("paid", { ...this.props(paid), variant: paidVariant, amount_usd_cents: paid.amount_usd_cents, currency: paid.currency, payment_provider: paid.payment_provider ?? this.d.payments.name });
+    if (paidVariant === "add1") await this.d.tracker.track("upsell_purchased", { ...this.props(paid), offer: "add1", amount_usd_cents: paid.amount_usd_cents, currency: paid.currency });
+    await this.sendMail(paidVariant === "add1" ? "receipt_add" : "receipt", paid);
+    // The adventure bought has its own copy of the drawings: the parent's are no longer needed (D26).
+    if (paidVariant === "add1" && paid.parent_order_id) {
+      const parent = await this.d.db.orders.get(paid.parent_order_id);
+      const pdet = parent ? this.details(parent) : null;
+      if (parent && pdet && !pdet.charsDeletedAt) await this.eraseCharacters(parent, "last_adventure");
+    }
     return paid;
   }
 
@@ -341,11 +370,16 @@ export class ColorearEngine {
 
   // ------------------------------------------------------------------ mail
 
-  private mailVars(o: OrderRow): MailVars {
-    const det = this.details(o);
-    const lang = det?.lang ?? "es";
-    const base = this.d.brand.domain.replace(/\/$/, "");
-    return {
+  /** Links in emails and pages of a colorear order always use COLOREAR_PUBLIC_URL (default https://www.pintoria.app). */
+  private publicUrl(): string {
+    return colorearPublicUrl(this.d.env);
+  }
+
+  private async mailVars(o: OrderRow, opts: { daysLeft?: number } = {}): Promise<MailVars> {
+    const base = this.publicUrl();
+    const kind = o.variant === "add1" ? "add" : o.variant === "credit" ? "credit" : "main";
+    const parent = kind === "credit" && o.parent_order_id ? await this.d.db.orders.get(o.parent_order_id) : null;
+    const vars: MailVars = {
       names: o.child_first_name ?? "",
       price: formatPrice(o.amount_minor, o.currency as never, COUNTRIES[o.country].priceFormatLocale),
       statusLink: `${base}/colorear/confirmacion/${o.access_token}`,
@@ -357,18 +391,70 @@ export class ColorearEngine {
       supportEmail: this.d.brand.supportEmail,
       brand: this.d.brand.brand,
       notes: [],
-      ...(lang ? {} : {}),
+      kind,
+      parentLink: parent ? `${base}/colorear/entrega/${parent.access_token}` : undefined,
+      daysLeft: opts.daysLeft,
+      legalLang: this.legalLangOf(o),
+      address: this.d.env.LEGAL_ADDRESS ?? "[DOMICILIO PENDIENTE]",
+      stopLink: `${base}/api/colorear/baja?t=${o.access_token}&s=${signLink(this.d.env, "baja", o.access_token, 60 * 86_400, this.d.now().getTime())}`,
+      landingLink: `${base}${(this.details(o)?.lang ?? "es") === "en" ? "/en" : "/"}`,
+      commercialOk: await this.commercialAllowed(o),
     };
+    // Trio: adventures still to create. Single / Trio without credits: the 48 h offer (only in the delivery email).
+    if (kind === "main" && (o.variant === "single" || o.variant === "bundle3")) {
+      const det = this.details(o);
+      const credits = det ? await this.creditsOf(o, det) : null;
+      if (credits && credits.left > 0 && credits.usable) {
+        vars.creditsLeft = credits.left;
+        vars.creditsUntil = o.purge_at ? iso(new Date(o.purge_at)).slice(0, 10) : "";
+      } else if (det && o.status !== "refunded" && vars.commercialOk) {
+        const offer = await this.offerOf(o, det, o.delivered_at ? new Date(o.delivered_at) : this.d.now());
+        if (offer) {
+          vars.offerPrice = offer.price;
+          vars.offerUntil = `${offer.until.slice(0, 16).replace("T", " ")} UTC`;
+          vars.offerLink = vars.deliveryLink;
+        }
+      }
+    }
+    return vars;
   }
 
-  private async sendMail(kind: "receipt" | "delivery" | "refund", o: OrderRow, notes: string[] = []): Promise<boolean> {
+  private legalLangOf(o: OrderRow): "es-419" | "es-ES" | "en" {
+    return (this.details(o)?.lang ?? "es") === "en" ? "en" : o.country === "ES" ? "es-ES" : "es-419";
+  }
+
+  private offersKey(email: string): Promise<string> {
+    return this.hashEmail(`offers:${email.trim().toLowerCase()}`);
+  }
+
+  /** Commercial content (the offer) needs: not unsubscribed, and fewer than COLOREAR_LEGAL_RULES.maxCommercialEmails sent for this order. */
+  private async commercialAllowed(o: OrderRow): Promise<boolean> {
+    if (!o.email) return false;
+    if ((this.details(o)?.commercialEmails ?? 0) >= COLOREAR_LEGAL_RULES.maxCommercialEmails) return false;
+    return !(await this.d.db.suppression.get(await this.offersKey(o.email)));
+  }
+
+  /** One-click stop of offers (link in every email with commercial content). Valid with the order token and its signed link. */
+  async unsubscribeOffers(accessToken: string, sig: string | null): Promise<boolean> {
+    if (!verifyLink(this.d.env, "baja", accessToken, sig, this.d.now().getTime())) return false;
+    const o = await this.orderByToken(accessToken);
+    if (!o?.email) return !!o;
+    const key = await this.offersKey(o.email);
+    if (!(await this.d.db.suppression.get(key))) await this.d.db.suppression.insert({ phone_e164_hash: key, source: "colorear_offers" });
+    return true;
+  }
+
+  private async sendMail(kind: "receipt" | "receipt_add" | "delivery" | "refund" | "reminder", o: OrderRow, notes: string[] = [], opts: { daysLeft?: number } = {}): Promise<boolean> {
     if (!o.email) return false;
     const det = this.details(o);
-    const msg = composeColorearMessage(kind, det?.lang ?? "es", o.email, { ...this.mailVars(o), notes });
+    const vars = { ...(await this.mailVars(o, opts)), notes };
+    const msg = composeColorearMessage(kind, det?.lang ?? "es", o.email, vars);
     const res = await this.d.delivery.send(msg);
+    const commercial = (kind === "delivery" && !!vars.offerPrice) || (kind === "reminder" && !!vars.commercialOk && !(vars.creditsLeft && vars.creditsLeft > 0));
+    if (commercial && res.status === "sent") await this.patchDetails(o.id, { commercialEmails: (det?.commercialEmails ?? 0) + 1 });
     await this.d.db.deliveries.insert({
       order_id: o.id,
-      kind,
+      kind: kind === "receipt_add" ? "receipt" : kind,
       channel: res.channel,
       status: res.status,
       provider: res.provider,
@@ -416,11 +502,13 @@ export class ColorearEngine {
       costCents: 0,
       calls: 0,
       retries: 0,
-      characters: det.persons.map((_, i) => ({ k: i + 1, status: "pending", attempts: 0 })),
+      // Trio credit / "otra aventura": the characters are the parent's drawings, already copied; no photo is involved.
+      characters: det.seed ? det.seed.map((c) => ({ k: c.k, status: "done" as const, attempts: 0, ext: c.ext })) : det.persons.map((_, i) => ({ k: i + 1, status: "pending" as const, attempts: 0 })),
       story: null,
       pages,
       notes: [],
       effectiveProvider: image.name,
+      ...(det.seed ? { photosDeletedAt: now } : {}),
     };
     await this.putState(order.id, state);
     await this.d.tracker.track("generation_started", { ...this.props(order), pages_total: COLOREAR.pagesTotal, provider: image.name, model: image.model, quality: state.quality, age_band: ageBandOf(det.age), persons: det.persons.length, theme: det.themeId });
@@ -645,8 +733,14 @@ export class ColorearEngine {
       state.lease = null;
       const delivered = new Date(this.d.now());
       const completed = await this.d.db.orders.update(orderId, { status: "completed", purge_at: iso(addDays(delivered, COLOREAR.retentionDays)) });
-      // intermediate files are no longer needed
-      for (const c of state.characters) await this.d.storage.delete(charPath(orderId, c.k, c.ext ?? "png"));
+      // intermediate files are no longer needed. The character drawings of a first book (single or Trio) are the exception: they are kept
+      // for the Trio's extra adventures / the 48 h offer and erased by the sweeper at `charsUntil` (30 days Trio, 48 h single). Photos are
+      // gone since stage 1 either way.
+      const keepsCharacters = order.variant === "single" || order.variant === "bundle3";
+      if (keepsCharacters) {
+        const until = order.variant === "bundle3" ? addDays(delivered, COLOREAR.creditDays) : new Date(delivered.getTime() + COLOREAR.upsellHours * 3_600_000);
+        await this.patchDetails(orderId, { charsUntil: iso(until) });
+      } else for (const c of state.characters) await this.d.storage.delete(charPath(orderId, c.k, c.ext ?? "png"));
       for (const p of state.pages) await this.d.storage.delete(pagePath(orderId, p.n, p.ext ?? "png"));
       await save();
       await this.d.tracker.track("generation_completed", {
@@ -690,6 +784,264 @@ export class ColorearEngine {
     }
   }
 
+  // ------------------------------------------------------------------ Trio credits and "otra aventura"
+
+  /**
+   * Trio (bundle3) and "otra aventura" (add1) reuse the CHARACTER DRAWINGS of the first book, never the photos (those are erased as
+   * today, within 24 h). Every extra book is an order of its own (`parent_order_id`): a free `credit` child for the 2 extra Trio
+   * adventures, or a paid `add1` child. The run is the same as for any order, with stage 1 (characters) already done from a copy
+   * of the parent's drawings. The drawings are kept only until `details.charsUntil`: 30 days for the Trio, 48 h after delivery for
+   * the offer (the later of both when it applies), then the sweeper erases them.
+   */
+  private locks = new Map<string, Promise<unknown>>();
+  private withLock<T>(key: string, fn: () => Promise<T>): Promise<T> {
+    const prev = this.locks.get(key) ?? Promise.resolve();
+    const next = prev.catch(() => undefined).then(fn);
+    this.locks.set(key, next);
+    void next.finally(() => { if (this.locks.get(key) === next) this.locks.delete(key); }).catch(() => undefined);
+    return next;
+  }
+
+  private static readonly TRIO_EXTRA = 2;
+
+  private alive(o: OrderRow, det: OrderDetails): boolean {
+    return !o.pii_purged_at && (o.status === "delivered" || o.status === "completed") && !!o.purge_at && new Date(o.purge_at) > this.d.now() && !det.charsDeletedAt;
+  }
+
+  /** Credits of a Trio: how many of its 2 extra adventures are left. A cancelled (failed) extra book gives its credit back. */
+  private async creditsOf(parent: OrderRow, det: OrderDetails): Promise<{ left: number; total: number; usable: boolean } | null> {
+    if (parent.variant !== "bundle3") return null;
+    const kids = await this.d.db.orders.find({ parent_order_id: parent.id, variant: "credit" });
+    const used = kids.filter((k) => k.status !== "cancelled" && k.status !== "refunded").length;
+    const left = det.creditsCancelledAt ? 0 : Math.max(0, ColorearEngine.TRIO_EXTRA - used);
+    return { left, total: ColorearEngine.TRIO_EXTRA, usable: left > 0 && this.alive(parent, det) };
+  }
+
+  /** The 48 h offer "otra aventura con las mismas fotos", or null when it does not apply (not delivered, window over, Trio credits still open, drawings gone). */
+  private async offerOf(parent: OrderRow, det: OrderDetails, deliveredAt: Date): Promise<{ price: string; amountMinor: number; until: string } | null> {
+    // Only the buyer of ONE adventure gets the 48 h offer; a Trio buyer already has his adventures (D26: drawings kept until the last one).
+    if (parent.variant !== "single") return null;
+    if (!this.alive(parent, det)) return null;
+    const until = new Date(deliveredAt.getTime() + COLOREAR.upsellHours * 3_600_000);
+    if (until <= this.d.now()) return null;
+    const p = colorearPrice(parent.country, "add1");
+    return { price: formatPrice(p.amountMinor, p.currency, COUNTRIES[parent.country].priceFormatLocale), amountMinor: p.amountMinor, until: iso(until) };
+  }
+
+  private cleanTheme(theme: string | undefined, themeId: string | undefined): { ok: true; theme: string; themeId: string } | { ok: false } {
+    let value = "";
+    if (theme && theme.trim()) {
+      const t = sanitizeShortText(theme, 50);
+      if (!t.ok) return { ok: false };
+      value = t.value;
+    }
+    return { ok: true, theme: value, themeId: themeId && isThemeId(themeId) ? themeId : value ? "custom" : "none" };
+  }
+
+  /** Copies the parent's character drawings to the child's own paths. Null when they are gone. */
+  private async copyCharacters(parent: OrderRow, childId: string): Promise<Array<{ k: number; ext: "png" | "svg" }> | null> {
+    const st = await this.getState(parent.id);
+    if (!st || !st.characters.length) return null;
+    const seed: Array<{ k: number; ext: "png" | "svg" }> = [];
+    for (const c of st.characters) {
+      const ext = c.ext ?? "png";
+      const f = await this.d.storage.get(charPath(parent.id, c.k, ext));
+      if (!f) {
+        for (const done of seed) await this.d.storage.delete(charPath(childId, done.k, done.ext)).catch(() => undefined);
+        return null;
+      }
+      await this.d.storage.put(charPath(childId, c.k, ext), f.bytes, ext === "svg" ? "image/svg+xml" : "image/png");
+      seed.push({ k: c.k, ext });
+    }
+    return seed;
+  }
+
+  private async patchDetails(orderId: string, patch: Partial<OrderDetails>): Promise<void> {
+    const o = await this.d.db.orders.get(orderId);
+    const det = o ? this.details(o) : null;
+    if (o && det) await this.d.db.orders.update(orderId, { details: JSON.stringify({ ...det, ...patch }) });
+  }
+
+  private async insertChild(parent: OrderRow, pdet: OrderDetails, variant: "credit" | "add1", t: { theme: string; themeId: string }, seed: Array<{ k: number; ext: "png" | "svg" }>, id: string, extra: Partial<OrderRow>): Promise<OrderRow> {
+    const now = this.d.now();
+    const det: OrderDetails = { v: 1, persons: pdet.persons, theme: t.theme, themeId: t.themeId, age: pdet.age, lang: pdet.lang, seed };
+    return this.d.db.orders.insert({
+      id,
+      access_token: token(),
+      product: COLOREAR.slug,
+      variant,
+      parent_order_id: parent.id,
+      calls_included: 0,
+      country: parent.country,
+      locale: parent.locale,
+      language: parent.language,
+      currency: parent.currency,
+      amount_minor: 0,
+      amount_usd_cents: 0,
+      status: "created",
+      email: parent.email,
+      phone_e164: null,
+      phone_e164_hash: null,
+      child_first_name: parent.child_first_name,
+      child_age: parent.child_age,
+      details: JSON.stringify(det),
+      consent_draft: null,
+      timezone: "UTC",
+      window_start: iso(now),
+      window_end: iso(now),
+      payment_provider: null,
+      checkout_id: null,
+      payment_id: null,
+      test_mode: parent.test_mode,
+      creative: parent.creative,
+      device: parent.device,
+      paid_at: null,
+      delivered_at: null,
+      refunded_at: null,
+      refund_reason: null,
+      refund_amount_minor: null,
+      purge_at: iso(addDays(now, COLOREAR.retentionDays + 1)),
+      pii_purged_at: null,
+      ...extra,
+    });
+  }
+
+  /**
+   * One of the Trio's 2 extra adventures, with 1 click: the buyer only chooses the theme. Creates a free `credit` order that reuses the
+   * parent's character drawings and returns its token; the caller starts the run (`kickRun`). Idempotent per slot (unique `checkout_id`).
+   */
+  async useCredit(accessToken: string, input: { theme?: string; themeId?: string }): Promise<{ ok: true; orderId: string; token: string; creditsLeft: number } | { ok: false; reason: "not_found" | "no_credits" | "expired" | "invalid_theme" | "busy" }> {
+    const first = await this.orderByToken(accessToken);
+    if (!first) return { ok: false, reason: "not_found" };
+    return this.withLock(first.id, async () => {
+      const parent = await this.d.db.orders.get(first.id);
+      const pdet = parent ? this.details(parent) : null;
+      if (!parent || !pdet || parent.variant !== "bundle3" || parent.status !== "delivered") return { ok: false, reason: "not_found" } as const;
+      const credits = await this.creditsOf(parent, pdet);
+      if (!credits) return { ok: false, reason: "not_found" } as const;
+      if (!this.alive(parent, pdet)) return { ok: false, reason: "expired" } as const;
+      if (credits.left <= 0) return { ok: false, reason: "no_credits" } as const;
+      const t = this.cleanTheme(input.theme, input.themeId);
+      if (!t.ok) {
+        await this.d.tracker.track("content_blocked", { ...this.props(parent), stage: "input", reason: "theme" });
+        return { ok: false, reason: "invalid_theme" } as const;
+      }
+      const childId = randomUUID();
+      const seed = await this.copyCharacters(parent, childId);
+      if (!seed) return { ok: false, reason: "expired" } as const;
+      const slot = (await this.d.db.orders.find({ parent_order_id: parent.id, variant: "credit" })).length + 1;
+      const now = this.d.now();
+      let child: OrderRow;
+      try {
+        child = await this.insertChild(parent, pdet, "credit", t, seed, childId, { status: "paid", paid_at: iso(now), payment_provider: "credit", checkout_id: `credit:${parent.id}:${slot}` });
+      } catch {
+        for (const c of seed) await this.d.storage.delete(charPath(childId, c.k, c.ext)).catch(() => undefined);
+        return { ok: false, reason: "busy" } as const;
+      }
+      const left = credits.left - 1;
+      await this.d.tracker.track("credit_used", { ...this.props(child), variant: "credit", credits_left: left, credits_total: credits.total });
+      // Last adventure requested: the child already holds its own copy, so the parent's drawings are erased now (D26: not kept after the last one).
+      if (left === 0) await this.eraseCharacters(parent, "credits_used");
+      return { ok: true, orderId: child.id, token: child.access_token, creditsLeft: left } as const;
+    });
+  }
+
+  signUpsell(accessToken: string, until: string): string {
+    const ttl = Math.max(1, Math.floor((new Date(until).getTime() - this.d.now().getTime()) / 1000));
+    return signLink(this.d.env, "upsell", accessToken, ttl, this.d.now().getTime());
+  }
+
+  /**
+   * "Otra aventura con las mismas fotos": checkout of the `add1` product for the 48 h after delivery. Needs the signed offer link
+   * (made by getStatus while the offer is open) and re-checks the window. The order starts unpaid and reuses the parent's drawings,
+   * copied now so the window cannot close while the buyer is paying. Pays through the same path as any order (mock or Polar).
+   */
+  async createUpsellCheckout(accessToken: string, sig: string | null, input: { theme?: string; themeId?: string; ip: string | null }, urls: { successUrl: (o: OrderRow) => string; cancelUrl: string }): Promise<{ ok: true; checkoutUrl: string; order: OrderRow } | { ok: false; reason: "not_found" | "expired" | "invalid_theme" }> {
+    const parent = await this.orderByToken(accessToken);
+    const pdet = parent ? this.details(parent) : null;
+    if (!parent || !pdet || !parent.delivered_at) return { ok: false, reason: "not_found" };
+    const offer = await this.offerOf(parent, pdet, new Date(parent.delivered_at));
+    if (!offer || !verifyLink(this.d.env, "upsell", accessToken, sig, this.d.now().getTime())) return { ok: false, reason: "expired" };
+    const t = this.cleanTheme(input.theme, input.themeId);
+    if (!t.ok) {
+      await this.d.tracker.track("content_blocked", { ...this.props(parent), stage: "input", reason: "theme" });
+      return { ok: false, reason: "invalid_theme" };
+    }
+    const childId = randomUUID();
+    const seed = await this.copyCharacters(parent, childId);
+    if (!seed) return { ok: false, reason: "expired" };
+    const p = colorearPrice(parent.country, "add1");
+    const child = await this.insertChild(parent, pdet, "add1", t, seed, childId, {
+      amount_minor: p.amountMinor,
+      amount_usd_cents: toUsdCents(p.amountMinor, p.currency, this.d.env),
+      consent_draft: { checkbox_ids: ["K2"], accepted_at: iso(this.d.now()), ip: input.ip },
+    });
+    const charge = convertForProvider(this.d.payments, child.amount_minor, child.currency as never, this.d.env);
+    const session = await this.d.payments.createCheckout({
+      orderId: child.id,
+      productSlug: COLOREAR.slug,
+      variant: "add1",
+      country: child.country,
+      productName: `${this.d.brand.brand} - ${COLOREAR.slug} - add1`,
+      amountMinor: charge.amountMinor,
+      currency: charge.currency,
+      customerEmail: child.email!,
+      successUrl: urls.successUrl(child),
+      cancelUrl: urls.cancelUrl,
+      testMode: child.test_mode,
+    });
+    const updated = await this.d.db.orders.update(child.id, { checkout_id: session.checkoutId, payment_provider: session.provider });
+    await this.d.tracker.track("checkout_started", { ...this.props(updated), variant: "add1", amount_usd_cents: updated.amount_usd_cents, currency: updated.currency, payment_provider: session.provider });
+    return { ok: true, checkoutUrl: session.url, order: updated };
+  }
+
+  /** First time the delivery page shows the offer: one `upsell_viewed` event per order. */
+  async trackUpsellViewed(accessToken: string): Promise<void> {
+    const o = await this.orderByToken(accessToken);
+    const det = o ? this.details(o) : null;
+    if (!o || !det || det.upsellViewedAt || !o.delivered_at) return;
+    const offer = await this.offerOf(o, det, new Date(o.delivered_at));
+    if (!offer) return;
+    await this.patchDetails(o.id, { upsellViewedAt: iso(this.d.now()) });
+    await this.d.tracker.track("upsell_viewed", { ...this.props(o), offer: "add1", hours_left: Math.max(0, Math.round((new Date(offer.until).getTime() - this.d.now().getTime()) / 3_600_000)) });
+  }
+
+  /** Erases the character drawings of a parent order now and records it (no content in the log). */
+  private async eraseCharacters(o: OrderRow, reason: string): Promise<void> {
+    const count = await this.deleteCharacters(o.id);
+    await this.patchDetails(o.id, { charsDeletedAt: iso(this.d.now()) });
+    await this.d.tracker.track("characters_deleted", { ...this.props(o), count, reason });
+  }
+
+  /** "Delete my characters" button (single-adventure buyers). The book stays until its date; the 48 h offer ends. */
+  async deleteMyCharacters(accessToken: string): Promise<{ ok: boolean; message?: string }> {
+    const o = await this.orderByToken(accessToken);
+    const det = o ? this.details(o) : null;
+    if (!o || !det || o.pii_purged_at || o.variant !== "single") return { ok: false };
+    if (!det.charsDeletedAt) await this.eraseCharacters(o, "button");
+    const lang = det.lang === "en" ? "en" : o.country === "ES" ? "es-ES" : "es-419";
+    return { ok: true, message: COLOREAR_DELIVERY_LEGAL[lang].deleteDoneOffer.replace("{{FECHA_BORRADO}}", (o.purge_at ?? "").slice(0, 10)) };
+  }
+
+  private async deleteCharacters(orderId: string): Promise<number> {
+    let n = 0;
+    for (let k = 1; k <= COLOREAR.maxPhotos; k++) for (const ext of ["png", "svg"]) {
+      const f = await this.d.storage.get(charPath(orderId, k, ext));
+      if (f) { await this.d.storage.delete(charPath(orderId, k, ext)); n++; }
+    }
+    return n;
+  }
+
+  /** A refund of the parent also ends its unused Trio adventures: the extra books (free credits) are cancelled and erased. Paid `add1` books keep their own refund. */
+  private async cancelCreditBooks(parent: OrderRow): Promise<void> {
+    const kids = await this.d.db.orders.find({ parent_order_id: parent.id, variant: "credit" });
+    for (const k of kids) {
+      if (k.status === "cancelled" || k.status === "refunded" || k.pii_purged_at) continue;
+      await this.deleteFiles(k.id, null);
+      await this.d.db.orders.update(k.id, { status: "cancelled", purge_at: iso(this.d.now()) });
+    }
+  }
+
   // ------------------------------------------------------------------ refunds and cleanup
 
   private async deleteFiles(orderId: string, state: GenState | null): Promise<void> {
@@ -706,6 +1058,7 @@ export class ColorearEngine {
   async markRefunded(order: OrderRow, reason: string, automatic: boolean, callProvider = true): Promise<{ refunded: boolean; reason?: string }> {
     if (order.status === "refunded") return { refunded: true, reason: "already_refunded" };
     if (!order.payment_id) {
+      // Never paid, or a free Trio adventure that failed: cancelled, and the credit goes back to the Trio (creditsOf ignores cancelled books).
       await this.d.db.orders.update(order.id, { status: "cancelled" });
       await this.deleteFiles(order.id, null);
       return { refunded: false, reason: "not_paid" };
@@ -713,6 +1066,7 @@ export class ColorearEngine {
     if (callProvider) await this.d.payments.refund({ paymentId: order.payment_id, currency: order.currency as never, reason });
     const now = this.d.now();
     await this.deleteFiles(order.id, null);
+    await this.cancelCreditBooks(order);
     await this.d.db.orders.update(order.id, { status: "refunded", refunded_at: iso(now), refund_reason: reason, refund_amount_minor: order.amount_minor, purge_at: iso(now) });
     await this.d.tracker.track("refunded", { ...this.props(order), reason, amount_usd_cents: order.amount_usd_cents, automatic });
     await this.d.tracker.track("photos_deleted", { ...this.props(order), count: 0, reason: "refund" });
@@ -724,13 +1078,45 @@ export class ColorearEngine {
     const order = await this.orderByToken(accessToken);
     if (!order) return { refunded: false, reason: "not_found" };
     const base = new Date(order.delivered_at ?? order.paid_at ?? order.created_at).getTime();
-    if (this.d.now().getTime() > base + COLOREAR.refundWindowDays * 86_400_000) return { refunded: false, reason: "outside_window" };
+    const days = (this.d.now().getTime() - base) / 86_400_000;
+    if (days > COLOREAR.refundWindowDays) return { refunded: false, reason: "outside_window" };
+    if (order.variant === "bundle3" && order.payment_id && order.status !== "refunded") return this.refundTrio(order, days);
     return this.markRefunded(order, "customer_request", false);
   }
 
+  /**
+   * Trio refund (D26 (6)), window counted from the first delivery: only the first adventure used -> full refund; more requested -> the
+   * unused ones, one third of the price each (colorearTrioRefund). A partial refund keeps the books already made, cancels the unused
+   * adventures and erases the drawings. Partial refunds in Polar are [no verificado]: if the provider call fails nothing is changed and
+   * the buyer is told to write to us (plan B of legal: full or none).
+   */
+  private async refundTrio(order: OrderRow, days: number): Promise<{ refunded: boolean; reason?: string }> {
+    const kids = (await this.d.db.orders.find({ parent_order_id: order.id, variant: "credit" })).filter((k) => k.status !== "cancelled" && k.status !== "refunded");
+    const used = 1 + kids.length;
+    const r = colorearTrioRefund({ paidMinor: order.amount_minor, credits: COLOREAR_LEGAL_RULES.trioAdventures, used, daysSinceFirstDelivery: days, alreadyRefundedMinor: order.refund_amount_minor ?? 0 });
+    if (r.rule === "none") return { refunded: false, reason: "nothing_to_refund" };
+    if (r.rule === "full") return this.markRefunded(order, "customer_request", false);
+    const now = this.d.now();
+    // Mark first: the provider's refund webhook can arrive before this method returns and must not be read as a full refund.
+    await this.d.db.orders.update(order.id, { refunded_at: iso(now) });
+    try {
+      await this.d.payments.refund({ paymentId: order.payment_id!, amountMinor: r.refundMinor, currency: order.currency as never, reason: "customer_request_unused_adventures" });
+    } catch (err) {
+      console.error("[colorear] partial refund failed", err instanceof Error ? err.message : err);
+      await this.d.db.orders.update(order.id, { refunded_at: null });
+      return { refunded: false, reason: "partial_failed" };
+    }
+    await this.patchDetails(order.id, { creditsCancelledAt: iso(now) });
+    await this.d.db.orders.update(order.id, { refund_amount_minor: (order.refund_amount_minor ?? 0) + r.refundMinor, refund_reason: "customer_request_unused_adventures", refunded_at: iso(now) });
+    const fresh = (await this.d.db.orders.get(order.id)) ?? order;
+    if (!(this.details(fresh)?.charsDeletedAt)) await this.eraseCharacters(fresh, "refund");
+    await this.d.tracker.track("refunded", { ...this.props(order), reason: "unused_adventures", amount_usd_cents: toUsdCents(r.refundMinor, order.currency as never, this.d.env), automatic: false });
+    return { refunded: true, reason: "partial" };
+  }
+
   /** Cron/sweeper: resumes stalled books, refunds books that could not be made in time, erases stray photos and expired books. */
-  async sweep(opts: { maxRuns?: number } = {}): Promise<{ resumed: number; refunded: number; photosErased: number; purged: number }> {
-    const out = { resumed: 0, refunded: 0, photosErased: 0, purged: 0 };
+  async sweep(opts: { maxRuns?: number } = {}): Promise<{ resumed: number; refunded: number; photosErased: number; charsErased: number; reminded: number; purged: number }> {
+    const out = { resumed: 0, refunded: 0, photosErased: 0, charsErased: 0, reminded: 0, purged: 0 };
     const now = this.d.now();
     const refundAfterMs = Number(this.d.env.COLOREAR_REFUND_AFTER_MIN ?? 45) * 60_000;
     const open = await this.d.db.orders.find({ product: COLOREAR.slug, status: { in: ["paid", "completed"] } });
@@ -765,6 +1151,32 @@ export class ColorearEngine {
         if (o.status === "created") await this.d.db.orders.update(o.id, { status: "cancelled", purge_at: iso(now) });
       }
     }
+    // Character drawings kept for the Trio's extra adventures / the 48 h offer: erased when their window ends (photos are never kept).
+    // Day-25 reminder: "your book is deleted on <date>", 5 days before the deletion, once per book.
+    const live = await this.d.db.orders.find({ product: COLOREAR.slug, status: { in: ["completed", "delivered"] } });
+    for (const o of live) {
+      if (o.pii_purged_at) continue;
+      let det = this.details(o);
+      if (!det) continue;
+      if (det.charsUntil && !det.charsDeletedAt && new Date(det.charsUntil) <= now) {
+        await this.eraseCharacters(o, "window_ended");
+        out.charsErased++;
+        det = { ...det, charsDeletedAt: iso(now) };
+      }
+      if (o.status === "delivered" && o.email && o.purge_at && !det.reminderSentAt) {
+        const purge = new Date(o.purge_at);
+        if (now >= addDays(purge, -COLOREAR.reminderDaysBefore) && now < purge) {
+          const daysLeft = Math.max(1, Math.ceil((purge.getTime() - now.getTime()) / DAY_MS));
+          const fresh = (await this.d.db.orders.get(o.id)) ?? o;
+          const hasCredits = fresh.variant === "bundle3" && ((await this.creditsOf(fresh, det))?.usable ?? false);
+          if (await this.sendMail("reminder", fresh, [], { daysLeft })) {
+            await this.patchDetails(o.id, { reminderSentAt: iso(now) });
+            await this.d.tracker.track("expiry_reminder_sent", { ...this.props(o), days_left: daysLeft, has_credits: hasCredits, sent: true });
+            out.reminded++;
+          }
+        }
+      }
+    }
     // expired books
     const due = await this.d.db.orders.find({ product: COLOREAR.slug, purge_at: { lte: iso(now) } });
     for (const o of due) {
@@ -783,16 +1195,19 @@ export class ColorearEngine {
     if (!order) return null;
     const det = this.details(order);
     const lang = det?.lang ?? "es";
-    const base = { lang, names: order.pii_purged_at ? "" : order.child_first_name ?? "", country: order.country, testMode: order.test_mode };
-    if (order.pii_purged_at || order.status === "purged") return { ...base, phase: "gone", progress: 1, stage: "gone", characters: [], pages: [], notes: [], expiresAt: null, hasPdf: false };
-    if (order.status === "refunded") return { ...base, phase: "refunded", progress: 0, stage: "refunded", characters: [], pages: [], notes: [], expiresAt: null, hasPdf: false };
-    if (order.status === "created") return { ...base, phase: "awaiting_payment", progress: 0, stage: "created", characters: [], pages: [], notes: [], expiresAt: null, hasPdf: false };
-    if (order.status === "cancelled") return { ...base, phase: "gone", progress: 0, stage: "cancelled", characters: [], pages: [], notes: [], expiresAt: null, hasPdf: false };
+    const kind: ColorearStatus["kind"] = order.variant === "add1" ? "add" : order.variant === "credit" ? "credit" : "main";
+    const base = { lang, names: order.pii_purged_at ? "" : order.child_first_name ?? "", country: order.country, testMode: order.test_mode, variant: order.variant, kind, parentToken: null as string | null, credits: null as ColorearStatus["credits"], creditsExpired: false, books: [] as ColorearBookRef[], offer: null as ColorearStatus["offer"], legal: { characters: null, offerTerms: null, deleteButton: null } as ColorearStatus["legal"] };
+    const none = { characters: [], pages: [], notes: [], expiresAt: null, hasPdf: false };
+    if (order.pii_purged_at || order.status === "purged") return { ...base, ...none, phase: "gone", progress: 1, stage: "gone" };
+    if (order.status === "refunded") return { ...base, ...none, phase: "refunded", progress: 0, stage: "refunded" };
+    if (order.status === "created") return { ...base, ...none, phase: "awaiting_payment", progress: 0, stage: "created" };
+    // a free Trio adventure that could not be made is cancelled and its credit returns to the Trio
+    if (order.status === "cancelled") return { ...base, ...none, phase: kind === "credit" ? "failed" : "gone", progress: 0, stage: "cancelled", parentToken: await this.parentTokenOf(order) };
     const st = await this.getState(order.id);
     const total = (det?.persons.length ?? 1) + 1 + COLOREAR.scenes + 1;
     const doneUnits = st ? st.characters.filter((c) => c.status !== "pending").length + (st.story ? 1 : 0) + st.pages.filter((p) => p.status !== "pending").length : 0;
     const ready = order.status === "delivered" || (order.status === "completed" && st?.stage === "done");
-    return {
+    const out: ColorearStatus = {
       ...base,
       phase: ready ? "ready" : st?.stage === "failed" ? "failed" : "working",
       progress: ready ? 1 : Math.min(0.97, doneUnits / total),
@@ -802,7 +1217,46 @@ export class ColorearEngine {
       notes: st?.notes ?? [],
       expiresAt: order.purge_at,
       hasPdf: ready,
+      parentToken: kind === "credit" ? await this.parentTokenOf(order) : null,
     };
+    if (kind === "main" && det && (ready || st?.stage === "failed" || order.status === "completed")) {
+      const credits = await this.creditsOf(order, det);
+      if (credits && credits.usable) out.credits = { left: credits.left, total: credits.total, until: order.purge_at ?? "" };
+      out.creditsExpired = !!credits && credits.left > 0 && !credits.usable;
+      out.books = await this.booksOf(order);
+      // Legal strings of the delivery page (owned by legal-compliance), with the REAL dates: the drawings are erased and the offer ends then.
+      const L = COLOREAR_DELIVERY_LEGAL[this.legalLangOf(order)];
+      const day = (iso8: string) => new Date(iso8).toLocaleDateString(lang === "en" ? "en-US" : "es-MX", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+      const stamp = (iso8: string) => new Date(iso8).toLocaleString(lang === "en" ? "en-US" : "es-MX", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: "UTC", timeZoneName: "short" });
+      const keeps = !det.charsDeletedAt && !!ready;
+      if (keeps && order.variant === "single" && det.charsUntil) out.legal.characters = L.charactersOffer.replace("{{FECHA_PERSONAJES}}", stamp(det.charsUntil));
+      if (keeps && order.variant === "bundle3" && credits?.usable && order.purge_at) out.legal.characters = L.charactersTrio.replace("{{FECHA_CREDITOS}}", day(order.purge_at));
+      if (keeps && order.variant === "single") out.legal.deleteButton = L.deleteButton;
+      const offer = ready ? await this.offerOf(order, det, order.delivered_at ? new Date(order.delivered_at) : this.d.now()) : null;
+      if (offer) {
+        const legalLoc = lang === "en" ? "en" : order.country === "ES" ? "es-ES" : "es-419";
+        const k2 = resolveAllColorearCheckboxes(legalLoc, this.legalVars()).find((c) => c.checkboxId === "K2");
+        out.legal.offerTerms = L.offerTerms.replace("{{FECHA_OFERTA}}", stamp(offer.until));
+        out.offer = { price: offer.price, until: offer.until, sig: this.signUpsell(accessToken, offer.until), hoursLeft: Math.max(1, Math.ceil((new Date(offer.until).getTime() - this.d.now().getTime()) / 3_600_000)), payNotice: k2?.text ?? "" };
+      }
+    }
+    return out;
+  }
+
+  private async parentTokenOf(o: OrderRow): Promise<string | null> {
+    const parent = o.parent_order_id ? await this.d.db.orders.get(o.parent_order_id) : null;
+    return parent && !parent.pii_purged_at ? parent.access_token : null;
+  }
+
+  /** The other adventures of a purchase (Trio credits and "otra aventura" books), for the delivery page. Cancelled and unpaid ones are not shown. */
+  private async booksOf(parent: OrderRow): Promise<ColorearBookRef[]> {
+    const kids = (await this.d.db.orders.find({ parent_order_id: parent.id }, { orderBy: "created_at" })).filter((k) => !["created", "cancelled", "refunded", "purged"].includes(k.status) && !k.pii_purged_at);
+    return kids.map((k) => {
+      const d = this.details(k);
+      const lang = d?.lang ?? "es";
+      const label = d && d.theme ? d.theme : lang === "es" ? "Aventura sorpresa" : "Surprise adventure";
+      return { token: k.access_token, label, phase: k.status === "delivered" ? ("ready" as const) : ("working" as const), kind: k.variant === "add1" ? ("add" as const) : ("credit" as const) };
+    });
   }
 
   async readPdf(accessToken: string): Promise<{ bytes: Uint8Array; filename: string; order: OrderRow } | null> {
@@ -856,8 +1310,31 @@ export class ColorearEngine {
   }
 }
 
+export interface ColorearBookRef {
+  token: string;
+  /** What the buyer asked for (catalog label or free text), shown to the buyer only. */
+  label: string;
+  phase: "working" | "ready";
+  kind: "credit" | "add";
+}
+
 export interface ColorearStatus {
   phase: "awaiting_payment" | "working" | "ready" | "failed" | "refunded" | "gone";
+  variant: string;
+  /** main = the purchase (1 adventure or Trio), add = "otra aventura" purchase, credit = free Trio adventure. */
+  kind: "main" | "add" | "credit";
+  /** Free Trio adventure: token of the order that lists all the adventures. */
+  parentToken: string | null;
+  /** Trio: adventures that can still be created with 1 click, and when they expire. Null when none (or not a Trio). */
+  credits: { left: number; total: number; until: string } | null;
+  /** Trio whose unused adventures expired. */
+  creditsExpired: boolean;
+  /** Other adventures of this purchase. */
+  books: ColorearBookRef[];
+  /** "Otra aventura con las mismas fotos" while the 48 h window is open. `sig` is the signed link required by the checkout. */
+  offer: { price: string; until: string; sig: string; hoursLeft: number; payNotice: string } | null;
+  /** Legal strings with their real dates (drawings kept until..., offer valid until..., delete button). Null when they do not apply. */
+  legal: { characters: string | null; offerTerms: string | null; deleteButton: string | null };
   progress: number;
   stage: string;
   lang: ColorearLang;
