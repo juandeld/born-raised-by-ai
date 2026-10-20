@@ -37,7 +37,7 @@ Costo del bundle [EST]: N × $0.53 − (N−1) × $0.08, porque los 1–5 person
 
 - El Trío se fija **un escalón por debajo del precio de dos libros sueltos** en cada moneda; así el mensaje "3 por menos que el precio de 2" es literalmente cierto y fácil de entender sin calculadora.
 - El Cinco se fija **por debajo del precio de tres libros sueltos** ("5 por menos que el precio de 3"); su función principal es ancla: hace que el Trío se vea como el punto razonable y sube el AOV cuando lo elige 10 %.
-- **Paridad por país**: en MX el precio por libro del Trío (MX$143 ≈ $7.5) queda en ~58 % del precio unitario de EE. UU. y el del Cinco en ~49 %, dentro del espíritu de la regla 60–70 %; el sencillo MX$229 (≈ $12.1, ~93 % del de EE. UU.) lo fijó Juan el 18-oct y no lo toco. ES y UK en el sencillo están en 106 % / 100 % del de EE. UU. en USD (precio local con IVA incluido), y por libro del Trío en 92 % / 94 %.
+- **Paridad por país**: en MX el precio por libro del Trío (MX$143 ≈ $7.5) queda en ~58 % del precio unitario de EE. UU. y el del Cinco en ~49 %, dentro del espíritu de la regla 60–70 %; el sencillo MX$229 (≈ $12.1, ~93 % del de EE. UU.) lo fijó Juan el 18-oct y no lo toco. ES y UK en el sencillo están en 106 % / 100 % del de EE. UU. en USD (precio local con IVA incluido; la regla pide 85–95 %, queda por encima y lo marco para revisar con los datos de la prueba de ES), y por libro del Trío en 68 % / 63 %.
 - **Ahorros 36–48 %**: exceden el 30 % que decido solo → escalado a Juan (sección 6), con plan B ≤ 30 %.
 
 ### 1.3 Presentación y opción por defecto
@@ -207,7 +207,7 @@ Etsy: dos fichas (Una, Trío) en lugar de tres (48 págs y Pack Fiesta salen); C
 | # | Qué | Por qué requiere a Juan | Recomendación |
 |---|---|---|---|
 | 1 | **Trío** y **Cinco** (bundles nuevos) | Regla: bundles nuevos | Aprobar |
-| 2 | Ahorro del Trío 36–38 % y del Cinco 45–48 % | Regla: descuentos > 30 % | Aprobar. **Plan B ≤ 30 %** (se pierde el mensaje "3 por menos que 2"): Trío $27.99 · £21.99 · €25.99 · MX$489; Cinco $39.99 · £29.99 · €36.99 · MX$689. Contribución por Trío US baja ≈ $2.8 y MX ≈ $2.5 |
+| 2 | Ahorro del Trío 36–38 % y del Cinco 45–48 % | Regla: descuentos > 30 % | Aprobar. **Plan B ≤ 30 %** (se pierde el mensaje "3 por menos que 2"): Trío $27.99 · £21.99 · €25.99 · MX$489; Cinco $39.99 · £29.99 · €36.99 · MX$689. La contribución por Trío sube ≈ $2.7 en US y ≈ $2.5 en MX por pedido, pero la conversión del bundle baja [EST] |
 | 3 | Eliminar el 48 págs ($19.99) y sacar el Pack Fiesta del selector | Cambia la oferta del producto aprobada | Aprobar |
 | 4 | Regla de CAC: pasar de "60 % del ticket" a "contribución − 20 % del AOV" en países con IVA | Regla del portafolio | Aprobar (`director-portafolio`) |
 | 5 | Retención de personajes en línea 48 h / 30 días para el upsell y los créditos | Cambia el dato retenido (D8) | `legal-compliance` |
