@@ -42,3 +42,15 @@ Borrar antes el registro A de "parking" de GoDaddy y el CNAME `www` existente. P
 - Vercel: desplegado en https://born-raised-by-ai-4ta9.vercel.app (root apps/web), PAYMENT_PROVIDER=mock.
 - ElevenLabs: agente es-419 creado (agent_2601m58wfve0fdc9j1dbfm0v5fy8) con voz LykVXmiL9G4zV1CJHN2o. Faltan: ELEVENLABS_API_KEY en Vercel, agentes es-ES / en-US / en-GB, confirmación escrita del caso de uso.
 - Pendientes de Juan: Twilio (SID, token, número), Resend (API key), lumen-labs.co DNS → Vercel, Polar y Recurrente (KYC), cuenta USD.
+
+## Polar: producto de colorear (Pintoria)
+
+Un solo producto con precios en 4 monedas (USD 12.99, GBP 9.99, EUR 11.99, MXN 229). `createCheckout` envía `currency` en minúsculas (`usd`, `gbp`, `eur`, `mxn`) según la moneda del pedido (`COLOREAR_PRICES`).
+
+```
+POLAR_PRODUCT_MAP={"colorear:US:single":"3ccd6b75-f151-4c78-8910-9745523f410e","colorear:GB:single":"3ccd6b75-f151-4c78-8910-9745523f410e","colorear:ES:single":"3ccd6b75-f151-4c78-8910-9745523f410e","colorear:MX:single":"3ccd6b75-f151-4c78-8910-9745523f410e"}
+```
+
+- Webhook de Polar ya creado: formato Raw, API 2026-10, eventos `order.paid` y `order.refunded`, URL `/api/webhooks/polar`.
+- Firma: `polar.ts` usa los bytes utf-8 del secreto completo (incluido `whsec_`), igual que el SDK de Polar (`Buffer.from(secret,'utf-8').toString('base64')` antes de standardwebhooks). Cubierto por prueba.
+- `PAYMENT_PROVIDER` sigue en `mock` hasta decisión de Juan.

@@ -36,6 +36,9 @@ describe("payment providers", () => {
     expect(calls[0]!.url).toContain("sandbox-api.polar.sh");
     expect(calls[0]!.body.products).toEqual(["prod-uuid"]);
     expect(calls[0]!.body.metadata).toEqual({ order_id: "o1" });
+    expect(calls[0]!.body.currency).toBe(checkout.currency.toLowerCase());
+    await polar.createCheckout({ ...checkout, currency: "GBP" });
+    expect(calls[1]!.body.currency).toBe("gbp");
     await expect(polar.createCheckout({ ...checkout, country: "ES" })).rejects.toThrow(/POLAR_PRODUCT_MAP/);
 
     const body = JSON.stringify({ type: "order.paid", data: { id: "ord_9", checkout_id: "chk_1", metadata: { order_id: "o1" } } });
@@ -43,6 +46,20 @@ describe("payment providers", () => {
     const headers = { "webhook-id": "m1", "webhook-timestamp": ts, "webhook-signature": signStandardWebhook(Buffer.from("whs"), "m1", ts, body) };
     expect(await polar.parseWebhook(body, headers)).toEqual({ type: "payment_succeeded", orderId: "o1", checkoutId: "chk_1", paymentId: "ord_9" });
     await expect(polar.parseWebhook(body, { ...headers, "webhook-signature": "v1,AAAA" })).rejects.toThrow(/signature/);
+  });
+
+  it("Polar: verifies the signature the way Polar signs (utf-8 bytes of the whole secret, whsec_ prefix included)", async () => {
+    const secret = "whsec_Zm9vYmFyYmF6cXV4";
+    const polar = new PolarPaymentProvider({ accessToken: "t", webhookSecret: secret, productMap: {}, server: "sandbox" });
+    const body = JSON.stringify({ type: "order.paid", data: { id: "ord_1", checkout_id: "chk_1", metadata: { order_id: "o1" } } });
+    const ts = String(Math.floor(Date.now() / 1000));
+    // Polar SDK: Buffer.from(secret, "utf-8").toString("base64") is handed to standardwebhooks, which base64-decodes it back to the utf-8 bytes.
+    const sdkKey = Buffer.from(Buffer.from(secret, "utf-8").toString("base64"), "base64");
+    const good = { "webhook-id": "m9", "webhook-timestamp": ts, "webhook-signature": signStandardWebhook(sdkKey, "m9", ts, body) };
+    expect(await polar.parseWebhook(body, good)).toMatchObject({ type: "payment_succeeded", orderId: "o1" });
+    // Treating the secret as base64 after stripping the prefix (the generic Svix convention) must NOT verify.
+    const wrong = { ...good, "webhook-signature": signStandardWebhook(Buffer.from("Zm9vYmFyYmF6cXV4", "base64"), "m9", ts, body) };
+    await expect(polar.parseWebhook(body, wrong)).rejects.toThrow(/signature/);
   });
 
   it("Polar: full refund reads the order amount first, partial refund sends the given amount", async () => {

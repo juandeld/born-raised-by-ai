@@ -54,8 +54,23 @@ export interface ImageProvider {
 export interface PersonInput {
   /** Name as the buyer typed it. Never leaves our infrastructure except inside the finished PDF and our emails. */
   name: string;
-  /** Short role/description ("niña, 6 años", "perro"). Sent to the story writer, never the name. */
+  /**
+   * English descriptor of who it is, sent to the image and story prompts, never the name. For orders made with closed roles it is
+   * derived from `roleId` at checkout ("the child's grandfather, an older man"); for older orders it is the buyer's free text ("niña, 6 años").
+   */
   role: string;
+  /** Closed role chosen with the buttons (absent in orders saved before closed roles). */
+  roleId?: string;
+  /** Sanitized short description of "other" (<= 30 characters), when given. */
+  roleText?: string;
+}
+
+/** What the checkout receives per person: either a closed `roleId` (+ optional `roleText` for "other") or, for old clients, free text in `role`. */
+export interface PersonSubmission {
+  name: string;
+  roleId?: string;
+  roleText?: string;
+  role?: string;
 }
 
 export interface StoryScene {

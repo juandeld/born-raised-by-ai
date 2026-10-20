@@ -15,10 +15,10 @@ import { buildCharacterFromTextPrompt, buildCharacterPrompt, buildCoverPrompt, b
 import { inspectLineArt, normalizeLineArt } from "./qa";
 import { composeCoverFromCharacters } from "./cover";
 import { assembleBook } from "./pdf";
-import { sanitizePersonName, sanitizeShortText } from "./sanitize";
+import { resolvePersonRole, sanitizePersonName, sanitizeShortText, storyLabelsOf } from "./sanitize";
 import { charPath, pagePath, pdfPath, photoPath, statePath, type GenState, type PageState } from "./state";
 import { fillNames, fillVisual, joinNames, rolesOf, type StoryProvider } from "./story";
-import { ImageProviderError, type GeneratedImage, type ImageProvider, type ImageQuality, type PersonInput, type RefImage } from "./types";
+import { ImageProviderError, type GeneratedImage, type ImageProvider, type ImageQuality, type PersonInput, type PersonSubmission, type RefImage } from "./types";
 
 export interface ColorearDeps {
   db: Db;
@@ -41,7 +41,7 @@ export interface ColorearCheckoutInput {
   lang: ColorearLang;
   country: CountryCode;
   email: string;
-  persons: PersonInput[];
+  persons: PersonSubmission[];
   photos: Uint8Array[];
   /** Free text (sanitized) or a catalog theme label. */
   theme?: string;
@@ -175,14 +175,19 @@ export class ColorearEngine {
     const persons: PersonInput[] = [];
     if (input.persons.length < 1 || input.persons.length > COLOREAR.maxPhotos) errors.persons = "1 to 5 people";
     else {
-      for (const p of input.persons) {
+      const ageNum = Number(input.age);
+      for (const [idx, p] of input.persons.entries()) {
         const n = sanitizePersonName(p.name);
-        const r = sanitizeShortText(p.role, 40);
-        if (!n.ok || !r.ok) {
-          errors.persons = `Invalid person (${!n.ok ? `name:${n.reason}` : `role:${(r as { reason: string }).reason}`})`;
+        if (!n.ok) {
+          errors.persons = `Invalid person (name:${n.reason})`;
           break;
         }
-        persons.push({ name: n.value, role: r.value });
+        const r = resolvePersonRole(p, idx, Number.isFinite(ageNum) ? ageNum : COLOREAR.ageMin);
+        if (!r.ok) {
+          errors.persons = `Invalid person (role:${r.reason})`;
+          break;
+        }
+        persons.push({ name: n.value, ...r.value });
       }
     }
     if (input.photos.length !== input.persons.length || input.photos.length < 1) errors.photos = "One photo per person";
@@ -560,7 +565,7 @@ export class ColorearEngine {
       if (!state.story) {
         state.stage = "story";
         await save();
-        state.story = await this.d.story.write({ roles, lang: det.lang, band, theme: det.theme });
+        state.story = await this.d.story.write({ roles, labels: storyLabelsOf(det.persons, det.lang), lang: det.lang, band, theme: det.theme });
         await save();
       }
       const story = state.story!;

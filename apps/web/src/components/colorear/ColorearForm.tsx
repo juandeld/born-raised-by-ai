@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import type { ColorearLang } from "@lumen/config";
-import { COLOREAR_COPY } from "@/lib/colorear-copy";
+import { COMPANION_ROLE_IDS, PROTAGONIST_ROLE_IDS, ROLE_OTHER_MAX, roleChipLabel, type ColorearLang, type ColorearRoleId } from "@lumen/config";
+import { COLOREAR_COPY, type ColorearCopy } from "@/lib/colorear-copy";
 import { PencilIcon, ThemeIcon } from "./ThemeIcon";
 
 export interface CountryLegal {
@@ -18,7 +18,10 @@ interface Item {
   blob: Blob;
   preview: string;
   name: string;
-  role: string;
+  /** Closed role chosen with the chips; "" until the buyer picks one. */
+  roleId: ColorearRoleId | "";
+  /** Optional short description, only for "other". */
+  roleText: string;
 }
 
 const MAX = 5;
@@ -51,6 +54,35 @@ async function compress(file: File): Promise<Blob> {
   }
   bmp.close();
   throw new Error("too big");
+}
+
+/** One closed-choice group per photo (radiogroup). Photo 1 offers the protagonist; photos 2 to 5 offer the relation to the protagonist. */
+function RolePicker({ idx, item, lang, c, onChange }: { idx: number; item: Item; lang: ColorearLang; c: ColorearCopy["form"]["people"]; onChange: (p: Partial<Item>) => void }) {
+  const ids: readonly ColorearRoleId[] = idx === 0 ? PROTAGONIST_ROLE_IDS : COMPANION_ROLE_IDS;
+  const labelId = `role-label-${item.id}`;
+  return (
+    <div className="mt-3 border-t border-lapiz-line pt-3">
+      <p id={labelId} className="text-sm font-semibold">{idx === 0 ? c.protagonist : c.companion}</p>
+      {idx === 0 && <p className="text-sm text-lapiz-muted">{c.protagonistHint}</p>}
+      <div role="radiogroup" aria-labelledby={labelId} className="mt-2 flex flex-wrap gap-2">
+        {ids.map((rid) => {
+          const on = item.roleId === rid;
+          return (
+            <label key={rid} className="c-role relative flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-full border border-lapiz-line bg-white px-4 text-center text-[15px] font-semibold transition-colors hover:border-lapiz-teal/70 hover:bg-lapiz-mist">
+              <input type="radio" name={`role-${item.id}`} value={rid} checked={on} className="sr-only" onChange={() => onChange({ roleId: rid, roleText: rid === "other" ? item.roleText : "" })} />
+              {roleChipLabel(rid, lang)}
+            </label>
+          );
+        })}
+      </div>
+      {item.roleId === "other" && (
+        <label className="mt-3 block text-sm font-semibold">
+          {c.otherLabel}
+          <input className="c-field" value={item.roleText} maxLength={ROLE_OTHER_MAX} placeholder={c.otherPh} autoComplete="off" onChange={(e) => onChange({ roleText: e.target.value })} />
+        </label>
+      )}
+    </div>
+  );
 }
 
 export function ColorearForm({ lang, countries, defaultCountry, themes, creative }: { lang: ColorearLang; countries: Record<string, CountryLegal>; defaultCountry: string; themes: Array<{ id: string; label: string }>; creative: string }) {
@@ -101,19 +133,25 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
       if (f.size > MAX_INPUT_BYTES) { setPhotoMsg(c.photos.tooLarge); continue; }
       try {
         const blob = await compress(f);
-        added.push({ id: nextId.current++, blob, preview: URL.createObjectURL(blob), name: "", role: "" });
+        added.push({ id: nextId.current++, blob, preview: URL.createObjectURL(blob), name: "", roleId: "", roleText: "" });
       } catch {
         setPhotoMsg(c.errors.unreadable!);
       }
     }
-    if (added.length) setItems((prev) => [...prev, ...added].slice(0, MAX));
+    if (added.length) setItems((prev) => fitRoles([...prev, ...added].slice(0, MAX)));
   }
+  /** Photo 1 is always the protagonist and the others never are: whatever no longer fits its position is cleared so the buyer picks again. */
+  const fitRoles = (list: Item[]): Item[] =>
+    list.map((i, idx) => {
+      const isProt = (PROTAGONIST_ROLE_IDS as readonly string[]).includes(i.roleId);
+      return i.roleId && isProt !== (idx === 0) ? { ...i, roleId: "", roleText: "" } : i;
+    });
   const patch = (id: number, p: Partial<Item>) => setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...p } : i)));
   const remove = (id: number) =>
     setItems((prev) => {
       const gone = prev.find((i) => i.id === id);
       if (gone) URL.revokeObjectURL(gone.preview);
-      return prev.filter((i) => i.id !== id);
+      return fitRoles(prev.filter((i) => i.id !== id));
     });
 
   async function submit(e: React.FormEvent) {
@@ -121,7 +159,7 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
     if (busy) return;
     const local: Record<string, string> = {};
     if (!items.length) local.photos = c.errors.photos!;
-    if (items.some((i) => !i.name.trim() || !i.role.trim())) local.persons = c.errors.persons!;
+    if (items.some((i) => !i.name.trim() || !i.roleId)) local.persons = c.errors.persons!;
     if (!age) local.age = c.errors.age!;
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) local.email = c.errors.email!;
     if (!allChecked) local.consent = c.errors.consent!;
@@ -140,7 +178,8 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
     items.forEach((it, i) => {
       fd.set(`photo${i + 1}`, new File([it.blob], `photo-${i + 1}.jpg`, { type: "image/jpeg" }));
       fd.set(`name${i + 1}`, it.name.trim());
-      fd.set(`role${i + 1}`, it.role.trim());
+      fd.set(`roleId${i + 1}`, it.roleId);
+      if (it.roleId === "other" && it.roleText.trim()) fd.set(`roleText${i + 1}`, it.roleText.trim());
     });
     try {
       const res = await fetch("/api/colorear/checkout", { method: "POST", body: fd });
@@ -196,7 +235,8 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
             <p className="text-sm text-lapiz-muted">{c.people.hint}</p>
             <ul className="mt-3 space-y-4">
               {items.map((it, idx) => (
-                <li key={it.id} className="flex gap-3 rounded-xl border border-lapiz-line bg-lapiz-paper p-3">
+                <li key={it.id} className="rounded-xl border border-lapiz-line bg-lapiz-paper p-3">
+                  <div className="flex gap-3">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={it.preview} alt="" className="h-24 w-24 shrink-0 rounded-lg border border-lapiz-line object-cover" />
                   <div className="min-w-0 flex-1 space-y-2">
@@ -204,16 +244,13 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
                       {c.people.name} {idx + 1}
                       <input className={input} value={it.name} maxLength={30} autoComplete="off" onChange={(e) => patch(it.id, { name: e.target.value })} />
                     </label>
-                    <label className="block text-sm font-semibold">
-                      {c.people.role}
-                      <input className={input} value={it.role} maxLength={40} list="roles" placeholder={c.people.rolePh} onChange={(e) => patch(it.id, { role: e.target.value })} />
-                    </label>
                     <button type="button" className="inline-flex min-h-[44px] items-center text-sm font-semibold underline underline-offset-4" onClick={() => remove(it.id)}>{c.people.remove}</button>
                   </div>
+                  </div>
+                  <RolePicker idx={idx} item={it} lang={lang} c={c.people} onChange={(p) => patch(it.id, p)} />
                 </li>
               ))}
             </ul>
-            <datalist id="roles">{c.people.roleSuggestions.map((r) => <option key={r} value={r} />)}</datalist>
             {err("persons")}
           </div>
         )}

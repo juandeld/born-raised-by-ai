@@ -51,6 +51,8 @@ export class PolarPaymentProvider implements PaymentProvider {
       headers: { authorization: `Bearer ${this.cfg.accessToken}`, "content-type": "application/json" },
       body: JSON.stringify({
         products: [productId],
+        // Presentment currency for multi-currency products (3-letter lowercase code, e.g. "gbp").
+        currency: req.currency.toLowerCase(),
         success_url: req.successUrl,
         customer_email: req.customerEmail,
         allow_discount_codes: false,

@@ -111,6 +111,9 @@ body {
   .c-theme { -webkit-tap-highlight-color: transparent; }
   .c-theme:has(input:checked) { border-color: #23303b; border-width: 2.5px; background: #e4f0ee; box-shadow: 3px 3px 0 0 #1b6b67; }
   .c-theme:has(input:focus-visible) { outline: 3px solid #f0b43c; outline-offset: 2px; }
+  .c-role { -webkit-tap-highlight-color: transparent; }
+  .c-role:has(input:checked) { border-color: #23303b; border-width: 2.5px; background: #e4f0ee; color: #145551; box-shadow: 2px 2px 0 0 #1b6b67; }
+  .c-role:has(input:focus-visible) { outline: 3px solid #f0b43c; outline-offset: 2px; }
   .c-theme:has(input:checked) .c-check { opacity: 1; transform: scale(1); }
 }
 @media (prefers-reduced-motion: reduce) { .c-btn, .c-btn-quiet, .c-theme * { transition: none !important; } }

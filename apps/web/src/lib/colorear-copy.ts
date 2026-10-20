@@ -14,7 +14,7 @@ export interface ColorearCopy {
   form: {
     title: string; intro: string;
     photos: { label: string; hint: string; add: string; remove: string; tooLarge: string; tooMany: string; badType: string; heic: string; count: (n: number) => string };
-    people: { label: string; hint: string; name: string; role: string; rolePh: string; add: string; remove: string; roleSuggestions: string[] };
+    people: { label: string; hint: string; name: string; role: string; protagonist: string; protagonistHint: string; companion: string; otherLabel: string; otherPh: string; add: string; remove: string };
     age: { label: string; hint: string };
     theme: { label: string; hint: string; ph: string; own: string; picked: string };
     email: { label: string; hint: string };
@@ -103,13 +103,16 @@ const ES: ColorearCopy = {
     },
     people: {
       label: "¿Quiénes salen?",
-      hint: "Un nombre y quién es, para cada foto. Los nombres se quedan en nuestro servidor.",
+      hint: "Un nombre y quién es, para cada foto. La primera foto es siempre quien protagoniza el libro. Los nombres se quedan en nuestro servidor.",
       name: "Nombre",
       role: "Quién es",
-      rolePh: "niña de 6 años, papá, perro...",
+      protagonist: "Protagonista del libro",
+      protagonistHint: "Usamos la edad que elijas más abajo.",
+      companion: "Quién es para el protagonista",
+      otherLabel: "Cuéntanos quién es (opcional)",
+      otherPh: "vecina, maestro...",
       add: "Agregar persona",
       remove: "Quitar",
-      roleSuggestions: ["niña", "niño", "mamá", "papá", "abuela", "abuelo", "perro", "gato", "bebé"],
     },
     age: { label: "Edad de quien va a colorear", hint: "Ajusta la dificultad de los dibujos." },
     theme: { label: "Elige la aventura", hint: "Toda la historia gira en torno a este tema. Si no eliges ninguno, te sorprendemos.", ph: "dinosaurios, mi ciudad, el cumpleaños de Sofía...", own: "O escribe la tuya", picked: "Elegida" },
@@ -121,7 +124,7 @@ const ES: ColorearCopy = {
     paying: "Preparando el pago...",
     errors: {
       photos: "Agrega de 1 a 5 fotos.",
-      persons: "Escribe un nombre y quién es para cada foto (solo letras).",
+      persons: "Escribe un nombre (solo letras) y elige quién es para cada foto.",
       theme: "Ese tema no se puede usar. Prueba con otro.",
       email: "Revisa tu correo.",
       age: "Elige una edad de 3 a 8 años.",
@@ -233,13 +236,16 @@ const EN: ColorearCopy = {
     },
     people: {
       label: "Who is in the book?",
-      hint: "A name and who they are, for each photo. Names stay on our server.",
+      hint: "A name and who they are, for each photo. The first photo is always the main character of the book. Names stay on our server.",
       name: "Name",
       role: "Who they are",
-      rolePh: "girl, 6, dad, dog...",
+      protagonist: "Main character of the book",
+      protagonistHint: "We use the age you choose below.",
+      companion: "Who they are to the main character",
+      otherLabel: "Tell us who they are (optional)",
+      otherPh: "neighbor, teacher...",
       add: "Add person",
       remove: "Remove",
-      roleSuggestions: ["girl", "boy", "mom", "dad", "grandma", "grandpa", "dog", "cat", "baby"],
     },
     age: { label: "Age of the child who will color", hint: "Adjusts how detailed the drawings are." },
     theme: { label: "Choose the adventure", hint: "The whole story is built around this theme. If you pick none, we surprise you.", ph: "dinosaurs, my city, Sofia's birthday...", own: "Or write your own", picked: "Selected" },
@@ -251,7 +257,7 @@ const EN: ColorearCopy = {
     paying: "Preparing payment...",
     errors: {
       photos: "Add 1 to 5 photos.",
-      persons: "Type a name and who they are for each photo (letters only).",
+      persons: "Type a name (letters only) and choose who they are for each photo.",
       theme: "That theme cannot be used. Try another one.",
       email: "Check your email address.",
       age: "Choose an age from 3 to 8.",

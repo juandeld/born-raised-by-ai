@@ -5,6 +5,8 @@ import type { PersonInput, Story, StoryScene } from "./types";
 export interface StoryRequest {
   /** Roles only: names are substituted locally, so the story writer never sees them. */
   roles: string[];
+  /** Same order as `roles`: how each person is called in the story language ("la abuela", "grandma"). */
+  labels?: string[];
   lang: ColorearLang;
   band: AgeBand;
   /** Sanitized optional theme or city of the adventure ("" when none). */
@@ -136,7 +138,7 @@ export class AnthropicStoryProvider implements StoryProvider {
       "Never mention brands, licensed characters, real celebrities, or scary, violent or inappropriate things. Keep it gentle, funny and kind.";
     const user =
       `Write a story of exactly ${COLOREAR.scenes} scenes for a coloring book for children aged ${req.band}. ` +
-      `The main characters are (refer to them ONLY with the tokens {1}..{${n}}, never invent names): ${req.roles.map((r, i) => `{${i + 1}} = ${r}`).join("; ")}. ` +
+      `The main characters are (refer to them ONLY with the tokens {1}..{${n}}, never invent names): ${req.roles.map((r, i) => `{${i + 1}} = ${r}${req.labels?.[i] ? ` (in the story call this character "${req.labels[i]}" when a role word is needed, never a name)` : ""}`).join("; ")}. ` +
       `${req.theme ? `Adventure theme or place: ${req.theme}. ` : "Choose a magical, friendly adventure. "}` +
       `Language of "text": ${lang}. Each scene "text" is 1 or 2 short, simple sentences (max 25 words) read aloud to a young child. ` +
       `Use {all} for "all the characters". Each scene "visual" is an English description of ONE drawing (what is seen: characters using tokens {k}, setting, action), simple enough to color. ` +

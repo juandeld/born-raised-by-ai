@@ -1,5 +1,5 @@
 import { COLOREAR, colorearCountries, isColorearLang, type CountryCode } from "@lumen/config";
-import { ColorearValidationError } from "@lumen/generate";
+import { ColorearValidationError, type PersonSubmission } from "@lumen/generate";
 import { getColorear } from "@/lib/colorear";
 import { baseUrl } from "@/lib/engine";
 import { legalReady } from "@/lib/legal-vars";
@@ -8,7 +8,7 @@ import { clientIp, deviceOf, json, rateLimited } from "@/lib/request";
 
 /**
  * multipart/form-data: photo1..photoN (JPEG already compressed by the browser, <= 900 KB each; Vercel limits the body to 4.5 MB),
- * name1..nameN, role1..roleN, and lang, country, email, age, theme, themeId, creative, checkboxIds (JSON). The server re-validates everything.
+ * name1..nameN, roleId1..roleIdN (+ roleText<i> for "other"; legacy role1..roleN accepted), and lang, country, email, age, theme, themeId, creative, checkboxIds (JSON). The server re-validates everything.
  */
 export async function POST(req: Request) {
   const ip = clientIp(req.headers);
@@ -26,12 +26,16 @@ export async function POST(req: Request) {
   const countryRaw = String(form.get("country") ?? "").toUpperCase() as CountryCode;
   const country = open.includes(countryRaw) ? countryRaw : open[0]!;
   const photos: Uint8Array[] = [];
-  const persons: Array<{ name: string; role: string }> = [];
+  const persons: PersonSubmission[] = [];
   for (let i = 1; i <= COLOREAR.maxPhotos; i++) {
     const f = form.get(`photo${i}`);
     if (!(f instanceof File) || f.size === 0) continue;
     photos.push(new Uint8Array(await f.arrayBuffer()));
-    persons.push({ name: String(form.get(`name${i}`) ?? ""), role: String(form.get(`role${i}`) ?? "") });
+    const roleId = String(form.get(`roleId${i}`) ?? "").slice(0, 40);
+    // Closed roles (current form) or, for an old cached page, free text in role<i>.
+    persons.push(roleId
+      ? { name: String(form.get(`name${i}`) ?? ""), roleId, roleText: String(form.get(`roleText${i}`) ?? "").slice(0, 100) }
+      : { name: String(form.get(`name${i}`) ?? ""), role: String(form.get(`role${i}`) ?? "") });
   }
   let checkboxIds: string[] = [];
   try {
