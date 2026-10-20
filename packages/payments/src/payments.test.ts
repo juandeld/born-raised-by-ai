@@ -57,8 +57,11 @@ describe("payment providers", () => {
     const sdkKey = Buffer.from(Buffer.from(secret, "utf-8").toString("base64"), "base64");
     const good = { "webhook-id": "m9", "webhook-timestamp": ts, "webhook-signature": signStandardWebhook(sdkKey, "m9", ts, body) };
     expect(await polar.parseWebhook(body, good)).toMatchObject({ type: "payment_succeeded", orderId: "o1" });
-    // Treating the secret as base64 after stripping the prefix (the generic Svix convention) must NOT verify.
-    const wrong = { ...good, "webhook-signature": signStandardWebhook(Buffer.from("Zm9vYmFyYmF6cXV4", "base64"), "m9", ts, body) };
+    // Secrets generated on or after 2026-09-08 are Standard Webhooks (docs: polar.sh/docs/integrate/webhooks/delivery): the library strips whsec_ and base64-decodes. Accepted too.
+    const std = { ...good, "webhook-signature": signStandardWebhook(Buffer.from("Zm9vYmFyYmF6cXV4", "base64"), "m9", ts, body) };
+    expect(await polar.parseWebhook(body, std)).toMatchObject({ type: "payment_succeeded", orderId: "o1" });
+    // A signature made with any other key must still be rejected.
+    const wrong = { ...good, "webhook-signature": signStandardWebhook(Buffer.from("another-key"), "m9", ts, body) };
     await expect(polar.parseWebhook(body, wrong)).rejects.toThrow(/signature/);
   });
 
@@ -130,12 +133,13 @@ describe("payment providers", () => {
   it("catalog: Jinglo MX single is required, the package only when BUNDLE_ENABLED=1; Colorear shares the same map", () => {
     const env = { ENABLED_COUNTRIES: "MX", COLOREAR_COUNTRIES: "MX" };
     const cat = polarCatalog(env);
-    expect(cat.map((c) => [c.key, c.required, c.amountMinor])).toEqual([["santa:MX:single", true, 19900], ["santa:MX:bundle", false, 34900], ["colorear:MX:single", true, 22900]]);
+    expect(cat.map((c) => [c.key, c.required, c.amountMinor])).toEqual([["santa:MX:single", true, 19900], ["santa:MX:bundle", false, 34900], ["colorear:MX:single", true, 22900], ["colorear:MX:bundle3", true, 42900], ["colorear:MX:add1", true, 16900]]);
     expect(polarCatalog({ ...env, BUNDLE_ENABLED: "1" }).find((c) => c.key === "santa:MX:bundle")!.required).toBe(true);
     const u = "123e4567-e89b-12d3-a456-426614174000";
-    expect(checkProductMap({ "santa:MX:single": u }, env).missing).toEqual(["colorear:MX:single"]);
-    expect(checkProductMap({ "santa:MX:single": u, "colorear:MX:single": u }, env).ok).toBe(true);
-    expect(checkProductMap({ "santa:MX:single": "x", "colorear:MX:single": u }, env).malformed).toEqual(["santa:MX:single"]);
+    const col = { "colorear:MX:single": u, "colorear:MX:bundle3": u, "colorear:MX:add1": u };
+    expect(checkProductMap({ "santa:MX:single": u }, env).missing).toEqual(Object.keys(col));
+    expect(checkProductMap({ "santa:MX:single": u, ...col }, env).ok).toBe(true);
+    expect(checkProductMap({ "santa:MX:single": "x", ...col }, env).malformed).toEqual(["santa:MX:single"]);
   });
 
   it("reconcile: finds paid/refunded mismatches both ways and ignores test orders", () => {

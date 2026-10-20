@@ -9,7 +9,7 @@ export interface CatalogItem {
   key: string;
   product: "santa" | "colorear";
   country: CountryCode;
-  variant: Variant;
+  variant: string;
   currency: Currency;
   amountMinor: number;
   /** Needed for the product to be sellable with the current env. False for the package while BUNDLE_ENABLED is off. */
@@ -26,8 +26,10 @@ export function polarCatalog(env: Record<string, string | undefined> = process.e
     }
   }
   for (const country of colorearCountries(env)) {
-    const p = COLOREAR_PRICES[country];
-    items.push({ key: `colorear:${country}:single`, product: "colorear", country, variant: "single", currency: p.currency, amountMinor: p.amountMinor, required: true });
+    for (const variant of ["single", "bundle3", "add1"] as const) {
+      const p = COLOREAR_PRICES[country][variant];
+      items.push({ key: `colorear:${country}:${variant}`, product: "colorear", country, variant, currency: p.currency, amountMinor: p.amountMinor, required: true });
+    }
   }
   return items;
 }

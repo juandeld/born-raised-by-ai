@@ -31,7 +31,9 @@ Polar > Products > New product (https://polar.sh/dashboard/lumen-labs/products).
 | Clave | Producto | Precio |
 |---|---|---|
 | `santa:MX:single` | Jinglo, llamada de Santa | MXN 199.00 |
-| `colorear:MX:single` | Colorear (Pintoria) | MXN 229.00 |
+| `colorear:MX:single` | Colorear (Pintoria), 1 aventura | MXN 229.00 |
+| `colorear:MX:bundle3` | Colorear Trio (3 aventuras) | MXN 429.00 |
+| `colorear:MX:add1` | Colorear, otra aventura (oferta a las 48 h) | MXN 169.00 |
 | `santa:MX:bundle` | Paquete | NO crear (apagado, `BUNDLE_ENABLED` sin definir) |
 
 Notas: si Polar no deja fijar MXN como moneda de presentacion en tu cuenta, crea el precio en USD y activa multi-moneda en el producto; avisame, porque cambia `currency` en `packages/config`. Copia el UUID de cada producto (aparece en la URL y en el menu del producto).
@@ -54,7 +56,7 @@ Notas: si Polar no deja fijar MXN como moneda de presentacion en tu cuenta, crea
 | `POLAR_SERVER` | `sandbox` mientras pruebas; `production` al abrir |
 | `POLAR_ACCESS_TOKEN` | el token del paso 4 (del entorno que corresponda) |
 | `POLAR_WEBHOOK_SECRET` | el secret del paso 4 |
-| `POLAR_PRODUCT_MAP` | JSON en una linea: `{"santa:MX:single":"<uuid>","colorear:MX:single":"<uuid>"}` |
+| `POLAR_PRODUCT_MAP` | JSON en una linea: `{"santa:MX:single":"<uuid>","colorear:MX:single":"<uuid>","colorear:MX:bundle3":"<uuid>","colorear:MX:add1":"<uuid>"}` |
 | `ENABLED_COUNTRIES` | `MX` (ES y GB estan activados por defecto pero no tienen producto en Polar: sin esta variable el checkout fallaria ahi) |
 | `BUNDLE_ENABLED` | no definir |
 
