@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { lockedPrefixLength } from "./prelude";
-import { AVISO, EN_GB_RIGHTS_SUFFIX, PRELUDES, RAW_CHECKBOXES, RAW_COLOREAR_CHECKBOXES, COLOREAR_CHECKBOX_ORDER, COLOREAR_IMPLICIT_IDS, renderColorearAviso, fill, hasUnfilledPlaceholders, renderAviso, renderPrelude, resolveAllCheckboxes } from "./index";
+import { AVISO, EN_GB_RIGHTS_SUFFIX, PRELUDES, RAW_CHECKBOXES, RAW_COLOREAR_CHECKBOXES, COLOREAR_CHECKBOX_ORDER, COLOREAR_IMPLICIT_IDS, renderColorearAviso, renderColorearReminder, colorearTrioRefund, colorearDefectRefund, COLOREAR_LEGAL_RULES, COLOREAR_LEGAL_VERSION, COLOREAR_REMINDER, COLOREAR_DELIVERY_LEGAL, COLOREAR_TRIO_LINE, COLOREAR_TRIO_REFUND_LINE, COLOREAR_EMAIL_LINE, fill, hasUnfilledPlaceholders, renderAviso, renderPrelude, resolveAllCheckboxes } from "./index";
 
 const dir = resolve(__dirname, "../../../docs/legal/textos");
 const read = (f: string) => readFileSync(resolve(dir, f), "utf8").replace(/\s*`\[no verificado[^\]]*\]`/g, "");
@@ -161,11 +161,15 @@ describe("placeholders", () => {
         for (const id of COLOREAR_CHECKBOX_ORDER) {
           const t = RAW_COLOREAR_CHECKBOXES[id][lang].text;
           expect(t).not.toMatch(brands);
-          expect(RAW_COLOREAR_CHECKBOXES[id][lang].id).toMatch(/colorear-v3$/);
+          expect(RAW_COLOREAR_CHECKBOXES[id][lang].id).toMatch(/colorear-v4$/);
         }
         expect(RAW_COLOREAR_CHECKBOXES.K1[lang].text.length).toBeLessThanOrEqual(140);
         expect(RAW_COLOREAR_CHECKBOXES.K1[lang].text).toMatch(/IA|AI/);
         expect(RAW_COLOREAR_CHECKBOXES.K1[lang].text).toMatch(/24 h/);
+        // D26: the one checkbox now discloses the retention of the character drawings.
+        expect(RAW_COLOREAR_CHECKBOXES.K1[lang].text).toMatch(/48 h/);
+        expect(RAW_COLOREAR_CHECKBOXES.K1[lang].text).toMatch(/30/);
+        expect(RAW_COLOREAR_CHECKBOXES.K1[lang].text).toMatch(/Tr[ií]o/);
       }
     });
 
@@ -181,5 +185,84 @@ describe("placeholders", () => {
         expect(hasUnfilledPlaceholders(text)).toBe(false);
       }
     });
+  });
+});
+
+describe("colorear D26: characters retention, Trio credits, reminder", () => {
+  const langs = ["es-419", "es-ES", "en"] as const;
+  const vars = { MARCA: "Pintoria", TITULAR: "Titular", EMAIL_PRIVACIDAD: "p@x.co", EMAIL_SOPORTE: "s@x.co", DOMINIO: "x.co", DOMICILIO: "Calle 1", FECHA_BORRADO: "2026-11-20", ENLACE: "https://x.co/e", ENLACE_OFERTA: "https://x.co/o", ENLACE_BAJA: "https://x.co/b", FECHA_PERSONAJES: "2026-10-22", FECHA_OFERTA: "2026-10-22", FECHA_CREDITOS: "2026-11-20" };
+  const brands = /openai|anthropic|claude|resend|supabase|vercel|polar|recurrente|gpt|google|gemini|nano ?banana/i;
+
+  it("version and numbers are in step with the texts", () => {
+    expect(COLOREAR_LEGAL_VERSION).toBe("colorear-legal-v4");
+    expect(COLOREAR_LEGAL_RULES).toMatchObject({ photosMaxHours: 24, charactersOfferHours: 48, charactersTrioDays: 30, trioAdventures: 3, creditsValidDays: 30, bookAndOrderDays: 30, reminderDay: 25, refundDays: 7, maxCommercialEmails: 3 });
+    for (const lang of langs) {
+      const aviso = JSON.stringify(renderColorearAviso(lang, vars));
+      expect(aviso).toMatch(/48 (horas|hours)/);
+      expect(aviso).toMatch(/30 (días|days)/);
+      expect(aviso).toMatch(/24 (horas|hours)/);
+      expect(aviso).toMatch(/Tr[ií]o/);
+      expect(aviso).toMatch(/inter[eé]s leg[ií]timo|legitimate interest/);
+      expect(aviso).toMatch(/(tres|three) (de esos |of those )?(correos|emails)/);
+      expect(aviso).toMatch(/Borrar mis personajes|Delete my characters/);
+      expect(aviso).toMatch(/oponerse|object/);
+      expect(aviso).not.toMatch(/se borran en 24 h y los personajes se borran al terminar/);
+    }
+  });
+
+  it("the old promise that characters are deleted when the book is finished is gone", () => {
+    for (const lang of langs) {
+      const text = JSON.stringify(renderColorearAviso(lang, vars));
+      expect(text).not.toMatch(/los personajes y las páginas intermedias|the characters and intermediate pages/);
+    }
+  });
+
+  it("Trio refund rule: full if only the first adventure was used, unused thirds if more, nothing after 7 days", () => {
+    const paid = 2499;
+    expect(colorearTrioRefund({ paidMinor: paid, credits: 3, used: 0, daysSinceFirstDelivery: 0 })).toEqual({ refundMinor: 2499, rule: "full" });
+    expect(colorearTrioRefund({ paidMinor: paid, credits: 3, used: 1, daysSinceFirstDelivery: 7 })).toEqual({ refundMinor: 2499, rule: "full" });
+    expect(colorearTrioRefund({ paidMinor: paid, credits: 3, used: 2, daysSinceFirstDelivery: 3 })).toEqual({ refundMinor: 833, rule: "unused" });
+    expect(colorearTrioRefund({ paidMinor: paid, credits: 3, used: 3, daysSinceFirstDelivery: 3 })).toEqual({ refundMinor: 0, rule: "none" });
+    expect(colorearTrioRefund({ paidMinor: paid, credits: 3, used: 1, daysSinceFirstDelivery: 8 })).toEqual({ refundMinor: 0, rule: "none" });
+    expect(colorearTrioRefund({ paidMinor: 42900, credits: 3, used: 2, daysSinceFirstDelivery: 1 }).refundMinor).toBe(14300);
+    // never refunds more than what is left after a defect refund
+    const d = colorearDefectRefund(paid, 3);
+    expect(d).toBe(833);
+    expect(colorearTrioRefund({ paidMinor: paid, credits: 3, used: 1, daysSinceFirstDelivery: 2, alreadyRefundedMinor: d }).refundMinor).toBe(paid - d);
+    expect(colorearDefectRefund(1299, 1)).toBe(1299);
+  });
+
+  it("the reminder is transactional first, has no vendor names and never promises the same photos", () => {
+    for (const lang of langs) {
+      const plain = renderColorearReminder(lang, vars, { credits: 0, commercial: false });
+      expect(plain.subject).toContain("2026-11-20");
+      expect(plain.text).not.toContain("https://x.co/o");
+      expect(plain.text).not.toContain("https://x.co/b");
+      const withOffer = renderColorearReminder(lang, vars, { credits: 0, commercial: true });
+      expect(withOffer.text.indexOf("https://x.co/e")).toBeLessThan(withOffer.text.indexOf("https://x.co/o"));
+      expect(withOffer.text).toContain("https://x.co/b");
+      expect(withOffer.text).toContain("Calle 1");
+      expect(withOffer.text).toContain("Titular");
+      const credits = renderColorearReminder(lang, vars, { credits: 2, commercial: true });
+      expect(credits.text).toContain("2");
+      expect(credits.text).not.toContain("https://x.co/o");
+      for (const r of [plain, withOffer, credits]) {
+        expect(JSON.stringify(r)).not.toMatch(brands);
+        expect(hasUnfilledPlaceholders(JSON.stringify(r))).toBe(false);
+        expect(r.subject).not.toMatch(/Sofía|\{\{/);
+      }
+      expect(JSON.stringify(COLOREAR_REMINDER[lang])).not.toMatch(/same photos|mismas fotos/i);
+    }
+  });
+
+  it("checkout, delivery-page and Trio lines are neutral and complete", () => {
+    for (const lang of langs) {
+      const all = JSON.stringify([COLOREAR_TRIO_LINE[lang], COLOREAR_TRIO_REFUND_LINE[lang], COLOREAR_EMAIL_LINE[lang], COLOREAR_DELIVERY_LEGAL[lang]]);
+      expect(all).not.toMatch(brands);
+      expect(COLOREAR_TRIO_LINE[lang]).toMatch(/30/);
+      expect(COLOREAR_TRIO_LINE[lang]).toMatch(/caducan|expire/);
+      expect(COLOREAR_EMAIL_LINE[lang]).toMatch(/(tres|three)/);
+      expect(COLOREAR_DELIVERY_LEGAL[lang].deleteButton).toMatch(/Borrar mis personajes|Delete my characters/);
+    }
   });
 });
