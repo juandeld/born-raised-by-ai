@@ -833,7 +833,7 @@ export class ColorearEngine {
       if (!state.story) {
         state.stage = "story";
         await save();
-        state.story = await this.d.story.write({ roles, labels: storyLabelsOf(det.persons, det.lang), lang: det.lang, band, theme: det.theme });
+        state.story = await this.d.story.write({ roles, labels: storyLabelsOf(det.persons, det.lang), lang: det.lang, band, theme: det.theme, themeId: det.themeId });
         await save();
       }
       const story = state.story!;
