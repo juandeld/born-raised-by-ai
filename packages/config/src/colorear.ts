@@ -20,8 +20,11 @@ export const COLOREAR = {
   maxPhotoBytes: 900_000,
   /** Budget for ALL photos of one submit: Vercel rejects a body over 4.5 MB, and the form fields need a little room. */
   uploadBudgetBytes: 4_000_000,
-  /** Original upload limit shown to the buyer (compressed in the browser before sending). */
-  maxUploadMb: 10,
+  /**
+   * Largest ORIGINAL file the form tries to open (a 48 MP camera photo, a 20 MB iPhone screenshot, a HEIC). Only a sanity limit: the browser reduces
+   * the photo before anything is sent, and the limits that matter (`maxPhotoBytes`, `uploadBudgetBytes`) apply to what is sent, never to the original.
+   */
+  maxOriginalBytes: 60 * 1024 * 1024,
   ageMin: 3,
   ageMax: 8,
   refundWindowDays: 7,

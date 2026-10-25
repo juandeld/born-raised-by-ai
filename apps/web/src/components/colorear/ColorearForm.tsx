@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { COLOREAR, COMPANION_ROLE_IDS, PROTAGONIST_ROLE_IDS, ROLE_OTHER_MAX, colorearPhotoBudget, roleChipLabel, type ColorearLang, type ColorearRoleId } from "@lumen/config";
 import { COLOREAR_COPY, type ColorearCopy } from "@/lib/colorear-copy";
+import { PhotoPrepError, preparePhoto, shrinkPhoto } from "@/lib/photo-prep";
 import { PencilIcon, ThemeIcon } from "./ThemeIcon";
 
 export interface CountryLegal {
@@ -40,43 +41,10 @@ const MAX = 5;
 const blankItem = (id: number): Item => ({ id, shots: [], name: "", roleId: "", roleText: "" });
 /** An added card the buyer never touched: it is ignored on submit instead of blocking the payment. */
 const isBlank = (i: Item) => !i.shots.length && !i.name.trim() && !i.roleId;
-const MAX_INPUT_BYTES = 10 * 1024 * 1024;
 /**
- * Each photo must stay under the server limit (900 KB). The normal target is 640 KB; if everything the buyer added would not fit
- * Vercel's 4.5 MB request body, the photos are re-encoded smaller right before sending (see `fit`).
- */
-const TARGET_BYTES = 640_000;
-
-/** Reads a photo, applies its EXIF rotation, scales it to at most 1280 px and re-encodes it as JPEG (this also strips GPS and metadata). */
-async function compress(file: Blob, target = TARGET_BYTES): Promise<Blob> {
-  const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
-  let maxSide = 1280;
-  let quality = 0.82;
-  for (let i = 0; i < 8; i++) {
-    const k = Math.min(1, maxSide / Math.max(bmp.width, bmp.height));
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(bmp.width * k));
-    canvas.height = Math.max(1, Math.round(bmp.height * k));
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("no canvas");
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
-    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", quality));
-    if (blob && blob.size <= target) {
-      bmp.close();
-      return blob;
-    }
-    quality = Math.max(0.5, quality - 0.08);
-    maxSide = Math.round(maxSide * 0.85);
-  }
-  bmp.close();
-  throw new Error("too big");
-}
-
-/**
- * Makes all the photos about to be sent fit one request. Normally they already do (each is at most 640 KB). With many photos
+ * Makes all the photos about to be sent fit one request. Normally they already do (each is about 640 KB at most). With many photos
  * (up to 15) the largest ones are re-encoded to `colorearPhotoBudget(count)`, which keeps the whole body under Vercel's 4.5 MB.
+ * This limit applies to what is sent; the original photo the buyer picked can be of any size (see `@/lib/photo-prep`).
  */
 async function fit(groups: Blob[][]): Promise<Blob[][]> {
   const all = groups.flat();
@@ -85,7 +53,7 @@ async function fit(groups: Blob[][]): Promise<Blob[][]> {
   const out: Blob[][] = [];
   for (const g of groups) {
     const row: Blob[] = [];
-    for (const b of g) row.push(b.size > per ? await compress(b, per) : b);
+    for (const b of g) row.push(b.size > per ? await shrinkPhoto(b, per) : b);
     out.push(row);
   }
   return out;
@@ -145,8 +113,10 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
   const usingCode = codeEnabled && code.trim().length > 0;
   const [busy, setBusy] = useState(false);
   const [photoMsg, setPhotoMsg] = useState("");
-  /** Photos being compressed right now (the pay button waits for them). */
-  const [photoBusy, setPhotoBusy] = useState(false);
+  /** Batches of photos being opened and reduced right now (the pay button waits for them). */
+  const [photosPending, setPhotosPending] = useState(0);
+  const photoBusy = photosPending > 0;
+  const [photoProgress, setPhotoProgress] = useState<{ at: number; of: number } | null>(null);
   const nextShot = useRef(1);
   /** How many photos card `idx` may hold: the protagonist (card 1) and the others can have different limits. */
   const limitOf = (idx: number) => Math.max(1, idx === 0 ? photoLimits.main : photoLimits.other);
@@ -189,7 +159,7 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
     started.current = true;
     beacon("form_started");
   };
-  /** Validates and compresses the files chosen for one card (one or several at once) and adds them after the photos it already has, up to its limit. */
+  /** Opens and reduces the files chosen for one card (one or several at once) and adds them after the photos it already has, up to its limit. */
   async function addPhotos(id: number, list: FileList | null) {
     const files = Array.from(list ?? []);
     if (!files.length) return;
@@ -201,22 +171,24 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
     if (room <= 0) { setPhotoMsg(c.photos.maxPer(limit)); return; }
     let msg = files.length > room ? c.photos.maxPer(limit) : "";
     setPhotoMsg("");
-    setPhotoBusy(true);
+    setPhotosPending((n) => n + 1);
+    const take = files.slice(0, room);
     const added: Shot[] = [];
     try {
-      for (const f of files.slice(0, room)) {
-        if (/heic|heif/i.test(f.type) || /\.(heic|heif)$/i.test(f.name)) { msg = c.photos.heic; continue; }
-        if (!/^image\/(jpeg|png|webp)$/.test(f.type)) { msg = c.photos.badType; continue; }
-        if (f.size > MAX_INPUT_BYTES) { msg = c.photos.tooLarge; continue; }
+      for (const [n, f] of take.entries()) {
+        setPhotoProgress(take.length > 1 ? { at: n + 1, of: take.length } : null);
         try {
-          const blob = await compress(f);
+          // Any phone photo or screenshot, of any size: it is opened, rotated and reduced here, and only the reduced JPEG is kept.
+          const blob = await preparePhoto(f);
           added.push({ key: nextShot.current++, blob, preview: URL.createObjectURL(blob) });
-        } catch {
-          msg = c.errors.unreadable!;
+        } catch (err) {
+          const code = err instanceof PhotoPrepError ? err.code : "unreadable";
+          msg = code === "too_big" ? c.photos.tooLarge : code === "not_image" ? c.photos.notImage : code === "heic_failed" ? c.photos.heic : c.photos.unreadable;
         }
       }
     } finally {
-      setPhotoBusy(false);
+      setPhotosPending((n) => n - 1);
+      setPhotoProgress(null);
     }
     if (!itemsRef.current.some((i) => i.id === id)) { added.forEach((x) => URL.revokeObjectURL(x.preview)); return; } // the card was removed meanwhile
     setItems((prev) => prev.map((i) => {
@@ -353,7 +325,7 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
       </div>
 
       <div className={card}>
-        {stepHead(1, c.photos.label, c.photos.hint)}
+        {stepHead(1, c.photos.label, c.photos.hint(lang === "es" && country === "ES" ? "móvil" : lang === "es" ? "celular" : "phone"))}
         <ul className="mt-4 space-y-4">
           {items.map((it, idx) => {
             const miss = tried ? missingOf(it, idx) : [];
@@ -401,7 +373,7 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
                         <svg aria-hidden viewBox="0 0 20 20" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.800" strokeLinecap="round"><path d="M10 4v12M4 10h12" /></svg>
                         <span>{required ? c.people.photoAdd : c.people.photoAddMore}</span>
                         <span className="text-[11px] font-medium text-lapiz-muted">{caption}</span>
-                        <input type="file" accept="image/jpeg,image/png,image/webp" multiple={limit - it.shots.length > 1} className="sr-only" aria-label={`${required ? c.people.photoAdd : c.people.photoAddMore} (${caption}): ${who}`} onChange={(e) => { void addPhotos(it.id, e.target.files); e.target.value = ""; }} />
+                        <input type="file" accept="image/*" multiple={limit - it.shots.length > 1} className="sr-only" aria-label={`${required ? c.people.photoAdd : c.people.photoAddMore} (${caption}): ${who}`} onChange={(e) => { void addPhotos(it.id, e.target.files); e.target.value = ""; }} />
                       </label>
                     );
                   })}
@@ -420,7 +392,7 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
             );
           })}
         </ul>
-        {photoBusy && <p role="status" className="mt-2 text-sm font-semibold text-lapiz-muted">{c.photos.preparing}</p>}
+        {photoBusy && <p role="status" className="mt-2 text-sm font-semibold text-lapiz-muted">{photoProgress ? c.photos.preparingN(photoProgress.at, photoProgress.of) : c.photos.preparing}</p>}
         {photoMsg && <p role="alert" className="mt-2 font-semibold text-lapiz-error">{photoMsg}</p>}
         {err("photos")}
         {err("persons")}
