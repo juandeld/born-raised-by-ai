@@ -77,6 +77,37 @@ export function colorearCountries(env: Record<string, string | undefined> = proc
   return list.length ? list : ["MX"];
 }
 
+/**
+ * Test codes: orders made with a code skip the payment and generate the real book, so the team can test end to end without a
+ * payment provider. `COLOREAR_TEST_CODES` is a comma-separated list (case-insensitive); empty or missing = feature off. Two cost brakes
+ * count orders in the database: a total per code and a rolling 24 h cap.
+ */
+export const COLOREAR_TEST_CODE_DEFAULTS = { maxUses: 50, dailyCap: 10 } as const;
+
+/** Upper-cases and removes all whitespace, so "promo 2026 " and "PROMO2026" are the same code. */
+export function normalizeTestCode(raw: string): string {
+  return raw.normalize("NFKC").replace(/\s+/g, "").toUpperCase();
+}
+
+/** Codes configured in the environment, normalized and without duplicates. Empty when the feature is off. */
+export function colorearTestCodes(env: Record<string, string | undefined> = process.env): string[] {
+  return [...new Set((env.COLOREAR_TEST_CODES ?? "").split(",").map(normalizeTestCode).filter(Boolean))];
+}
+
+export function colorearTestCodesEnabled(env: Record<string, string | undefined> = process.env): boolean {
+  return colorearTestCodes(env).length > 0;
+}
+
+/** `COLOREAR_TEST_CODE_MAX_USES` (orders per code, in total) and `COLOREAR_TEST_CODE_DAILY_CAP` (orders per code in any 24 h). 0 is allowed and closes the code. */
+export function colorearTestCodeLimits(env: Record<string, string | undefined> = process.env): { maxUses: number; dailyCap: number } {
+  const num = (v: string | undefined, d: number) => {
+    if (v === undefined || v.trim() === "") return d;
+    const n = Number(v);
+    return Number.isFinite(n) && n >= 0 ? Math.floor(n) : d;
+  };
+  return { maxUses: num(env.COLOREAR_TEST_CODE_MAX_USES, COLOREAR_TEST_CODE_DEFAULTS.maxUses), dailyCap: num(env.COLOREAR_TEST_CODE_DAILY_CAP, COLOREAR_TEST_CODE_DEFAULTS.dailyCap) };
+}
+
 export type ColorearLang = "es" | "en";
 export const COLOREAR_LANGS: ColorearLang[] = ["es", "en"];
 

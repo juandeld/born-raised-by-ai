@@ -2,7 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import type { Tracker } from "@lumen/analytics";
 import type { BaseProps } from "@lumen/analytics";
 import {
-  COLOREAR, COUNTRIES, IMAGE_COST_USD_CENTS, ageBandOf, colorearCountries, colorearLegalLocale, colorearPrice, colorearPublicUrl, formatPrice, isSelectableVariant, isThemeId, isValidAge, paperFor, themeLabel, toUsdCents,
+  COLOREAR, COUNTRIES, IMAGE_COST_USD_CENTS, ageBandOf, colorearCountries, colorearLegalLocale, colorearPrice, colorearPublicUrl, colorearTestCodeLimits, formatPrice, isSelectableVariant, isThemeId, isValidAge, paperFor, themeLabel, toUsdCents,
   addDays, DAY_MS, type AgeBand, type BrandConfig, type ColorearLang, type ColorearVariant, type CountryCode,
 } from "@lumen/config";
 import type { DeliveryProvider, Storage } from "@lumen/calls";
@@ -11,6 +11,7 @@ import { COLOREAR_DELIVERY_LEGAL, COLOREAR_LEGAL_RULES, COLOREAR_REFUND_LINE, co
 import { convertForProvider, type PaymentEvent, type PaymentProvider } from "@lumen/payments";
 import { composeColorearMessage, type MailVars } from "./emails";
 import { signLink, verifyLink } from "./link";
+import { TEST_CODE_PROVIDER, isTestCodeRef, matchTestCode, testCodeHash, testCodeRef } from "./test-code";
 import { buildCharacterFromTextPrompt, buildCharacterPrompt, buildCoverPrompt, buildScenePrompt } from "./prompt";
 import { inspectLineArt, normalizeLineArt } from "./qa";
 import { composeCoverFromCharacters } from "./cover";
@@ -53,9 +54,14 @@ export interface ColorearCheckoutInput {
   device?: string;
   /** What the buyer chose in the selector: 1 adventure (default) or the Trio. */
   variant?: "single" | "bundle3";
+  /**
+   * Optional test code (COLOREAR_TEST_CODES). A valid one skips the payment: the order is created with `payment_provider='test_code'`,
+   * amount 0 and `test_mode`, and the caller marks it paid with an internal `payment_succeeded` event. Checked on the server only.
+   */
+  testCode?: string;
 }
 
-export type ColorearErrors = Partial<Record<"email" | "country" | "persons" | "photos" | "theme" | "age" | "consent" | "variant", string>>;
+export type ColorearErrors = Partial<Record<"email" | "country" | "persons" | "photos" | "theme" | "age" | "consent" | "variant" | "code", string>>;
 
 export class ColorearValidationError extends Error {
   constructor(readonly errors: ColorearErrors) {
@@ -221,6 +227,8 @@ export class ColorearEngine {
     const checked = new Set(input.checkboxIds);
     if (!COLOREAR_CHECKBOX_ORDER.every((id) => checked.has(id))) errors.consent = "All consent boxes are required";
     if (input.variant !== undefined && !isSelectableVariant(input.variant)) errors.variant = "Unknown option";
+    // Same answer when the feature is off and when the code is wrong: nothing reveals whether codes exist.
+    if ((input.testCode ?? "").trim() && !matchTestCode(this.d.env, input.testCode!)) errors.code = "invalid";
     return { errors, persons, theme, age };
   }
 
@@ -230,6 +238,10 @@ export class ColorearEngine {
       if (v.errors.theme || v.errors.persons) await this.d.tracker.track("content_blocked", { product: COLOREAR.slug, country: input.country, language: input.lang, creative: input.creative ?? "none", device: (input.device as BaseProps["device"]) ?? "unknown", stage: "input", reason: v.errors.theme ? "theme" : "person" });
       throw new ColorearValidationError(v.errors);
     }
+    // Test code: checked against the caps before anything is stored (and once more after the insert, see below).
+    const code = (input.testCode ?? "").trim() ? matchTestCode(this.d.env, input.testCode!) : null;
+    const codeHash = code ? testCodeHash(this.d.env, code) : null;
+    if (codeHash && (await this.testCodeOver(codeHash, null))) throw new ColorearValidationError({ code: "exhausted" });
     const prepared: Uint8Array[] = [];
     for (const p of input.photos) {
       const out = await prepareUpload(p);
@@ -255,8 +267,9 @@ export class ColorearEngine {
       locale: colorearLegalLocale(input.country),
       language: languageCode,
       currency: price.currency,
-      amount_minor: price.amountMinor,
-      amount_usd_cents: toUsdCents(price.amountMinor, price.currency, this.d.env),
+      // A test-code order has no price: it is never charged and never refunded.
+      amount_minor: codeHash ? 0 : price.amountMinor,
+      amount_usd_cents: codeHash ? 0 : toUsdCents(price.amountMinor, price.currency, this.d.env),
       status: "created",
       email: input.email.trim().toLowerCase(),
       phone_e164: null,
@@ -268,10 +281,11 @@ export class ColorearEngine {
       timezone: "UTC",
       window_start: iso(now),
       window_end: iso(now),
-      payment_provider: null,
-      checkout_id: null,
+      payment_provider: codeHash ? TEST_CODE_PROVIDER : null,
+      // The reference carries the code hash, which is how uses are counted in the database (no new column needed).
+      checkout_id: codeHash ? testCodeRef(codeHash, id) : null,
       payment_id: null,
-      test_mode: this.d.payments.name === "mock" || this.d.env.TEST_MODE === "1",
+      test_mode: !!codeHash || this.d.payments.name === "mock" || this.d.env.TEST_MODE === "1",
       creative: input.creative ?? "none",
       device: input.device ?? "unknown",
       paid_at: null,
@@ -282,26 +296,79 @@ export class ColorearEngine {
       purge_at: iso(addDays(now, COLOREAR.retentionDays + 1)),
       pii_purged_at: null,
     });
-    const charge = convertForProvider(this.d.payments, order.amount_minor, order.currency as never, this.d.env);
-    const session = await this.d.payments.createCheckout({
-      orderId: order.id,
-      productSlug: COLOREAR.slug,
-      variant,
-      country: order.country,
-      productName: `${this.d.brand.brand} - ${COLOREAR.slug}`,
-      amountMinor: charge.amountMinor,
-      currency: charge.currency,
-      customerEmail: order.email!,
-      successUrl: urls.successUrl(order),
-      cancelUrl: urls.cancelUrl,
-      testMode: order.test_mode,
-    });
-    const updated = await this.d.db.orders.update(order.id, { checkout_id: session.checkoutId, payment_provider: session.provider });
+    if (codeHash) {
+      // Two requests can pass the first check together: re-check now that this order is stored; if a cap is reached it is cancelled, photos included.
+      const over = await this.testCodeOver(codeHash, order.id);
+      if (over) {
+        for (let i = 1; i <= prepared.length; i++) await this.d.uploads.delete(photoPath(id, i)).catch(() => undefined);
+        await this.d.db.orders.update(order.id, { status: "cancelled", purge_at: iso(now) });
+        throw new ColorearValidationError({ code: "exhausted" });
+      }
+    }
+    // No payment provider is involved for a test code: the web layer marks the order paid with an internal event (same path as a real payment).
+    let session: { provider: string; checkoutId: string; url: string };
+    if (codeHash) session = { provider: TEST_CODE_PROVIDER, checkoutId: order.checkout_id!, url: urls.successUrl(order) };
+    else {
+      const charge = convertForProvider(this.d.payments, order.amount_minor, order.currency as never, this.d.env);
+      session = await this.d.payments.createCheckout({
+        orderId: order.id,
+        productSlug: COLOREAR.slug,
+        variant,
+        country: order.country,
+        productName: `${this.d.brand.brand} - ${COLOREAR.slug}`,
+        amountMinor: charge.amountMinor,
+        currency: charge.currency,
+        customerEmail: order.email!,
+        successUrl: urls.successUrl(order),
+        cancelUrl: urls.cancelUrl,
+        testMode: order.test_mode,
+      });
+    }
+    const updated = codeHash ? order : await this.d.db.orders.update(order.id, { checkout_id: session.checkoutId, payment_provider: session.provider });
     const base = this.props(updated);
     const resolved = resolveAllColorearCheckboxes(lang === "en" ? "en" : input.country === "ES" ? "es-ES" : "es-419", this.legalVars());
     await this.d.tracker.track("consent_given", { ...base, checkbox_ids: [...COLOREAR_CHECKBOX_ORDER], text_version_ids: resolved.map((c) => c.textVersionId) });
     await this.d.tracker.track("checkout_started", { ...base, variant, amount_usd_cents: updated.amount_usd_cents, currency: updated.currency, payment_provider: session.provider });
+    if (codeHash) {
+      const limits = colorearTestCodeLimits(this.d.env);
+      const used = await this.testCodeOrders(codeHash);
+      const since = this.d.now().getTime() - DAY_MS;
+      await this.d.tracker.track("test_code_redeemed", { ...base, variant, code_hash: codeHash, uses_total: used.length, uses_24h: used.filter((o) => new Date(o.window_start).getTime() > since).length, max_uses: limits.maxUses, daily_cap: limits.dailyCap });
+    }
     return { order: updated, checkoutUrl: session.url };
+  }
+
+  // ------------------------------------------------------------------ test codes
+
+  /** Orders made with this code that count against its caps (cancelled ones, e.g. rejected by a cap, do not). `window_start` is the redeem time (engine clock). */
+  private async testCodeOrders(hash: string): Promise<OrderRow[]> {
+    const rows = await this.d.db.orders.find({ product: COLOREAR.slug, payment_provider: TEST_CODE_PROVIDER });
+    return rows
+      .filter((o) => o.status !== "cancelled" && isTestCodeRef(o.checkout_id, hash))
+      .sort((a, b) => new Date(a.window_start).getTime() - new Date(b.window_start).getTime() || (a.id < b.id ? -1 : 1));
+  }
+
+  /**
+   * Has this code reached `COLOREAR_TEST_CODE_MAX_USES` (all time) or `COLOREAR_TEST_CODE_DAILY_CAP` (rolling 24 h)? Counts the OTHER orders
+   * of the code (`exceptId` is the one just inserted, when re-checking). Under a burst of simultaneous requests this fails closed: each
+   * request sees the others' rows, so at most `cap` orders ever get through, and a request refused by a tie can simply be sent again.
+   */
+  private async testCodeOver(hash: string, exceptId: string | null): Promise<boolean> {
+    const { maxUses, dailyCap } = colorearTestCodeLimits(this.d.env);
+    const others = (await this.testCodeOrders(hash)).filter((o) => o.id !== exceptId);
+    const since = this.d.now().getTime() - DAY_MS;
+    return others.length >= maxUses || others.filter((o) => new Date(o.window_start).getTime() > since).length >= dailyCap;
+  }
+
+  private isTestCodeOrder(o: OrderRow): boolean {
+    return o.payment_provider === TEST_CODE_PROVIDER;
+  }
+
+  /** A test-code order or a child of one (free Trio adventure). */
+  private async isTestCodeFamily(o: OrderRow): Promise<boolean> {
+    if (this.isTestCodeOrder(o)) return true;
+    const parent = o.parent_order_id ? await this.d.db.orders.get(o.parent_order_id) : null;
+    return !!parent && this.isTestCodeOrder(parent);
   }
 
   // ------------------------------------------------------------------ payment
@@ -382,6 +449,7 @@ export class ColorearEngine {
     const vars: MailVars = {
       names: o.child_first_name ?? "",
       price: formatPrice(o.amount_minor, o.currency as never, COUNTRIES[o.country].priceFormatLocale),
+      testOrder: this.isTestCodeOrder(o),
       statusLink: `${base}/colorear/confirmacion/${o.access_token}`,
       deliveryLink: `${base}/colorear/entrega/${o.access_token}`,
       refundLink: `${base}/colorear/reembolso/${o.access_token}`,
@@ -475,6 +543,8 @@ export class ColorearEngine {
   private async imageFor(order: OrderRow): Promise<ImageProvider> {
     const real = this.d.image;
     if (real.name === "mock" || this.d.payments.name !== "mock") return real;
+    // Test-code orders (and the Trio adventures made from one) are always real: their cost is capped when the code is redeemed.
+    if (await this.isTestCodeFamily(order)) return real;
     const allow = (this.d.env.COLOREAR_TEST_EMAILS ?? "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
     if (order.email && allow.includes(order.email.toLowerCase())) return real;
     const cap = Number(this.d.env.COLOREAR_MOCK_REAL_DAILY_CAP ?? 3);
@@ -736,7 +806,7 @@ export class ColorearEngine {
       // intermediate files are no longer needed. The character drawings of a first book (single or Trio) are the exception: they are kept
       // for the Trio's extra adventures / the 48 h offer and erased by the sweeper at `charsUntil` (30 days Trio, 48 h single). Photos are
       // gone since stage 1 either way.
-      const keepsCharacters = order.variant === "single" || order.variant === "bundle3";
+      const keepsCharacters = (order.variant === "single" && !this.isTestCodeOrder(order)) || order.variant === "bundle3";
       if (keepsCharacters) {
         const until = order.variant === "bundle3" ? addDays(delivered, COLOREAR.creditDays) : new Date(delivered.getTime() + COLOREAR.upsellHours * 3_600_000);
         await this.patchDetails(orderId, { charsUntil: iso(until) });
@@ -821,6 +891,8 @@ export class ColorearEngine {
   private async offerOf(parent: OrderRow, det: OrderDetails, deliveredAt: Date): Promise<{ price: string; amountMinor: number; until: string } | null> {
     // Only the buyer of ONE adventure gets the 48 h offer; a Trio buyer already has his adventures (D26: drawings kept until the last one).
     if (parent.variant !== "single") return null;
+    // Test-code orders do not get the paid offer (there is nothing to charge it with): hidden, and no drawings are kept for it.
+    if (this.isTestCodeOrder(parent)) return null;
     if (!this.alive(parent, det)) return null;
     const until = new Date(deliveredAt.getTime() + COLOREAR.upsellHours * 3_600_000);
     if (until <= this.d.now()) return null;
@@ -1063,7 +1135,8 @@ export class ColorearEngine {
       await this.deleteFiles(order.id, null);
       return { refunded: false, reason: "not_paid" };
     }
-    if (callProvider) await this.d.payments.refund({ paymentId: order.payment_id, currency: order.currency as never, reason });
+    // A test-code order was never charged: there is nothing to give back at the provider.
+    if (callProvider && !this.isTestCodeOrder(order)) await this.d.payments.refund({ paymentId: order.payment_id, currency: order.currency as never, reason });
     const now = this.d.now();
     await this.deleteFiles(order.id, null);
     await this.cancelCreditBooks(order);
@@ -1080,7 +1153,8 @@ export class ColorearEngine {
     const base = new Date(order.delivered_at ?? order.paid_at ?? order.created_at).getTime();
     const days = (this.d.now().getTime() - base) / 86_400_000;
     if (days > COLOREAR.refundWindowDays) return { refunded: false, reason: "outside_window" };
-    if (order.variant === "bundle3" && order.payment_id && order.status !== "refunded") return this.refundTrio(order, days);
+    // Test-code orders have no money to split: "refund" just cancels the order and erases everything (Trio included).
+    if (order.variant === "bundle3" && order.payment_id && order.status !== "refunded" && !this.isTestCodeOrder(order)) return this.refundTrio(order, days);
     return this.markRefunded(order, "customer_request", false);
   }
 
@@ -1231,7 +1305,7 @@ export class ColorearEngine {
       const keeps = !det.charsDeletedAt && !!ready;
       if (keeps && order.variant === "single" && det.charsUntil) out.legal.characters = L.charactersOffer.replace("{{FECHA_PERSONAJES}}", stamp(det.charsUntil));
       if (keeps && order.variant === "bundle3" && credits?.usable && order.purge_at) out.legal.characters = L.charactersTrio.replace("{{FECHA_CREDITOS}}", day(order.purge_at));
-      if (keeps && order.variant === "single") out.legal.deleteButton = L.deleteButton;
+      if (keeps && order.variant === "single" && det.charsUntil) out.legal.deleteButton = L.deleteButton;
       const offer = ready ? await this.offerOf(order, det, order.delivered_at ? new Date(order.delivered_at) : this.d.now()) : null;
       if (offer) {
         const legalLoc = lang === "en" ? "en" : order.country === "ES" ? "es-ES" : "es-419";

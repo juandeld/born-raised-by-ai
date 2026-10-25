@@ -57,6 +57,14 @@ if (colorear.length) {
     })),
   );
 }
+
+// Test-code orders (no payment, real generation) are test mode, so they are left out above. Their spend is shown apart: it is the cost of the team tests.
+const testPaid = rows.filter((e) => e.test_mode && e.name === "paid" && e.properties.payment_provider === "test_code");
+if (testPaid.length) {
+  const ids = new Set(testPaid.map((e) => e.order_id));
+  const spendUsd = rows.filter((e) => e.test_mode && e.name === "generation_completed" && e.order_id && ids.has(e.order_id)).reduce((sum, e) => sum + (typeof e.properties.image_cost_usd_cents === "number" ? e.properties.image_cost_usd_cents : 0) / 100, 0);
+  console.log(`\nTest-code orders, last ${days} days: ${testPaid.length} orders, image cost $${spendUsd.toFixed(2)} (not in the tables above)`);
+}
 }
 
 main().catch((e) => {

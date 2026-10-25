@@ -94,7 +94,7 @@ function RolePicker({ idx, item, lang, c, onChange }: { idx: number; item: Item;
   );
 }
 
-export function ColorearForm({ lang, countries, defaultCountry, themes, creative }: { lang: ColorearLang; countries: Record<string, CountryLegal>; defaultCountry: string; themes: Array<{ id: string; label: string }>; creative: string }) {
+export function ColorearForm({ lang, countries, defaultCountry, themes, creative, codeEnabled = false }: { lang: ColorearLang; countries: Record<string, CountryLegal>; defaultCountry: string; themes: Array<{ id: string; label: string }>; creative: string; codeEnabled?: boolean }) {
   const c = COLOREAR_COPY[lang].form;
   const [items, setItems] = useState<Item[]>(() => [blankItem(0)]);
   const [tried, setTried] = useState(false);
@@ -113,6 +113,10 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
   const [theme, setTheme] = useState("");
   const [themeId, setThemeId] = useState("");
   const [checked, setChecked] = useState<Record<string, boolean>>({});
+  /** Optional test code: the field exists only when the server has codes configured. It is validated on the server, never here. */
+  const [code, setCode] = useState("");
+  const [codeOpen, setCodeOpen] = useState(false);
+  const usingCode = codeEnabled && code.trim().length > 0;
   const [busy, setBusy] = useState(false);
   const [photoMsg, setPhotoMsg] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -227,6 +231,7 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
     fd.set("theme", theme.trim());
     fd.set("themeId", themeId);
     fd.set("creative", creative);
+    if (usingCode) fd.set("code", code.trim());
     fd.set("checkboxIds", JSON.stringify(legal.checkboxes.filter((k) => k.id === payNotice.id || checked[k.id]).map((k) => k.id)));
     send.forEach((it, i) => {
       fd.set(`photo${i + 1}`, new File([it.blob!], `photo-${i + 1}.jpg`, { type: "image/jpeg" }));
@@ -242,7 +247,8 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
         return;
       }
       const e2: Record<string, string> = {};
-      for (const k of Object.keys(j.errors ?? { generic: "x" })) e2[k] = c.errors[k] ?? c.errors[j.errors?.[k] ?? ""] ?? c.errors.generic!;
+      for (const k of Object.keys(j.errors ?? { generic: "x" })) e2[k] = k === "code" ? c.errors[`code_${j.errors?.[k]}`] ?? c.errors.code_invalid! : c.errors[k] ?? c.errors[j.errors?.[k] ?? ""] ?? c.errors.generic!;
+      if (e2.code) setCodeOpen(true);
       if (res.status === 413) e2.photos = c.errors.unreadable!;
       setErrors(e2);
     } catch {
@@ -453,6 +459,27 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
         {err("consent")}
       </div>
 
+      {codeEnabled && (
+        <details open={codeOpen} onToggle={(e) => setCodeOpen(e.currentTarget.open)} className="px-1">
+          <summary className="flex min-h-[44px] cursor-pointer items-center text-sm font-semibold text-lapiz-muted underline underline-offset-4">{c.code.summary}</summary>
+          <label className="mt-1 block text-sm font-semibold">
+            {c.code.label}
+            <input
+              className={input}
+              value={code}
+              maxLength={40}
+              autoComplete="off"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
+              aria-describedby="code-hint"
+              onChange={(e) => { setCode(e.target.value); if (errors.code) setErrors((p) => { const { code: _drop, ...rest } = p; void _drop; return rest; }); }}
+            />
+          </label>
+          <p id="code-hint" className="mt-1 text-sm text-lapiz-muted">{c.code.hint}</p>
+          {err("code")}
+        </details>
+      )}
       <p className="text-sm font-semibold">{variant === "bundle3" ? legal.trioRefundLine : legal.refundLine}</p>
       <p className="text-sm">
         {payNotice.text}{" "}
@@ -460,9 +487,9 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
         {" · "}
         <a className="font-semibold underline" href={`/colorear/${lang}/privacidad`} target="_blank" rel="noreferrer">{lang === "es" ? "Privacidad" : "Privacy"}</a>
       </p>
-      {Object.entries(errors).filter(([k]) => !["photos", "persons", "age", "email", "theme", "consent"].includes(k)).map(([k, v]) => <p key={k} role="alert" className="font-semibold text-lapiz-error">{v}</p>)}
+      {Object.entries(errors).filter(([k]) => !["photos", "persons", "age", "email", "theme", "consent", "code"].includes(k)).map(([k, v]) => <p key={k} role="alert" className="font-semibold text-lapiz-error">{v}</p>)}
       <button type="submit" disabled={busy} className="c-btn c-btn-block min-h-[60px]">
-        {busy ? c.paying : c.pay(legal.prices[variant])}
+        {usingCode ? (busy ? c.code.busy : c.code.button) : busy ? c.paying : c.pay(legal.prices[variant])}
       </button>
     </form>
   );

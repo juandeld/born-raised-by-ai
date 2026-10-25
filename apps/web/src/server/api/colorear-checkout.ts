@@ -1,13 +1,18 @@
 import { COLOREAR, colorearCountries, colorearPublicUrl, isColorearLang, isSelectableVariant, type CountryCode } from "@lumen/config";
-import { ColorearValidationError, type PersonSubmission } from "@lumen/generate";
-import { getColorear } from "@/lib/colorear";
+import { ColorearValidationError, TEST_CODE_PROVIDER, type PersonSubmission } from "@lumen/generate";
+import { getColorear, handleColorearPayment } from "@/lib/colorear";
 import { legalReady } from "@/lib/legal-vars";
 import { clientIp, deviceOf, json, rateLimited } from "@/lib/request";
 
 
 /**
  * multipart/form-data: photo1..photoN (JPEG already compressed by the browser, <= 900 KB each; Vercel limits the body to 4.5 MB),
- * name1..nameN, roleId1..roleIdN (+ roleText<i> for "other"; legacy role1..roleN accepted), and lang, country, email, age, theme, themeId, creative, checkboxIds (JSON). The server re-validates everything.
+ * name1..nameN, roleId1..roleIdN (+ roleText<i> for "other"; legacy role1..roleN accepted), and lang, country, email, age, theme, themeId, creative, checkboxIds (JSON),
+ * and an optional `code` (test code, COLOREAR_TEST_CODES). The server re-validates everything.
+ *
+ * With a valid test code there is no payment: the order is created as `test_code` (amount 0, test mode) and marked paid right here with an
+ * internal `payment_succeeded` event, through the same function the payment webhooks use (consents, receipt, `paid` event, start of the run).
+ * The answer is the confirmation page, so the browser goes straight to the progress screen.
  */
 export async function POST(req: Request) {
   const ip = clientIp(req.headers);
@@ -36,6 +41,9 @@ export async function POST(req: Request) {
       ? { name: String(form.get(`name${i}`) ?? ""), roleId, roleText: String(form.get(`roleText${i}`) ?? "").slice(0, 100) }
       : { name: String(form.get(`name${i}`) ?? ""), role: String(form.get(`role${i}`) ?? "") });
   }
+  // Test codes: a brake on guessing (per IP, only when a code is sent). The code itself is never logged or tracked.
+  const testCode = String(form.get("code") ?? "").slice(0, 80);
+  if (testCode.trim() && rateLimited(`colorear-code:${ip ?? "?"}`, 10, 10 * 60_000)) return json({ ok: false, errors: { code: "rate" } }, 429);
   let checkboxIds: string[] = [];
   try {
     const parsed = JSON.parse(String(form.get("checkboxIds") ?? "[]"));
@@ -59,12 +67,16 @@ export async function POST(req: Request) {
         checkboxIds,
         ip,
         variant: isSelectableVariant(String(form.get("variant") ?? "")) ? (String(form.get("variant")) as "single" | "bundle3") : "single",
+        testCode,
         creative: String(form.get("creative") ?? "none").slice(0, 40).replace(/[^\w.-]/g, "") || "none",
         device: deviceOf(req.headers.get("user-agent")),
       },
       { successUrl: (o) => `${base}/colorear/confirmacion/${o.access_token}`, cancelUrl: `${base}${langRaw === "en" ? "/en" : "/"}` },
     );
-    void order;
+    if (order.payment_provider === TEST_CODE_PROVIDER) {
+      await handleColorearPayment({ type: "payment_succeeded", orderId: order.id, checkoutId: order.checkout_id, paymentId: order.checkout_id ?? `testcode:${order.id}` });
+      return json({ ok: true, url: checkoutUrl, testCode: true });
+    }
     return json({ ok: true, url: checkoutUrl });
   } catch (err) {
     if (err instanceof ColorearValidationError) return json({ ok: false, errors: err.errors }, 422);

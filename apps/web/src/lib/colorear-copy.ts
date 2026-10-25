@@ -29,6 +29,8 @@ export interface ColorearCopy {
     consent: string;
     pay: (p: string) => string;
     paying: string;
+    /** Optional test code (only shown when the server has codes configured). */
+    code: { summary: string; label: string; hint: string; button: string; busy: string };
     errors: Record<string, string>;
   };
   status: {
@@ -147,6 +149,13 @@ const ES: ColorearCopy = {
     consent: "Confirmo cada punto",
     pay: (p) => `Pagar ${p} y crear el libro`,
     paying: "Preparando el pago...",
+    code: {
+      summary: "¿Tienes un código?",
+      label: "Código",
+      hint: "Si te dieron un código de prueba, escríbelo aquí. Con un código válido no se cobra nada.",
+      button: "Usar mi código y crear el libro",
+      busy: "Creando tu pedido...",
+    },
     errors: {
       persons: "Completa las tarjetas marcadas: cada una necesita foto, nombre y quién es. Si no quieres agregar a alguien, usa Quitar.",
       photos: "Sube la foto del protagonista.",
@@ -160,6 +169,9 @@ const ES: ColorearCopy = {
       server: "Algo falló de nuestro lado. No se cobró nada. Intenta de nuevo.",
       generic: "No pudimos continuar. Intenta de nuevo.",
       unreadable: "No pudimos leer una de las fotos. Prueba con otra.",
+      code_invalid: "Ese código no es válido. Revísalo e inténtalo de nuevo.",
+      code_exhausted: "Ese código ya se agotó. Pide uno nuevo.",
+      code_rate: "Demasiados intentos con códigos. Espera unos minutos.",
     },
   },
   status: {
@@ -309,6 +321,13 @@ const EN: ColorearCopy = {
     consent: "I confirm each point",
     pay: (p) => `Pay ${p} and create the book`,
     paying: "Preparing payment...",
+    code: {
+      summary: "Have a code?",
+      label: "Code",
+      hint: "If you were given a test code, enter it here. A valid code means no charge.",
+      button: "Use my code and create the book",
+      busy: "Creating your order...",
+    },
     errors: {
       persons: "Complete the marked cards: each needs a photo, a name and who they are. If you do not want to add someone, use Remove.",
       photos: "Add the main character's photo.",
@@ -322,6 +341,9 @@ const EN: ColorearCopy = {
       server: "Something failed on our side. You were not charged. Try again.",
       generic: "We could not continue. Try again.",
       unreadable: "We could not read one of the photos. Try another one.",
+      code_invalid: "That code is not valid. Check it and try again.",
+      code_exhausted: "That code has run out. Ask for a new one.",
+      code_rate: "Too many code attempts. Wait a few minutes.",
     },
   },
   status: {

@@ -44,6 +44,8 @@ export const OPS_EVENTS = [
   "upsell_purchased",
   "characters_deleted",
   "expiry_reminder_sent",
+  // colorear test codes (team tests without payment)
+  "test_code_redeemed",
 ] as const;
 
 export type FunnelEventName = (typeof FUNNEL)[number];
@@ -120,6 +122,11 @@ export interface EventPropsMap {
   characters_deleted: BaseProps & { count: number; reason: string };
   /** Colorear: day-25 email "your book is deleted on <date>" (has_credits: it also reminded unused Trio adventures). */
   expiry_reminder_sent: BaseProps & { days_left: number; has_credits: boolean; sent: boolean };
+  /**
+   * Colorear: an order skipped the payment with a test code. `code_hash` is a short keyed hash (10 hex chars), never the code itself;
+   * `uses_total` / `uses_24h` are this code's order counts including this one (to watch the two caps). Always `test_mode: true`.
+   */
+  test_code_redeemed: BaseProps & { code_hash: string; variant: "single" | "bundle3"; uses_total: number; uses_24h: number; max_uses: number; daily_cap: number };
 }
 
 export type EventProps<N extends EventName> = EventPropsMap[N];

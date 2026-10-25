@@ -15,6 +15,6 @@ describe("D23 customer-facing copy has no vendor or model names", () => {
   });
   it("emails", () => {
     const vars = { names: "A", price: "$1", statusLink: "s", deliveryLink: "d", refundLink: "r", deleteDate: "2026-01-01", holder: "H", privacyEmail: "p@x.co", supportEmail: "s@x.co", brand: "B" };
-    for (const kind of ["receipt", "delivery", "refund"] as const) for (const lang of ["es", "en"] as const) expect(JSON.stringify(composeColorearMessage(kind, lang, "a@b.co", vars))).not.toMatch(BANNED);
+    for (const testOrder of [false, true]) for (const kind of ["receipt", "delivery", "refund"] as const) for (const lang of ["es", "en"] as const) expect(JSON.stringify(composeColorearMessage(kind, lang, "a@b.co", { ...vars, testOrder }))).not.toMatch(BANNED);
   });
 });

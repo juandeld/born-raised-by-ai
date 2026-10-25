@@ -9,6 +9,7 @@ export * from "./sanitize";
 export * from "./state";
 export * from "./uploads";
 export * from "./emails";
+export * from "./test-code";
 export * from "./engine";
 export * from "./factory";
 export * from "./providers";

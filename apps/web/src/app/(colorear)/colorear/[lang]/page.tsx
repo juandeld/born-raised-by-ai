@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { COLOREAR_DEFAULT_COUNTRY, COLOREAR_THEMES, colorearCountriesFor, colorearLegalLocale, colorearPrice, colorearPublicUrl, COUNTRIES, formatPrice, isColorearLang, type CountryCode } from "@lumen/config";
+import { COLOREAR_DEFAULT_COUNTRY, COLOREAR_THEMES, colorearCountriesFor, colorearTestCodesEnabled, colorearLegalLocale, colorearPrice, colorearPublicUrl, COUNTRIES, formatPrice, isColorearLang, type CountryCode } from "@lumen/config";
 import { COLOREAR_EMAIL_LINE, COLOREAR_REFUND_LINE, COLOREAR_TRIO_LINE, COLOREAR_TRIO_REFUND_LINE, renderColorearAviso, resolveAllColorearCheckboxes } from "@lumen/legal";
 import { CFooter, CHeader } from "@/components/colorear/Chrome";
 import { ColorearForm, type CountryLegal } from "@/components/colorear/ColorearForm";
@@ -123,7 +123,7 @@ export default async function Landing({ params, searchParams }: { params: Promis
         </section>
 
         <section id="crear" className="mx-auto max-w-3xl scroll-mt-4 px-4 py-10">
-          <ColorearForm lang={lang} countries={perCountry} defaultCountry={first} themes={themes} creative={(sp.c ?? "none").slice(0, 40)} />
+          <ColorearForm lang={lang} countries={perCountry} defaultCountry={first} themes={themes} creative={(sp.c ?? "none").slice(0, 40)} codeEnabled={colorearTestCodesEnabled()} />
         </section>
 
         <section className="mx-auto max-w-3xl px-4 py-10">

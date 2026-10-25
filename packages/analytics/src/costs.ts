@@ -79,7 +79,7 @@ export function computeOrderCosts(events: EventRow[], rates: CostRates = COST_RA
     let payment: number;
     if (provider === "recurrente") {
       payment = paidUsd * rates.recurrente.pct + rates.recurrente.fixedUsd;
-    } else if (provider === "mock") {
+    } else if (provider === "mock" || provider === "test_code") {
       payment = 0;
     } else {
       payment = paidUsd * (rates.polar.pct + (country === "US" ? 0 : rates.polar.intlPct)) + rates.polar.fixedUsd;
