@@ -16,10 +16,13 @@ const AGE_RULES: Record<AgeBand, string> = {
 /**
  * Said in every scene and cover prompt: the model must not invent people (seen in production: two extra kids on a cover with one person).
  * Only the people the buyer uploaded are drawn. Animals, pets and non-human story characters are fine. The story writer is told the same
- * (story.ts): helpers and friends are never other people.
+ * (story.ts): helpers and friends are never other people. It goes at the END of the scene and cover prompts (it weighs more there) and
+ * names the groups a theme invites (other superheroes, pirates, princesses...), seen in production on a one-person Superheroes book.
  */
 export const NO_EXTRA_PEOPLE =
-  "Draw ONLY the characters of this book (those of the reference images, or the ones described in the scene). Never add any other person, child, adult or human figure: no extra kids, crowds, passers-by or bystanders, not even small or in the background. Animals, pets and non-human story characters (creatures, fairies, mermaids, robots, aliens) are allowed.";
+  "Draw ONLY the characters of this book (those of the reference images, or the ones described in the scene). Never add any other person, child, adult or human figure: no extra kids, crowds, passers-by or bystanders, not even small or in the background. " +
+  "No other superheroes, pirates, princesses, knights, kings, queens, astronauts, players, musicians, spectators, drivers or workers, no people in costumes, no silhouettes of people, no faces in windows or in the sky, no statues or drawings of people. " +
+  "Animals, pets and non-human story characters (creatures, fairies, mermaids, robots, aliens) are allowed.";
 
 /**
  * The only place where the word "glasses" may appear in any prompt, and only to forbid them. Naming them as something to keep made the
@@ -102,14 +105,14 @@ export function buildScenePrompt(visual: string, band: AgeBand, count: number): 
     count > 0
       ? `The reference images are the cartoon characters of this book (character 1${count > 1 ? ` to ${count}, in order` : ""}). Draw them in the scene. ${lookRules(count)}`
       : "";
-  return `${styleFor(band)} ${consistency}${AGE_RULES[band]} Pets and animals stay animals: on four legs, with no clothes, never standing or dressed like a person. ${NO_EXTRA_PEOPLE} Composition: the characters and the action are the clear focus, filling most of the page, with white margins. Leave the bottom 15% of the page empty white (a caption is added there later). Scene: ${visual}`;
+  return `${styleFor(band)} ${consistency}${AGE_RULES[band]} Pets and animals stay animals: on four legs, with no clothes, never standing or dressed like a person. Composition: the characters and the action are the clear focus, filling most of the page, with white margins. Leave the bottom 15% of the page empty white (a caption is added there later). Scene: ${visual} ${NO_EXTRA_PEOPLE}`;
 }
 
 export function buildCoverPrompt(visual: string, band: AgeBand, count: number): string {
   return (
     `${styleFor(band)} The reference images are the cartoon characters of this book (character 1${count > 1 ? ` to ${count}, in order` : ""}). Draw all of them together happily. ${lookRules(count)}` +
-    `Pets and animals stay animals: on four legs, with no clothes or backpacks, never standing or dressed like a person. ${NO_EXTRA_PEOPLE} ` +
-    `${AGE_RULES[band]} This is the book cover: leave the top 25% of the page completely empty white (the title is added there later) and draw the scene in the lower 70%, with the characters large and filling the width. Scene: ${visual}`
+    `Pets and animals stay animals: on four legs, with no clothes or backpacks, never standing or dressed like a person. ` +
+    `${AGE_RULES[band]} This is the book cover: leave the top 25% of the page completely empty white (the title is added there later) and draw the scene in the lower 70%, with the characters large and filling the width. Scene: ${visual} ${NO_EXTRA_PEOPLE}`
   );
 }
 
