@@ -3,7 +3,7 @@ import type { Tracker } from "@lumen/analytics";
 import type { BaseProps } from "@lumen/analytics";
 import { piiHashKey } from "@lumen/config/secrets";
 import {
-  COLOREAR, COUNTRIES, IMAGE_COST_USD_CENTS, ageBandOf, booksIn, colorearCountries, colorearLegalLocale, colorearMockPayAllowed, colorearPhotoLimits, colorearPrice, colorearPublicUrl, colorearTestCodeLimits, formatPrice, isSelectableVariant, isThemeId, isValidAge, openaiImageFamily, paperFor, themeLabel, toUsdCents,
+  COLOREAR, COUNTRIES, IMAGE_COST_USD_CENTS, ageBandOf, booksIn, colorearCharacterStage, colorearCountries, colorearLegalLocale, colorearMockPayAllowed, colorearPhotoLimits, colorearPrice, colorearPublicUrl, colorearTestCodeLimits, formatPrice, isSelectableVariant, isProtagonistRole, isThemeId, isValidAge, openaiImageFamily, paperFor, themeLabel, toUsdCents,
   addDays, DAY_MS, type AgeBand, type BrandConfig, type ColorearLang, type ColorearVariant, type CountryCode,
 } from "@lumen/config";
 import type { DeliveryProvider, Storage } from "@lumen/calls";
@@ -203,6 +203,25 @@ export class ColorearEngine {
   private imageQuality(): ImageQuality {
     const q = (this.d.env.IMAGE_QUALITY ?? "medium").toLowerCase();
     return q === "low" || q === "high" ? q : "medium";
+  }
+
+  /**
+   * Model and quality of each image step for a provider. Pages: the provider's own model (OPENAI_IMAGE_MODEL) and IMAGE_QUALITY.
+   * Characters: COLOREAR_CHARACTER_MODEL / COLOREAR_CHARACTER_QUALITY when set; otherwise the same as the pages (nothing changes).
+   * The character model is an OpenAI model id, so it only applies when the book is drawn by the OpenAI provider.
+   * `override` is the model to send with character requests (undefined = the provider's own).
+   */
+  private stagesFor(image: ImageProvider): { pages: { model: string; quality: ImageQuality }; characters: { model: string; quality: ImageQuality; override: string | undefined } } {
+    const quality = this.imageQuality();
+    const c = colorearCharacterStage(this.d.env);
+    const override = image.name === "openai" && c.model && c.model !== image.model ? c.model : undefined;
+    return { pages: { model: image.model, quality }, characters: { model: override ?? image.model, quality: c.quality ?? quality, override } };
+  }
+
+  /** What the book is drawn with, for the health check and the cost comparison: the same resolution a new book would get. */
+  imageStages(): { provider: string; pages: { model: string; quality: string }; characters: { model: string; quality: string } } {
+    const st = this.stagesFor(this.d.image);
+    return { provider: this.d.image.name, pages: st.pages, characters: { model: st.characters.model, quality: st.characters.quality } };
   }
 
   private costCapCents(): number {
@@ -666,18 +685,23 @@ export class ColorearEngine {
 
   private async initState(order: OrderRow, det: OrderDetails): Promise<GenState> {
     const image = await this.imageFor(order);
+    const stages = this.stagesFor(image);
+    if (colorearCharacterStage(this.d.env).ignored) console.warn("[colorear] COLOREAR_CHARACTER_MODEL is not a usable OpenAI image model id (or is a shut-down one): ignored, the characters use the page model");
     const now = iso(this.d.now());
     const pages: PageState[] = Array.from({ length: COLOREAR.scenes + 1 }, (_, n) => ({ n, status: "pending", attempts: 0 }));
     const state: GenState = {
       v: 1,
       stage: "queued",
       provider: image.name,
-      model: image.model,
-      quality: this.imageQuality(),
+      model: stages.pages.model,
+      quality: stages.pages.quality,
+      characterModel: stages.characters.model,
+      characterQuality: stages.characters.quality,
       startedAt: now,
       updatedAt: now,
       lease: null,
       costCents: 0,
+      costCharactersCents: 0,
       calls: 0,
       retries: 0,
       // Trio credit / "otra aventura": the characters are the parent's drawings, already copied; no photo is involved.
@@ -689,7 +713,7 @@ export class ColorearEngine {
       ...(det.seed ? { photosDeletedAt: now } : {}),
     };
     await this.putState(order.id, state);
-    await this.d.tracker.track("generation_started", { ...this.props(order), pages_total: COLOREAR.pagesTotal, provider: image.name, model: image.model, quality: state.quality, age_band: ageBandOf(det.age), persons: det.persons.length, theme: det.themeId });
+    await this.d.tracker.track("generation_started", { ...this.props(order), pages_total: COLOREAR.pagesTotal, provider: image.name, model: image.model, quality: state.quality, character_model: stages.characters.model, character_quality: stages.characters.quality, age_band: ageBandOf(det.age), persons: det.persons.length, theme: det.themeId });
     return state;
   }
 
@@ -742,6 +766,9 @@ export class ColorearEngine {
     const roles = rolesOf(det.persons);
     const names = det.persons.map((p) => p.name);
     const quality = (state.quality as ImageQuality) ?? "medium";
+    // Character step: the model and quality recorded when the book started (books from before the setting have none: same as the pages).
+    const charQuality = (state.characterQuality as ImageQuality | undefined) ?? quality;
+    const charModel = image.name === "openai" && state.characterModel && state.characterModel !== image.model ? state.characterModel : undefined;
     const cap = this.costCapCents();
 
     const render = async (label: string, req: Parameters<ImageProvider["render"]>[0], inspect: { emptyTop?: number }, counter: { attempts: number }): Promise<{ img: GeneratedImage; bytes: Uint8Array; ext: "png" | "svg"; fallback: boolean }> => {
@@ -755,6 +782,7 @@ export class ColorearEngine {
           state.calls++;
           const img = await image.render(req);
           state.costCents += img.costUsdCents;
+          if (req.kind === "character") state.costCharactersCents = (state.costCharactersCents ?? 0) + img.costUsdCents;
           if (img.format === "svg") return { img, bytes: img.bytes, ext: "svg", fallback: false };
           const norm = await normalizeLineArt(img.bytes);
           const rep = await inspectLineArt(norm, { maxInk: maxInkFor(req.ageBand), ...inspect });
@@ -795,13 +823,16 @@ export class ColorearEngine {
         await pool(state.characters.filter((c) => c.status === "pending"), concurrency, async (c) => {
           if (remaining() < 5000) throw new BudgetError();
           const role = roles[c.k - 1] ?? "person";
+          // Approximate age of the protagonist (the age behind the chosen level), so the face gets the proportions of a child that age.
+          const person = det.persons[c.k - 1];
+          const ageYears = person?.roleId && isProtagonistRole(person.roleId) ? Math.min(det.age, 12) : undefined;
           // every photo of this person goes in as a reference (up to the limit set at checkout): more angles, closer likeness
           const stored = await Promise.all(Array.from({ length: counts[c.k - 1] ?? 1 }, (_, j) => this.d.uploads.get(photoPath(orderId, c.k, j + 1))));
           const refs: RefImage[] = stored.filter((p): p is NonNullable<typeof p> => !!p).map((p) => ({ bytes: p.bytes, mime: (p.contentType.includes("png") ? "image/png" : "image/jpeg") as RefImage["mime"] }));
           let result: Awaited<ReturnType<typeof render>> | null = null;
           if (refs.length) {
             try {
-              result = await render(`char${c.k}`, { prompt: buildCharacterPrompt(role, band, refs.length), width: 1024, height: 1024, quality, refs, kind: "character", ageBand: band, hints: { roles: [role], setting: "", seed: c.k } }, {}, c);
+              result = await render(`char${c.k}`, { prompt: buildCharacterPrompt(role, band, refs.length, ageYears), width: 1024, height: 1024, quality: charQuality, refs, ...(charModel ? { model: charModel } : {}), kind: "character", ageBand: band, hints: { roles: [role], setting: "", seed: c.k } }, {}, c);
             } catch (err) {
               if (!(err instanceof ModerationError)) throw err;
             }
@@ -810,7 +841,7 @@ export class ColorearEngine {
             // photo missing or refused: draw the person from the description alone
             c.status = "text_fallback";
             state.notes.push(`photo_${c.k}_text`);
-            result = await render(`char${c.k}t`, { prompt: buildCharacterFromTextPrompt(role, band), width: 1024, height: 1024, quality, refs: [], kind: "character", ageBand: band, hints: { roles: [role], setting: "", seed: c.k } }, {}, c).catch(async (err) => {
+            result = await render(`char${c.k}t`, { prompt: buildCharacterFromTextPrompt(role, band), width: 1024, height: 1024, quality: charQuality, refs: [], ...(charModel ? { model: charModel } : {}), kind: "character", ageBand: band, hints: { roles: [role], setting: "", seed: c.k } }, {}, c).catch(async (err) => {
               if (err instanceof ModerationError) {
                 const fb = await this.d.mockImage.render({ prompt: "", width: 1024, height: 1024, quality, refs: [], kind: "character", ageBand: band, hints: { roles: [role], setting: "", seed: c.k } });
                 return { img: fb, bytes: fb.bytes, ext: "svg" as const, fallback: true };
@@ -932,6 +963,13 @@ export class ColorearEngine {
         images_generated: state.calls,
         retries: state.retries,
         image_cost_usd_cents: Math.round(state.costCents * 100) / 100,
+        // Per step, to compare models: pages use `model` / `quality`, the character step its own.
+        model: state.model,
+        quality: state.quality,
+        character_model: state.characterModel ?? state.model,
+        character_quality: state.characterQuality ?? state.quality,
+        character_cost_usd_cents: Math.round((state.costCharactersCents ?? 0) * 100) / 100,
+        pages_cost_usd_cents: Math.round((state.costCents - (state.costCharactersCents ?? 0)) * 100) / 100,
         duration_seconds: Math.round((this.d.now().getTime() - new Date(state.startedAt).getTime()) / 1000),
         pdf_bytes: bytes.byteLength,
       });

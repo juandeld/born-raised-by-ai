@@ -172,12 +172,12 @@ describe("generation with several photos", () => {
       for (const band of ["3-4", "5-6", "7-8"] as const) {
         const prompt = buildCharacterPrompt("girl, 6", band, photos);
         expect(prompt, `${photos} photos, ${band}`).toMatch(/not photorealistic/); // the style rules, for one photo too
-        expect(prompt).toMatch(/kind, flattering caricature/);
+        expect(prompt).toMatch(/Kind and flattering, never ugly or mocking/); // no "caricature" any more: it produced one generic face (tests/colorear-likeness.test.ts)
+        expect(prompt).not.toMatch(/caricature/i);
+        expect(prompt).toMatch(/clearly recognizable as them by their distinctive features/); // wording approved in docs/proveedores/openai.md, condition 2 of 25-oct
         expect(prompt).toMatch(/Black and white line art only/);
-        if (photos > 1) {
-          // The exact sentence legal-compliance read: one cartoon character, never several, never a photorealistic or identical copy.
-          expect(prompt).toContain("Draw ONE cartoon character, never several, and never a photorealistic or identical copy.");
-        }
+        // The exact sentence legal-compliance read: one cartoon character, never several, never a photorealistic or identical copy (now for one photo too).
+        expect(prompt).toContain("Draw ONE cartoon character, never several, and never a photorealistic or identical copy.");
         // No wording that asks for a likeness: not "identical", "exact", "faithful", "portrait" or "lifelike" except in that negative sentence.
         const rest = prompt.replace("never a photorealistic or identical copy", "");
         expect(rest).not.toMatch(/\b(identical|exact(ly)?|faithful(ly)?|portrait|lifelike|true to life|realistic likeness)\b/i);

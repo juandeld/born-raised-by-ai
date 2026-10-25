@@ -23,6 +23,8 @@ export interface ImageRequest {
   quality: ImageQuality;
   /** Reference images (photo for a character, characters for a scene). Empty = text-to-image. */
   refs: RefImage[];
+  /** Model for THIS request when it differs from the provider's own (COLOREAR_CHARACTER_MODEL for the character step). Providers that cannot switch ignore it. */
+  model?: string;
   kind: "character" | "scene" | "cover";
   ageBand: AgeBand;
   hints: MockHints;

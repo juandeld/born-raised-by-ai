@@ -10,6 +10,11 @@ import { ImageProviderError, type GeneratedImage, type ImageProvider, type Image
  * and max; we never ask for them). Model: OPENAI_IMAGE_MODEL, default gpt-image-1-mini (shut down 1-dec-2026: replacements
  * gpt-image-2.5-flare and gpt-image-2.5-sunburst; gpt-image-1 was shut down 23-oct-2026 and must never be configured).
  * Cost comes from the `usage` tokens of the response when present (prices per model family in @lumen/config, [no verificado]), else from the price table.
+ * A request may name its own model (`ImageRequest.model`, used by the character step: COLOREAR_CHARACTER_MODEL); it is sent and priced with that model's family.
+ * Checked on 25-oct-2026 against the OpenAI docs (model page of gpt-image-2.5-sunburst, images.edit reference, image generation guide): both 2.5
+ * models support /v1/images/edits with up to 16 `image[]`, the snapshot gpt-image-2.5-sunburst-2026-09-08 is the default one, quality takes
+ * low | medium | high (+ xhigh, max, auto), input_fidelity is not documented for them (omitted for gpt-image-2) and the answer is base64.
+ * The real call with the account's key has not been run from this repository.
  */
 export class OpenAIImageProvider implements ImageProvider {
   readonly name = "openai" as const;
@@ -27,6 +32,8 @@ export class OpenAIImageProvider implements ImageProvider {
   }
 
   async render(req: ImageRequest): Promise<GeneratedImage> {
+    // The character step may use another model than the pages (COLOREAR_CHARACTER_MODEL); the cost is priced with the model that drew it.
+    const model = req.model || this.model;
     const size = `${req.width}x${req.height}`;
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), this.timeoutMs);
@@ -34,7 +41,7 @@ export class OpenAIImageProvider implements ImageProvider {
     try {
       if (req.refs.length) {
         const form = new FormData();
-        form.set("model", this.model);
+        form.set("model", model);
         form.set("prompt", req.prompt);
         form.set("size", size);
         form.set("quality", req.quality);
@@ -48,7 +55,7 @@ export class OpenAIImageProvider implements ImageProvider {
         res = await this.fetchFn(`${this.baseUrl}/v1/images/generations`, {
           method: "POST",
           headers: { authorization: `Bearer ${this.apiKey}`, "content-type": "application/json" },
-          body: JSON.stringify({ model: this.model, prompt: req.prompt, n: 1, size, quality: req.quality, output_format: "png" }),
+          body: JSON.stringify({ model, prompt: req.prompt, n: 1, size, quality: req.quality, output_format: "png" }),
           signal: ctrl.signal,
         });
       }
@@ -61,7 +68,7 @@ export class OpenAIImageProvider implements ImageProvider {
     const j = (await res.json()) as { data?: Array<{ b64_json?: string }>; usage?: Usage };
     const b64 = j.data?.[0]?.b64_json;
     if (!b64) throw new ImageProviderError("OpenAI returned no image", "bad_output");
-    return { format: "png", bytes: new Uint8Array(Buffer.from(b64, "base64")), ...this.cost(req, j.usage) };
+    return { format: "png", bytes: new Uint8Array(Buffer.from(b64, "base64")), ...this.cost(model, req, j.usage) };
   }
 
   private async errorOf(res: Response): Promise<ImageProviderError> {
@@ -84,8 +91,8 @@ export class OpenAIImageProvider implements ImageProvider {
   }
 
   /** Token prices per 1M by model family (OPENAI_IMAGE_TOKEN_USD_PER_M, [no verificado]): mini, gpt-image-1 and the 2.5 / 2 generation. */
-  private cost(req: ImageRequest, usage?: Usage): { costUsdCents: number; costSource: "usage" | "estimate" } {
-    const family = openaiImageFamily(this.model);
+  private cost(model: string, req: ImageRequest, usage?: Usage): { costUsdCents: number; costSource: "usage" | "estimate" } {
+    const family = openaiImageFamily(model);
     if (usage && typeof usage.output_tokens === "number") {
       const rate = OPENAI_IMAGE_TOKEN_USD_PER_M[family];
       const imgIn = usage.input_tokens_details?.image_tokens ?? 0;

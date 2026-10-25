@@ -36,6 +36,46 @@ describe("OpenAI image provider", () => {
     expect(form.has("response_format")).toBe(false);
   });
 
+  it.each(["gpt-image-2.5-sunburst", "gpt-image-2.5-flare", "gpt-image-2.5-sunburst-2026-09-08"])("%s: several image[] to /v1/images/edits, no input_fidelity, base64 answer", async (model) => {
+    const { calls, fetchFn } = fake();
+    const out = await new OpenAIImageProvider(model, "k", "https://api.example", fetchFn).render(req([ref(1), ref(2), ref(3)], "high"));
+    expect(out.format).toBe("png");
+    expect(calls[0]!.url).toBe("https://api.example/v1/images/edits");
+    const form = calls[0]!.body as FormData;
+    expect(form.get("model")).toBe(model);
+    expect(form.getAll("image[]")).toHaveLength(3);
+    expect(form.get("quality")).toBe("high");
+    expect(form.get("size")).toBe("1024x1024");
+    expect([...form.keys()].sort()).toEqual(["image[]", "image[]", "image[]", "model", "n", "prompt", "quality", "size"]);
+    // the text-to-image call of the same model (character from a description) also leaves out what the newer models reject
+    const gen = fake();
+    await new OpenAIImageProvider(model, "k", "https://api.example", gen.fetchFn).render(req([], "high"));
+    expect(gen.calls[0]!.url).toBe("https://api.example/v1/images/generations");
+    expect(Object.keys(gen.calls[0]!.body as Record<string, unknown>).sort()).toEqual(["model", "n", "output_format", "prompt", "quality", "size"]);
+  });
+
+  it("a request can name its own model (the character step) and is priced with the rates of THAT model's family", async () => {
+    const usage = { input_tokens: 3200, output_tokens: 1000, input_tokens_details: { text_tokens: 200, image_tokens: 3000 } };
+    const { calls, fetchFn } = fake(usage);
+    const p = new OpenAIImageProvider("gpt-image-1-mini", "k", "https://api.example", fetchFn);
+    const own = await p.render(req([ref(1)]));
+    const other = await p.render({ ...req([ref(1)]), model: "gpt-image-2.5-sunburst" });
+    expect((calls[0]!.body as FormData).get("model")).toBe("gpt-image-1-mini");
+    expect((calls[1]!.body as FormData).get("model")).toBe("gpt-image-2.5-sunburst");
+    expect(own.costUsdCents).toBeCloseTo(1.59, 3); // mini rates
+    expect(other.costUsdCents).toBeCloseTo(5.5, 3); // 2.5 rates: $5 text, $8 image in, $30 image out per 1M
+    expect(p.model).toBe("gpt-image-1-mini"); // the provider itself does not change
+  });
+
+  it("prices the 2.5 family (also by dated snapshot) at $5 / $8 / $30 per 1M tokens, not at the gpt-image-1 rates", async () => {
+    const usage = { input_tokens: 3200, output_tokens: 1000, input_tokens_details: { text_tokens: 200, image_tokens: 3000 } };
+    const price = async (model: string) => (await new OpenAIImageProvider(model, "k", "https://api.example", fake(usage).fetchFn).render(req([ref(1)]))).costUsdCents;
+    expect(await price("gpt-image-2.5-sunburst-2026-09-08")).toBeCloseTo((1000 * 30 + 200 * 5 + 3000 * 8) / 1e4, 6);
+    expect(await price("gpt-image-2.5-flare-2026-09-08")).toBeCloseTo(5.5, 6);
+    expect(await price("gpt-image-1")).toBeCloseTo((1000 * 40 + 200 * 5 + 3000 * 10) / 1e4, 6); // 7.1: the old family, for contrast
+    expect(await price("gpt-image-2.5-sunburst")).toBeLessThan(await price("gpt-image-1"));
+  });
+
   it("uses the generations endpoint without references, and never sends the fields the newer models reject", async () => {
     const { calls, fetchFn } = fake();
     await new OpenAIImageProvider("gpt-image-1-mini", "k", "https://api.example", fetchFn).render(req([]));

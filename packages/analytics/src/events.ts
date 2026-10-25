@@ -101,10 +101,16 @@ export interface EventPropsMap {
   /** Post-call delivery step failed (recording, certificate, email). `error` is truncated and has emails/numbers redacted. */
   post_call_failed: BaseProps & { call_id: string; error: string };
   /** Colorear: one book generation run. `theme` is a catalog id, "custom" or "none"; never the buyer's text. */
-  generation_started: BaseProps & { pages_total: number; provider: string; model: string; quality: string; age_band: string; persons: number; theme: string };
+  generation_started: BaseProps & { pages_total: number; provider: string; model: string; quality: string; character_model?: string; character_quality?: string; age_band: string; persons: number; theme: string };
   generation_page_retried: BaseProps & { page_index: number; attempt: number; reason: string };
-  /** image_cost_usd_cents is the estimated provider cost of the whole book (fractions of a cent allowed). */
-  generation_completed: BaseProps & { provider: string; images_generated: number; retries: number; image_cost_usd_cents: number; duration_seconds: number; pdf_bytes: number };
+  /**
+   * image_cost_usd_cents is the estimated provider cost of the whole book (fractions of a cent allowed). `model` / `quality` are the pages',
+   * `character_*` the character step's, with the cost of each step, so books made with different models can be compared.
+   */
+  generation_completed: BaseProps & {
+    provider: string; images_generated: number; retries: number; image_cost_usd_cents: number; duration_seconds: number; pdf_bytes: number;
+    model?: string; quality?: string; character_model?: string; character_quality?: string; character_cost_usd_cents?: number; pages_cost_usd_cents?: number;
+  };
   generation_failed: BaseProps & { reason: string; pages_done: number };
   content_blocked: BaseProps & { stage: "input" | "output"; reason: string };
   book_downloaded: BaseProps & { kind: "pdf" };

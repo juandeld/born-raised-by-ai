@@ -10,6 +10,7 @@ import { hasCronSecret, json } from "@/lib/request";
 export async function GET(req: Request) {
   if (!hasCronSecret(req)) return json({ ok: true });
   const d = getEngine().deps;
-  const c = getColorear().d;
-  return json({ ok: true, providers: { payments: d.payments.name, voice: d.voice.name, telephony: d.telephony.name, db: d.db.kind, concurrency: d.maxConcurrency }, colorear: { image: c.image.name, model: c.image.model, story: c.story.name } });
+  const engine = getColorear();
+  const c = engine.d;
+  return json({ ok: true, providers: { payments: d.payments.name, voice: d.voice.name, telephony: d.telephony.name, db: d.db.kind, concurrency: d.maxConcurrency }, colorear: { image: c.image.name, model: c.image.model, story: c.story.name, stages: engine.imageStages() } });
 }

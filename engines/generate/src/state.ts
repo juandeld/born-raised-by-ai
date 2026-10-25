@@ -23,12 +23,21 @@ export interface GenState {
   v: 1;
   stage: Stage;
   provider: string;
+  /** Model and quality of the PAGES (cover + scenes), i.e. OPENAI_IMAGE_MODEL / IMAGE_QUALITY. */
   model: string;
   quality: string;
+  /**
+   * Model and quality of the CHARACTER step (COLOREAR_CHARACTER_MODEL / COLOREAR_CHARACTER_QUALITY), recorded when the book starts so a run
+   * that resumes uses the same ones and two books can be compared. Absent in books started before this setting existed: same as `model` / `quality`.
+   */
+  characterModel?: string;
+  characterQuality?: string;
   startedAt: string;
   updatedAt: string;
   lease: { id: string; until: string } | null;
   costCents: number;
+  /** Part of `costCents` spent in the character step (the rest is pages). */
+  costCharactersCents?: number;
   calls: number;
   retries: number;
   characters: CharState[];

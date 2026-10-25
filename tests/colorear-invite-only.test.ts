@@ -322,9 +322,12 @@ describe("F7: /api/health", () => {
   });
   it("with the CRON_SECRET (Authorization: Bearer, or x-cron-secret) it lists the active providers, for the deploy checklist", async () => {
     for (const headers of [{ authorization: `Bearer ${env.CRON_SECRET}` }, { "x-cron-secret": env.CRON_SECRET! }] as Array<Record<string, string>>) {
-      const body = (await (await health.GET(new Request("http://localhost:3000/api/health", { headers }))).json()) as { providers?: { payments: string }; colorear?: { image: string } };
+      const body = (await (await health.GET(new Request("http://localhost:3000/api/health", { headers }))).json()) as { providers?: { payments: string }; colorear?: { image: string; stages?: { pages: { model: string }; characters: { model: string; quality: string } } } };
       expect(body.providers?.payments).toBe("mock");
       expect(body.colorear?.image).toBeTruthy();
+      // which model and quality draw the pages and the characters, so the deploy checklist can confirm COLOREAR_CHARACTER_MODEL took effect
+      expect(body.colorear?.stages?.pages.model).toBeTruthy();
+      expect(body.colorear?.stages?.characters.quality).toBeTruthy();
     }
   });
 });

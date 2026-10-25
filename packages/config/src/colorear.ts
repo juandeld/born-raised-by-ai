@@ -317,6 +317,36 @@ export function imageProviderName(env: Record<string, string | undefined> = proc
   return v === "openai" || v === "nanobanana" ? v : "mock";
 }
 
+export type ImageQualityName = "low" | "medium" | "high";
+
+/** `low`, `medium` or `high` (any case); anything else is undefined. The 2.5 models also take xhigh and max: Pintoria never asks for them. */
+export function parseImageQuality(v: string | undefined | null): ImageQualityName | undefined {
+  const q = (v ?? "").trim().toLowerCase();
+  return q === "low" || q === "medium" || q === "high" ? q : undefined;
+}
+
+/**
+ * Is this a model id we may send to the OpenAI Images API? A typo in an environment variable must not turn every character into the local
+ * stick-figure fallback after 3 failed calls, so anything that does not look like `gpt-image-...` is refused here. gpt-image-1 was shut
+ * down on 2026-10-23 and is never accepted.
+ */
+export function isUsableOpenaiImageModel(model: string): boolean {
+  const m = model.trim();
+  return /^gpt-image-[a-z0-9][a-z0-9.\-]*$/i.test(m) && !/^gpt-image-1$/i.test(m);
+}
+
+/**
+ * Model and quality of the CHARACTER step (the drawing made from the photos, where the likeness is decided), apart from the pages:
+ * `COLOREAR_CHARACTER_MODEL` (e.g. gpt-image-2.5-sunburst, or its dated snapshot) and `COLOREAR_CHARACTER_QUALITY` (low | medium | high).
+ * `OPENAI_IMAGE_MODEL` and `IMAGE_QUALITY` keep ruling the pages. Not set (or not valid) = undefined = the character step uses the same
+ * model and quality as the pages, as before. `ignored` is true when a model was set but is not usable, so the caller can warn.
+ */
+export function colorearCharacterStage(env: Record<string, string | undefined> = process.env): { model: string | undefined; quality: ImageQualityName | undefined; ignored: boolean } {
+  const raw = (env.COLOREAR_CHARACTER_MODEL ?? "").trim();
+  const usable = raw !== "" && isUsableOpenaiImageModel(raw);
+  return { model: usable ? raw : undefined, quality: parseImageQuality(env.COLOREAR_CHARACTER_QUALITY), ignored: raw !== "" && !usable };
+}
+
 /** Price family of an OpenAI image model: gpt-image-1-mini, gpt-image-1 (shut down 23-oct-2026) or the 2.5 / 2 generation (flare, sunburst). */
 export type OpenAIImageFamily = "mini" | "v1" | "v2";
 
