@@ -1,6 +1,6 @@
 # OpenAI: edición de fotos de la familia a ilustraciones (gpt-image, API de imágenes)
 
-Veredicto D27: **PERMITIDO con condiciones** para Pintoria (condiciones obligatorias abajo). Jinglo: no aplica, no envía voz ni fotos a OpenAI.
+Veredicto D27: **RIESGO ALTO para fotos de menores de 13 años** (relectura del 25-oct-2026, tarde: cláusula de las Business Terms y guía de API para menores, ver la última sección con fecha); **PERMITIDO con condiciones** para todo lo demás de Pintoria (condiciones obligatorias abajo). Jinglo: no aplica, no envía voz ni fotos a OpenAI.
 Lectura: 19-oct-2026, `legal-compliance`. No es asesoría de abogado. Citas: fragmentos textuales mínimos.
 Cambio reciente: las Service Terms se actualizaron el 16-oct-2026, tres días antes de esta lectura. Revisar cada 30 días.
 
@@ -109,14 +109,69 @@ Lectura: 25-oct-2026, `legal-compliance`. Motivo de la lectura: Juan compara tod
 Las páginas de políticas de openai.com (Service Terms, Usage Policies y Business Terms) respondieron 403 a la herramienta de lectura. No se intentó saltar la protección. Una copia archivada de las páginas tampoco estuvo accesible desde este entorno y la extensión del navegador no estaba conectada. La última versión leída (19-oct-2026) decía "Updated: October 16, 2026" para las Service Terms; si se actualizaron después o si el texto de la sección 6 cambia para los modelos 2.5: [no verificado].
 Acción: Juan o `arquitecto` abren las tres páginas en un navegador, comparan con las citas de este archivo y avisan a `legal-compliance` si hay diferencias. Hasta entonces el veredicto es provisional.
 
+**Actualización del mismo día (tarde):** las tres páginas ya abrieron con la herramienta de lectura. Ver la sección «Relectura 25-oct-2026 (tarde)» más abajo; el veredicto provisional queda sustituido por el de esa sección.
+
 ### Cambio 2 del bloque "Pendiente" (hasta 3 fotos por persona)
 
 Revisado el mismo día en `docs/legal/aprobaciones/colorear-codigo-prueba-3-fotos.md`: la política de OpenAI no limita las fotos por persona ni por pedido; el aviso nuevo se aprueba y la versión sube a `colorear-legal-v5` (el cambio lo hace `arquitecto`).
 
+## Relectura 25-oct-2026 (tarde): políticas de OpenAI y veredicto sobre `gpt-image-2.5-sunburst` y `gpt-image-2.5-flare`
+
+Lectura: 25-oct-2026, `legal-compliance`, a petición del coordinador. Veredicto D27 para Pintoria: **RIESGO ALTO para fotos de menores de 13 años; PERMITIDO con condiciones para fotos de personas de 13 o más, mascotas y dibujos**. Sustituye al veredicto provisional de la sección anterior. No es asesoría de abogado.
+
+Límite de la lectura: la herramienta resume la página con un modelo pequeño y limita las citas, así que no obtuve el texto íntegro. Los fragmentos de abajo son los que devolvió, repetidos de forma consistente en dos lecturas. Antes de cualquier cobro, Juan o `arquitecto` abren las Business Terms (§2) en un navegador y confirman las palabras exactas [no verificado: texto íntegro].
+
+### Documentos releídos
+
+| Documento | Enlace | Lectura del 19-oct | Hoy |
+|---|---|---|---|
+| Usage Policies | https://openai.com/policies/usage-policies/ | "Effective: October 29, 2025" | "Effective: November 20, 2026"; changelog con entrada del 2026-10-21 |
+| Service Terms | https://openai.com/policies/service-terms/ | "Updated: October 16, 2026" | "Updated: October 16, 2026" (sin cambio) |
+| Business Terms | https://openai.com/policies/business-terms/ | titulada "Services Agreement", "Effective: January 1, 2026", §3.3(c) y §4.2 | titulada "OpenAI Business Terms", sin fecha, §2(c), §3.2 y §8.3 |
+| Guía de API para menores de 18 | https://developers.openai.com/api/docs/guides/safety-checks/under-18-api-guidance | no leída | sin fecha visible |
+
+### Comparación con la lectura del 19-oct
+
+- **Usage Policies.** Las cláusulas que cité entonces siguen con las mismas palabras: semejanza sin consentimiento ("use of someone's likeness, including their photorealistic image or voice, without their consent"), CSAM, "facial recognition databases without data subject consent" y suplantación. No exigen revelar el uso de IA. No dicen nada específico sobre fotos de menores subidas por un adulto.
+- **Cambio del 21-oct, efectivo el 20-nov-2026** (changelog de la propia página). Cuatro asuntos: (a) restricciones a usar modelos y salidas para entrenar otros modelos; (b) protección de niños y adolescentes más clara (abuso, CSAM, grooming, sextorsión, sexualización; para adolescentes, contenido inapropiado, dietas, burlas del cuerpo, retos peligrosos, juegos de rol sexuales o violentos); (c) usos de alto riesgo sin revisión humana (incluye seguros, legal, educación y migración); (d) principios de seguridad nacional y aprobación previa para seguridad nacional, fuerzas del orden e **intermediarios de acceso a modelos**. Efecto en Pintoria: ninguno bloquea. No entrenamos modelos (a); el entregable es arte de línea para colorear, sin sexualización ni burla del cuerpo (b); (c) afecta a `ciudadania` y `seguros-tx`, no a Pintoria; (d) refuerza no pasar OpenAI por un agregador (fal.ai, Replicate): se llama a OpenAI directamente. Sin copia del texto anterior no pude hacer una comparación completa: comparé contra mis citas del 19-oct.
+- **Service Terms.** Misma fecha. La sección 6 no cambia: no identificar a una persona y no reproducir su semejanza "without express consent and all necessary rights". No nombra modelos concretos ni menores. Es decir, no hay diferencia entre `gpt-image-1-mini` y `gpt-image-2.5` en este documento.
+- **Business Terms: hallazgo nuevo para el veredicto.** La Sección 2 «Restrictions», apartado (c), prohíbe al cliente: "send us any personal information of children under 13 or the applicable age of digital consent", y en el mismo apartado "allow minors to use our Services without consent from their parent or guardian". El 19-oct cité solo la segunda mitad (como §3.3(c) del "Services Agreement"). No puedo decir si el texto cambió desde entonces (el documento se llama distinto y tiene otra numeración) o si lo pasé por alto; en cualquier caso mi veredicto anterior no lo tuvo en cuenta. Fue un error mío. Las demás cláusulas citadas se mantienen en sustancia: §3.2 no usar el contenido del cliente para mejorar los servicios y §8.3 borrado a los 30 días de terminar el contrato.
+- **Guía de API para menores de 18** (la había citado `docs/investigacion/santa.md`): "Organizations serving minors must comply with all applicable child protection, safety, and privacy laws, including" COPPA, y "You should not use OpenAI services to process any personal data of children under 13 or the" edad de consentimiento digital aplicable "without first implementing zero data retention in our API". Pide además filtros, monitoreo, garantía de edad donde corresponda y avisa de posibles auditorías, advertencias, suspensión o terminación del acceso. No distingue entre un desarrollador que procesa datos de menores y menores que usan el producto.
+
+### Qué significa para Pintoria
+
+Las fotos que Pintoria envía a OpenAI son datos personales de niños (los libros son para 3 a 12 años; la regla COPPA cuenta la foto de un niño como dato personal [no verificado contra el texto de la regla en esta lectura]). Sin retención cero (hoy solo hay el monitoreo de abuso de hasta 30 días), la lectura conservadora de la cláusula 2(c) y de la guía es que **no se pueden enviar fotos de menores de 13 años a OpenAI** hasta tener ZDR aprobada. El riesgo es contractual con OpenAI (advertencia, suspensión o cierre de la organización, y con ella la capacidad de vender), no un daño a las familias: el aviso ya les dice que el proveedor conserva copias hasta 30 días. Aplica igual al modelo de hoy (`gpt-image-1-mini`) que a los 2.5. La retención cero se pide por escrito a ventas de OpenAI y no la concede esta puerta.
+
+### Veredicto por uso
+
+| Uso | Veredicto | Razón |
+|---|---|---|
+| `gpt-image-2.5-sunburst` en el paso de personaje, con fotos de menores de 13 | **RIESGO ALTO** | Ninguna política prohíbe el modelo ni dibujar a un niño con el consentimiento del padre; lo que choca es enviar la foto sin ZDR (Business Terms §2(c) y guía para menores). Se trata como no permitido en la práctica hasta tener la aprobación de OpenAI o la decisión escrita de Juan. |
+| `gpt-image-2.5-sunburst` con fotos de personas de 13 años o más y mascotas | Permitido con condiciones | Condiciones 1 a 8, las de la actualización del 25-oct y las de abajo. |
+| `gpt-image-2.5-flare` en las páginas (dibujos de los personajes, sin nombres) | Permitido con condiciones | Recibe dibujos, no fotos. Que OpenAI cuente un dibujo muy parecido de un menor como dato personal es [no verificado]; por prudencia la solicitud de ZDR nombra ambos modelos. |
+| Piloto cerrado con `gpt-image-1-mini` y fotos de niños | **RIESGO ALTO**, igual que arriba | El modelo anterior no cambia la cláusula. |
+
+### Qué decide Juan (riesgo alto, plan B)
+
+1. **Pedir ZDR hoy** (texto abajo). Es lo que desbloquea fotos de menores de 13 con OpenAI, para cualquier modelo.
+2. **Mientras llega la respuesta**, una de estas tres, a elección de Juan: (a) el piloto cerrado solo con fotos de adultos, de personas de 13 o más y de mascotas; (b) asumir por escrito el riesgo contractual con OpenAI en un piloto de pocos adultos conocidos. No me corresponde aprobarlo; lo desaconsejo si es la misma organización con la que se cobrará, porque una suspensión frena también las ventas; (c) plan B: Recraft, sin darlo de alta, a la espera de su confirmación escrita sobre retención cero y fotos de menores (`recraft.md`). Ni Google ni los agregadores sirven de plan B hoy (`README.md`, sección 2b).
+3. Hasta que Juan elija, `legal-compliance` no da el visto bueno de proveedor a ninguna foto de un menor de 13 años enviada a OpenAI.
+
+### Condiciones que se mantienen o se añaden
+
+1. Las 8 condiciones de este archivo y las 6 de la actualización del 25-oct: `moderation: auto`, versión fija del modelo, `safety_identifier`, verificación de la organización antes de usar un 2.5 y ZDR solicitada nombrando los modelos.
+2. **Parecido del personaje.** Se permite pedir un personaje de dibujos animados que se parezca mucho a la persona, con sus rasgos distintivos (pelo, color de piel, gafas, ropa, expresión). La política no prohíbe el parecido, prohíbe la semejanza sin consentimiento y la que pueda confundirse con la real, y para eso están K1 y el aviso. Sigue prohibido pedir fotorrealismo, «retrato», «copia exacta» o «idéntica»: el resultado es arte de línea (condición 2 de este archivo). Frase aprobada para el prompt: "a cartoon character clearly recognizable as this person by their distinctive features (hair, skin tone, glasses, clothing), always as simple line art, never a photorealistic or identical copy". La prueba de `tests/colorear-photos.test.ts` puede aceptar «recognizable» y «distinctive features»; sigue rechazando «identical», «exact», «faithful», «portrait» y «lifelike» fuera de la frase de negación. A más parecido, más pesa que K1 quede registrada para cada pedido y que no se envíen fotos de quien no tenga el permiso de un adulto responsable.
+3. No cambia el aviso ni la casilla: ya dicen que el proveedor puede conservar copias hasta 30 días o más para revisar un posible abuso grave. Si llega ZDR, "hasta 30 días" sigue siendo cierto; la revisión de imágenes marcadas por seguridad infantil se mantiene incluso con ZDR.
+4. Releer las tres políticas el 20-nov-2026, cuando entran en vigor las Usage Policies nuevas, y cada 30 días.
+
+### Texto propuesto para ventas de OpenAI (lo envía Juan; yo no envío nada)
+
+> We operate a paid web service in which an adult parent or guardian uploads photos (1 to 3 per person, up to 5 people, including children aged 3 to 12) with explicit consent, to create line-art coloring-book characters delivered as a PDF to the adult. Children never use the service or the API. We use the Images API (edits) with gpt-image-2.5-sunburst and gpt-image-2.5-flare, and currently gpt-image-1-mini. Section 2(c) of your Business Terms and your under-18 API guidance say personal data of children under 13 should be processed only after zero data retention is implemented. We request zero data retention (or equivalent written approval) for these requests, and written confirmation that this use is acceptable. Our own copies of the photos are deleted within 24 hours. Please also tell us how input images flagged for child safety are handled under zero data retention.
+
 ## No verificado
 
 - Si OpenAI trata una ilustración de línea como "reproducir la semejanza" de la persona (se asume que sí, por eso se exige consentimiento).
-- Texto vigente de Service Terms, Usage Policies y Business Terms tras el 16-oct-2026 (ver arriba).
+- Texto íntegro de las tres políticas: la relectura de la tarde del 25-oct usó una herramienta que resume y limita las citas; confirmar en un navegador el §2(c) de las Business Terms y la guía de menores. Si el §2(c) ya estaba en el «Services Agreement» del 19-oct: [no verificado].
 - Si la cuenta de Guatemala sigue en la lista de países soportados vigente.
 - Obligación de reportar a NCMEC para un operador radicado en Guatemala que sirve a EE. UU.
 - Fecha de la guía de datos y de la guía de imágenes.
