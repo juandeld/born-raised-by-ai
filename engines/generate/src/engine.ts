@@ -19,8 +19,8 @@ import { composeCoverFromCharacters } from "./cover";
 import { assembleBook } from "./pdf";
 import { resolvePersonRole, sanitizePersonName, sanitizeShortText, storyLabelsOf } from "./sanitize";
 import { charPath, pagePath, pdfPath, photoPath, statePath, type GenState, type PageState } from "./state";
-import { fillNames, fillVisual, joinNames, rolesOf, type StoryProvider } from "./story";
-import { ImageProviderError, type GeneratedImage, type ImageProvider, type ImageQuality, type PersonInput, type PersonSubmission, type RefImage } from "./types";
+import { STORY_MAX_ATTEMPTS, TemplateStoryProvider, fillNames, fillVisual, joinNames, repairStory, rolesOf, type StoryProvider } from "./story";
+import { ImageProviderError, type GeneratedImage, type ImageProvider, type ImageQuality, type PersonInput, type PersonSubmission, type RefImage, type Story } from "./types";
 
 export interface ColorearDeps {
   db: Db;
@@ -867,8 +867,31 @@ export class ColorearEngine {
       // ---------------- stage 2: story
       if (!state.story) {
         state.stage = "story";
+        // The attempt is counted and saved BEFORE trying, so a crash or a timeout counts too and the book can never retry this stage forever.
+        state.storyAttempts = (state.storyAttempts ?? 0) + 1;
         await save();
-        state.story = await this.d.story.write({ roles, labels: storyLabelsOf(det.persons, det.lang), lang: det.lang, band, theme: det.theme, themeId: det.themeId });
+        const req = { roles, labels: storyLabelsOf(det.persons, det.lang), lang: det.lang, band, theme: det.theme, themeId: det.themeId };
+        let written: Story;
+        try {
+          written = await this.d.story.write(req);
+        } catch (err) {
+          const why = err instanceof Error ? err.message : "error";
+          (state.issues ??= []).push(`story#${state.storyAttempts}:${why}`.slice(0, 80));
+          if (state.storyAttempts < STORY_MAX_ATTEMPTS) {
+            await save();
+            throw err; // the next run asks again
+          }
+          // Out of attempts: the local template, with any scene that cannot be printed replaced. A paid book is never blocked by its story.
+          console.warn("[colorear] story: using the local safe story for run", orderId.slice(0, 8), "after", state.storyAttempts, "attempts:", why);
+          written = await new TemplateStoryProvider().write(req);
+        }
+        // Whoever wrote it, no scene that fails the content filter reaches the book: it is replaced by a generic scene of the same theme.
+        const fixed = repairStory(written, req);
+        state.story = { ...fixed, writer: written.writer };
+        for (const r of fixed.repaired ?? []) {
+          (state.issues ??= []).push(`story-scene-${r.n}-replaced:${r.reason}`.slice(0, 80));
+          await this.d.tracker.track("content_blocked", { ...this.props(order), stage: "output", reason: `story_scene_${r.n}:${r.reason}` });
+        }
         await save();
       }
       const story = state.story!;

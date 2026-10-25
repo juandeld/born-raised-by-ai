@@ -90,4 +90,6 @@ export interface Story {
   scenes: StoryScene[];
   /** Who wrote it: "anthropic" or "template". */
   writer: string;
+  /** Scenes that could not pass the content filter and were replaced by a generic safe scene of the same theme (internal diagnostics, never shown). */
+  repaired?: Array<{ n: number; reason: string }>;
 }

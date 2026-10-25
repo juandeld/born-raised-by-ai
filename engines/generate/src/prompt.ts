@@ -113,15 +113,39 @@ export function buildCoverPrompt(visual: string, band: AgeBand, count: number): 
   );
 }
 
-/** Words that must never appear in a prompt (brands and characters); checked over story output and every subject bank. */
+/**
+ * Words that must never appear in a prompt (brands and characters); checked over story output and every subject bank.
+ * Each entry is matched as a whole word or phrase (see `mentionsBrand`), so it must be written the way people write it.
+ * The last group are brand names that are usually typed as ONE word: a whole-word match would not see them inside "disney" or
+ * "mario" any more, which the old substring match did, so they are listed by themselves.
+ */
 export const BRAND_BLOCKLIST = [
   "disney", "pixar", "marvel", "dc comics", "pokemon", "pokémon", "pikachu", "mickey", "minnie", "frozen", "elsa", "bluey", "peppa", "paw patrol",
   "spider-man", "spiderman", "batman", "superman", "minecraft", "mario", "sonic", "hello kitty", "barbie", "lego", "roblox", "fortnite", "naruto",
   "dora", "cocomelon", "baby shark", "transformers", "hot wheels", "thomas the", "coca-cola", "nike", "adidas", "ferrari", "lamborghini", "harry potter",
   "star wars", "stitch", "winnie", "simpson", "sponge", "patrulla canina", "gabby", "hulk", "iron man", "pepa pig",
+  "disneyland", "disneyworld", "legoland", "spongebob", "peppapig", "mickeymouse", "minniemouse", "supermario", "mariokart", "mariobros", "doraemon",
+  "pokemongo", "winniethepooh",
 ];
 
+/**
+ * Lowercase, without accents, and every run of spaces and punctuation as ONE space, so "Pokémon", "POKEMON", "Spider-Man" and
+ * "spider man" compare equal and a word is always surrounded by spaces (or the ends of the text).
+ */
+function foldForMatch(text: string): string {
+  return text.normalize("NFD").replace(/\p{M}+/gu, "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+}
+
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** One pattern per entry: the whole word or phrase, optionally in the plural ("legos", "pokemones", "simpsons"). Never inside another word. */
+const BRAND_PATTERNS: RegExp[] = [...new Set(BRAND_BLOCKLIST.map(foldForMatch))].map((w) => new RegExp(`(?:^| )${escapeRegExp(w)}(?:e?s)?(?: |$)`, "u"));
+
+/**
+ * Does the text name a brand or a licensed character? Compares WHOLE words and phrases, ignoring case and accents: "Mario", "dora" and "lego"
+ * alone are caught, "armario", "exploradora", "voladora" or "llegó" are not (a substring match blocked every Spanish word ending in -dora).
+ */
 export function mentionsBrand(text: string): boolean {
-  const t = text.toLowerCase();
-  return BRAND_BLOCKLIST.some((b) => t.includes(b));
+  const t = foldForMatch(text);
+  return t.length > 0 && BRAND_PATTERNS.some((re) => re.test(t));
 }

@@ -45,22 +45,84 @@ export function fillVisual(visual: string, present: number[], roles: string[]): 
   });
 }
 
-export function validateStory(raw: unknown, nPersons: number): Story {
+/** Why one scene cannot go into the book ("bad shape", "text length", "visual length", "mentions a brand", "has a link"), or the clean scene. The single rule for strict validation and for repair. */
+function readScene(s: { text?: unknown; present?: unknown; visual?: unknown } | null | undefined, i: number, nPersons: number): { scene: StoryScene } | { issue: string } {
+  if (!s || typeof s.text !== "string" || typeof s.visual !== "string" || !Array.isArray(s.present)) return { issue: "bad shape" };
+  const present = [...new Set(s.present.map(Number))].filter((k) => Number.isInteger(k) && k >= 1 && k <= nPersons);
+  const text = s.text.replace(/\s+/g, " ").trim();
+  const visual = s.visual.replace(/\s+/g, " ").trim();
+  if (text.length < 8 || text.length > 220) return { issue: "text length" };
+  if (visual.length < 10 || visual.length > 400) return { issue: "visual length" };
+  if (mentionsBrand(`${text} ${visual}`)) return { issue: "mentions a brand" };
+  if (/https?:|www\.|@/.test(`${text} ${visual}`)) return { issue: "has a link" };
+  return { scene: { n: i + 1, text, present: present.length ? present : Array.from({ length: nPersons }, (_, k) => k + 1), visual } };
+}
+
+function readShape(raw: unknown): { title: string; scenes: unknown[] } {
   const j = raw as { title?: unknown; scenes?: unknown };
   if (!j || typeof j.title !== "string" || !Array.isArray(j.scenes)) throw new Error("story: bad shape");
   if (j.scenes.length !== COLOREAR.scenes) throw new Error(`story: expected ${COLOREAR.scenes} scenes, got ${j.scenes.length}`);
-  const scenes: StoryScene[] = j.scenes.map((s: { text?: unknown; present?: unknown; visual?: unknown }, i: number) => {
-    if (typeof s.text !== "string" || typeof s.visual !== "string" || !Array.isArray(s.present)) throw new Error(`story: scene ${i + 1} bad shape`);
-    const present = [...new Set(s.present.map(Number))].filter((k) => Number.isInteger(k) && k >= 1 && k <= nPersons);
-    const text = s.text.replace(/\s+/g, " ").trim();
-    const visual = s.visual.replace(/\s+/g, " ").trim();
-    if (text.length < 8 || text.length > 220) throw new Error(`story: scene ${i + 1} text length`);
-    if (visual.length < 10 || visual.length > 400) throw new Error(`story: scene ${i + 1} visual length`);
-    if (mentionsBrand(`${text} ${visual}`)) throw new Error(`story: scene ${i + 1} mentions a brand`);
-    if (/https?:|www\.|@/.test(`${text} ${visual}`)) throw new Error(`story: scene ${i + 1} has a link`);
-    return { n: i + 1, text, present: present.length ? present : Array.from({ length: nPersons }, (_, k) => k + 1), visual };
+  return { title: j.title, scenes: j.scenes };
+}
+
+/** Strict: throws on the first scene that cannot be printed. Used for what a language model wrote, which is worth asking again. */
+export function validateStory(raw: unknown, nPersons: number): Story {
+  const j = readShape(raw);
+  const scenes: StoryScene[] = j.scenes.map((s, i) => {
+    const r = readScene(s as never, i, nPersons);
+    if ("issue" in r) throw new Error(`story: scene ${i + 1} ${r.issue}`);
+    return r.scene;
   });
   return { title: j.title.trim().slice(0, 80), scenes, writer: "unknown" };
+}
+
+/** Failed attempts at the story stage of one book before the engine stops asking the story writer and uses the local safe story. */
+export const STORY_MAX_ATTEMPTS = 3;
+
+/**
+ * Lenient: a scene that cannot be printed is REPLACED by a generic safe scene of the same theme instead of failing the whole story
+ * (the book is never blocked by one sentence). Returns the story, with `repaired` listing the scenes that were replaced and why.
+ * Only a story that is not a story at all (wrong shape or number of scenes) still throws.
+ */
+export function repairStory(raw: unknown, req: StoryRequest): Story {
+  const n = req.roles.length;
+  const j = readShape(raw);
+  const repaired: Array<{ n: number; reason: string }> = [];
+  const scenes: StoryScene[] = j.scenes.map((s, i) => {
+    const r = readScene(s as never, i, n);
+    if ("scene" in r) return r.scene;
+    repaired.push({ n: i + 1, reason: r.issue });
+    return safeScene(i, req);
+  });
+  return { title: j.title.trim().slice(0, 80), scenes, writer: "unknown", ...(repaired.length ? { repaired } : {}) };
+}
+
+/**
+ * A generic, calm scene that goes anywhere in the story, in the theme of the book (its place) when the buyer chose one. Built from
+ * fixed words only; if the theme words were ever blocked themselves, the plain version without the theme is used. Never fails.
+ */
+export function safeScene(i: number, req: Pick<StoryRequest, "roles" | "lang" | "band" | "themeId">): StoryScene {
+  const n = req.roles.length;
+  const pl = n > 1;
+  const pack = req.themeId ? THEME_PACKS[req.themeId] : undefined;
+  const es = req.lang === "es";
+  const pick = i % 3;
+  const make = (t: { es: string; en: string; v: string }): StoryScene => {
+    const text = adaptTone(es ? ([
+      `{all} ${pl ? "disfrutan" : "disfruta"} un momento muy bonito ${t.es}.`,
+      `{all} ${pl ? "descansan" : "descansa"} un ratito ${t.es} y ${pl ? "miran" : "mira"} todo con una sonrisa.`,
+      `¡Qué bien se está ${t.es}! {all} ${pl ? "juegan" : "juega"} y ${pl ? "se divierten" : "se divierte"} mucho.`,
+    ][pick]!) : ([
+      `{all} ${pl ? "enjoy" : "enjoys"} a lovely moment ${t.en}.`,
+      `{all} ${pl ? "rest" : "rests"} for a little while ${t.en} and ${pl ? "look" : "looks"} around with a smile.`,
+      `It feels so good ${t.en}! {all} ${pl ? "play" : "plays"} and ${pl ? "have" : "has"} lots of fun.`,
+    ][pick]!), req.band);
+    const visual = [`{all} smiling together in ${t.v}`, `{all} resting happily and looking around in ${t.v}`, `{all} playing happily together in ${t.v}`][pick]!;
+    return { n: i + 1, text, present: Array.from({ length: n }, (_, k) => k + 1), visual };
+  };
+  const themed = pack ? make({ es: pack.es.at, en: pack.en.at, v: pack.v.place }) : null;
+  if (themed && !("issue" in readScene(themed, i, n))) return themed;
+  return make({ es: "en este lugar tan bonito", en: "in this lovely place", v: "a sunny green meadow with a few flowers" });
 }
 
 // ------------------------------------------------------------------ template story (no API key, or fallback)
@@ -257,10 +319,8 @@ export class FallbackStoryProvider implements StoryProvider {
         }
       }
     }
-    return validateStoryKeepWriter(await this.fallback.write(req), req.roles.length);
+    // The template is deterministic: asking again gives the same text, so a scene it cannot print is replaced here, never thrown.
+    const s = await this.fallback.write(req);
+    return { ...repairStory(s, req), writer: s.writer };
   }
-}
-
-function validateStoryKeepWriter(s: Story, n: number): Story {
-  return { ...validateStory(s, n), writer: s.writer };
 }

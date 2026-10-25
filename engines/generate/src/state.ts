@@ -42,6 +42,8 @@ export interface GenState {
   retries: number;
   characters: CharState[];
   story: Story | null;
+  /** Times the story stage has started for this book (saved BEFORE each try, so a crash counts). After STORY_MAX_ATTEMPTS the local safe story is used. Absent in older books = 0. */
+  storyAttempts?: number;
   pages: PageState[];
   /** Customer-visible notes, e.g. a photo that could not be used. Keys are translated by the web app. */
   notes: string[];
