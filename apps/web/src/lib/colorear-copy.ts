@@ -13,10 +13,11 @@ export interface ColorearCopy {
   faq: { title: string; items: Array<{ q: string; a: string }> };
   form: {
     title: string; intro: string;
-    photos: { label: string; hint: string; tooLarge: string; badType: string; heic: string };
+    photos: { label: string; hint: string; more: (n: number) => string; maxPer: (n: number) => string; preparing: string; tooLarge: string; badType: string; heic: string };
     people: {
       name: string; role: string; protagonist: string; protagonistHint: string; companion: string; otherLabel: string; otherPh: string; remove: string;
-      protagonistCard: string; card: (n: number) => string; photoAdd: string; photoChange: string; photoAlt: (who: string) => string;
+      protagonistCard: string; card: (n: number) => string; photoAdd: string; photoAddMore: string; photoRequired: string; photoOptional: string; photoAlt: (who: string, n: number) => string;
+      photosOf: (who: string) => string; photoRemove: (n: number, who: string) => string; photoRemoved: (n: number) => string;
       addCard: (next: number) => string; max: string; removed: (n: number) => string;
       missing: { photo: string; name: string; role: string; protagonistRole: string; join: (parts: string[]) => string };
     };
@@ -60,7 +61,7 @@ const ES: ColorearCopy = {
   hero: {
     kicker: "Un libro para colorear con tu familia adentro",
     title: "Tu familia, en un libro para colorear",
-    text: "Sube de 1 a 5 fotos, cuéntanos cómo se llaman y creamos una aventura de 24 páginas en la que ellos son los protagonistas. Lista en minutos, para imprimir en casa.",
+    text: "Sube fotos de 1 a 5 personas o mascotas, cuéntanos cómo se llaman y creamos una aventura de 24 páginas en la que ellos son los protagonistas. Lista en minutos, para imprimir en casa.",
     cta: "Crear mi libro",
     price: (p) => `${p} una sola vez. Sin suscripción.`,
     badges: ["24 páginas", "Para niños de 3 a 8 años", "Fotos borradas en menos de 24 h"],
@@ -68,7 +69,7 @@ const ES: ColorearCopy = {
   steps: {
     title: "Así funciona",
     items: [
-      { t: "Sube las fotos", d: "De 1 a 5 personas o mascotas, con el nombre de cada una." },
+      { t: "Sube las fotos", d: "De 1 a 5 personas o mascotas, con su nombre. Con varias fotos de cada una, el parecido mejora." },
       { t: "Elige la aventura", d: "Dinosaurios, espacio, castillos... Elige entre 24 temas o escribe el tuyo." },
       { t: "Recibe tu libro", d: "Dibujamos a tu familia en una historia de 22 escenas, con control de calidad en cada página. Te llega el PDF en pantalla y por correo, para imprimir cuantas veces quieras." },
     ],
@@ -93,7 +94,7 @@ const ES: ColorearCopy = {
     items: [
       { q: "¿Cómo lo hacen?", a: "Detrás de cada libro hay un proceso con varias etapas: convertimos cada foto en un personaje de dibujo que se mantiene reconocible en las 24 páginas, escribimos una historia con principio, aventura y final pensada para la edad del niño, y cada página pasa por revisión automática de calidad (trazo limpio, sin color ni sombreados, apto para colorear) y se vuelve a dibujar si no la supera. Al final maquetamos todo en un PDF listo para imprimir en Carta o A4. Todo con privacidad por diseño: las fotos se borran en cuanto los personajes están listos, siempre antes de 24 horas. Las ilustraciones y la historia se crean con nuestro proceso propio asistido por inteligencia artificial y pueden tener imperfecciones." },
       { q: "¿Cuánto tarda?", a: "Normalmente entre 5 y 15 minutos. Verás cómo van apareciendo los personajes y las páginas, y te lo enviamos por correo." },
-      { q: "¿Qué fotos funcionan mejor?", a: "Fotos claras, con buena luz y la cara visible, de una sola persona o mascota por foto. Se aceptan JPG y PNG de hasta 10 MB." },
+      { q: "¿Qué fotos funcionan mejor?", a: "Fotos claras, con buena luz y la cara visible, de una sola persona o mascota en cada foto. Si subes varias de la misma persona (de frente, de perfil, sonriendo), el parecido mejora. Se aceptan JPG y PNG de hasta 10 MB cada una." },
       { q: "¿Qué pasa con las fotos?", a: "Se usan solo para generar los dibujos de tu libro y se borran en cuanto están listos, siempre antes de 24 horas. Nunca se usan para entrenar modelos. Los dibujos de los personajes (no las fotos) se guardan solo para que puedas pedir otra aventura sin subir fotos: 48 horas después de la entrega, o hasta 30 días si compras el Trío; puedes borrarlos antes. El libro terminado se guarda 30 días para que puedas volver a descargarlo, y luego se borra." },
       { q: "¿Qué es el Trío?", a: "Tres aventuras con un solo pago, por menos que el precio de dos libros sueltos. Eliges la primera al comprar; las otras dos las pides después desde la página de entrega, con un clic y sin subir fotos, hasta 30 días después de recibir la primera." },
       { q: "¿Y si no me gusta el resultado?", a: "Reembolso completo y automático hasta 7 días después de recibirlo, desde el enlace de tu recibo. Sin preguntas." },
@@ -105,8 +106,11 @@ const ES: ColorearCopy = {
     title: "Crea tu libro",
     intro: "Tarda unos 2 minutos. Pagas al final y el libro empieza a hacerse al instante.",
     photos: {
-      label: "Fotos y nombres (de 1 a 5)",
-      hint: "Empieza con quien protagoniza el libro. Después puedes agregar hasta 4 personas o mascotas más. Una por foto, con la cara visible. JPG o PNG, hasta 10 MB.",
+      label: "Fotos y nombres (de 1 a 5 personas)",
+      hint: "Empieza con quien protagoniza el libro. Después puedes agregar hasta 4 personas o mascotas más. Cada foto, de una sola persona o mascota, con la cara visible. JPG o PNG, hasta 10 MB.",
+      more: (n) => `Añade hasta ${n} fotos: más ángulos = más parecido.`,
+      maxPer: (n) => `Máximo ${n} fotos por persona.`,
+      preparing: "Preparando las fotos...",
       tooLarge: "Esa foto pesa más de 10 MB.",
       badType: "Solo JPG o PNG.",
       heic: "Las fotos HEIC no se pueden leer aquí. En el iPhone elige \"Más compatible\" o envíate la foto por mensaje para convertirla a JPG.",
@@ -123,8 +127,13 @@ const ES: ColorearCopy = {
       protagonistCard: "Protagonista",
       card: (n) => `Persona ${n}`,
       photoAdd: "Subir foto",
-      photoChange: "Cambiar foto",
-      photoAlt: (who) => `Foto de ${who}`,
+      photoAddMore: "Otra foto",
+      photoRequired: "Obligatoria",
+      photoOptional: "Opcional",
+      photoAlt: (who, n) => `Foto ${n} de ${who}`,
+      photosOf: (who) => `Fotos de ${who}`,
+      photoRemove: (n, who) => `Quitar la foto ${n} de ${who}`,
+      photoRemoved: (n) => `Foto ${n} quitada.`,
       addCard: (next) => `+ Agregar otra persona o mascota (${next} de 5)`,
       max: "Máximo 5",
       removed: (n) => `Persona ${n} quitada.`,
@@ -232,7 +241,7 @@ const EN: ColorearCopy = {
   hero: {
     kicker: "A coloring book with your family inside",
     title: "Your family, in a coloring book",
-    text: "Upload 1 to 5 photos, tell us their names, and we create a 24-page adventure starring them. Ready in minutes, to print at home.",
+    text: "Upload photos of 1 to 5 people or pets, tell us their names, and we create a 24-page adventure starring them. Ready in minutes, to print at home.",
     cta: "Create my book",
     price: (p) => `${p} one time. No subscription.`,
     badges: ["24 pages", "For kids aged 3 to 8", "Photos deleted within 24 h"],
@@ -240,7 +249,7 @@ const EN: ColorearCopy = {
   steps: {
     title: "How it works",
     items: [
-      { t: "Upload the photos", d: "1 to 5 people or pets, with a name for each one." },
+      { t: "Upload the photos", d: "1 to 5 people or pets, with a name for each. With several photos of each one, the likeness gets closer." },
       { t: "Choose the adventure", d: "Dinosaurs, space, castles... Pick one of 24 themes or write your own." },
       { t: "Get your book", d: "We draw your family into a 22-scene story, with quality control on every page. The PDF arrives on screen and by email, ready to print as often as you like." },
     ],
@@ -265,7 +274,7 @@ const EN: ColorearCopy = {
     items: [
       { q: "How does it work?", a: "Behind every book is a multi-stage process: we turn each photo into a cartoon character that stays recognizable across all 24 pages, write a story with a beginning, an adventure and an ending suited to the child's age, and every page goes through automatic quality review (clean linework, no color or shading, ready to color) and is redrawn if it does not pass. Finally we lay everything out as a print-ready PDF for Letter or A4. Privacy by design throughout: photos are deleted as soon as the characters are ready, always within 24 hours. The illustrations and the story are created with our own illustration process assisted by artificial intelligence and may have imperfections." },
       { q: "How long does it take?", a: "Usually 5 to 15 minutes. You will see the characters and pages appear, and we also email it to you." },
-      { q: "Which photos work best?", a: "Clear photos with good light and the face visible, one person or pet per photo. JPG and PNG up to 10 MB." },
+      { q: "Which photos work best?", a: "Clear photos with good light and the face visible, with only one person or pet in each photo. If you upload several of the same person (facing the camera, in profile, smiling), the likeness gets closer. JPG and PNG up to 10 MB each." },
       { q: "What happens to the photos?", a: "They are used only to create the drawings for your book and are deleted as soon as they are ready, always within 24 hours. They are never used to train models. The drawings of the characters (not the photos) are kept only so you can order another adventure without uploading photos: 48 hours after delivery, or up to 30 days if you buy the Trio; you can delete them sooner. The finished book is kept 30 days so you can download it again, then deleted." },
       { q: "What is the Trio?", a: "Three adventures for one payment, for less than the price of two single books. You choose the first when you buy; you order the other two later from your delivery page, with one click and no new photos, up to 30 days after you receive the first." },
       { q: "What if I do not like it?", a: "Full automatic refund up to 7 days after you receive it, from the link in your receipt. No questions asked." },
@@ -277,8 +286,11 @@ const EN: ColorearCopy = {
     title: "Create your book",
     intro: "It takes about 2 minutes. You pay at the end and the book starts right away.",
     photos: {
-      label: "Photos and names (1 to 5)",
-      hint: "Start with the main character of the book. Then you can add up to 4 more people or pets. One per photo, face visible. JPG or PNG, up to 10 MB.",
+      label: "Photos and names (1 to 5 people)",
+      hint: "Start with the main character of the book. Then you can add up to 4 more people or pets. Each photo shows only one person or pet, face visible. JPG or PNG, up to 10 MB.",
+      more: (n) => `Add up to ${n} photos: more angles = a closer likeness.`,
+      maxPer: (n) => `Up to ${n} photos per person.`,
+      preparing: "Preparing the photos...",
       tooLarge: "That photo is larger than 10 MB.",
       badType: "JPG or PNG only.",
       heic: "HEIC photos cannot be read here. On iPhone choose \"Most Compatible\", or message the photo to yourself to convert it to JPG.",
@@ -295,8 +307,13 @@ const EN: ColorearCopy = {
       protagonistCard: "Main character",
       card: (n) => `Person ${n}`,
       photoAdd: "Add photo",
-      photoChange: "Change photo",
-      photoAlt: (who) => `Photo of ${who}`,
+      photoAddMore: "Another photo",
+      photoRequired: "Required",
+      photoOptional: "Optional",
+      photoAlt: (who, n) => `Photo ${n} of ${who}`,
+      photosOf: (who) => `Photos of ${who}`,
+      photoRemove: (n, who) => `Remove photo ${n} of ${who}`,
+      photoRemoved: (n) => `Photo ${n} removed.`,
       addCard: (next) => `+ Add another person or pet (${next} of 5)`,
       max: "Maximum 5",
       removed: (n) => `Person ${n} removed.`,

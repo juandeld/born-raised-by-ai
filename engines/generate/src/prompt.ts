@@ -18,9 +18,13 @@ const STYLE =
   "no border or frame; not photorealistic; original characters only, never any licensed, trademarked or famous cartoon character, logo or brand. " +
   "Nothing scary, violent or inappropriate for young children.";
 
-export function buildCharacterPrompt(role: string, band: AgeBand): string {
+export function buildCharacterPrompt(role: string, band: AgeBand, photos = 1): string {
+  const several =
+    photos > 1
+      ? `The ${photos} reference photos all show the SAME person or pet, from different angles and moments: use them together to understand their recognizable features (face shape, hair, glasses, markings). Draw ONE cartoon character, never several, and never a photorealistic or identical copy. `
+      : "";
   return (
-    `Turn the main person or pet in the reference photo into a friendly cartoon character for a children's coloring book. ` +
+    `Turn the main person or pet in the reference photo${photos > 1 ? "s" : ""} into a friendly cartoon character for a children's coloring book. ${several}` +
     `${STYLE} Draw ONE character only, full body, in a relaxed happy pose, facing the viewer, centered. Completely plain white background: no ground line, no clouds, no flowers, no props, nothing except the character. If it is a person, standing and dressed like in the photo. If it is an animal, draw it as that animal (sitting or standing on four legs, no clothes, no human body). ` +
     `Keep the features that make them recognizable: hairstyle and hair length, glasses, beard or mustache, freckles, typical clothing shapes, and for animals the breed, ear shape and marking patterns drawn as outlines. ` +
     `A kind, flattering caricature; never ugly or mocking. Do not copy the photo background. Description of who it is: ${role}. ${AGE_RULES[band]}`

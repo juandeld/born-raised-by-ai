@@ -81,7 +81,7 @@ export interface EventPropsMap {
   /** Landing: the sample call was played for the first time in this visit. */
   audio_play: BaseProps;
   consent_given: BaseProps & { checkbox_ids: string[]; text_version_ids: string[] };
-  checkout_started: BaseProps & { variant: "single" | "bundle" | "bundle3" | "add1" | "credit"; amount_usd_cents: number; currency: string; payment_provider: string };
+  checkout_started: BaseProps & { variant: "single" | "bundle" | "bundle3" | "add1" | "credit"; amount_usd_cents: number; currency: string; payment_provider: string; /** colorear: photos uploaded for each person, in order (numbers only) */ photos_per_person?: number[] };
   paid: BaseProps & { variant: "single" | "bundle" | "bundle3" | "add1" | "credit"; amount_usd_cents: number; currency: string; payment_provider: string };
   call_scheduled: BaseProps & { window_start_utc: string; window_end_utc: string };
   call_started: BaseProps & { attempt: number };

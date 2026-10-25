@@ -22,6 +22,7 @@
     "legal:docs": "tsx scripts/legal-docs.ts",
     "check:functions": "tsx scripts/check-functions.ts",
     "colorear:sample": "tsx scripts/colorear-sample.ts",
+    "colorear:photo-cost": "tsx scripts/colorear-photo-cost.ts",
     "polar:check": "tsx scripts/polar-check.ts"
   },
   "devDependencies": {

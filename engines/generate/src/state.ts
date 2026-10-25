@@ -50,4 +50,5 @@ export const statePath = (orderId: string) => `colorear/${orderId}/state.json`;
 export const charPath = (orderId: string, k: number, ext: string) => `colorear/${orderId}/char-${k}.${ext}`;
 export const pagePath = (orderId: string, n: number, ext: string) => `colorear/${orderId}/page-${String(n).padStart(2, "0")}.${ext}`;
 export const pdfPath = (orderId: string) => `colorear/${orderId}/book.pdf`;
-export const photoPath = (orderId: string, k: number) => `orders/${orderId}/photo-${k}.jpg`;
+/** Photo `j` (1 = the required one, 2 and 3 = extra angles) of person `k`. Photo 1 keeps the path orders had before several photos existed. */
+export const photoPath = (orderId: string, k: number, j = 1) => (j <= 1 ? `orders/${orderId}/photo-${k}.jpg` : `orders/${orderId}/photo-${k}-${j}.jpg`);

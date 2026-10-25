@@ -6,7 +6,9 @@ import { clientIp, deviceOf, json, rateLimited } from "@/lib/request";
 
 
 /**
- * multipart/form-data: photo1..photoN (JPEG already compressed by the browser, <= 900 KB each; Vercel limits the body to 4.5 MB),
+ * multipart/form-data: photo1..photoN (the required photo of each person; JPEG already compressed by the browser, <= 900 KB each, and the
+ * browser shrinks them so that every allowed photo fits Vercel's 4.5 MB body) and photo<i>_2, photo<i>_3.. (optional extra photos of person i;
+ * the limit per person is COLOREAR_MAX_PHOTOS_MAIN for person 1 and COLOREAR_MAX_PHOTOS_OTHER for the rest, enforced by the engine),
  * name1..nameN, roleId1..roleIdN (+ roleText<i> for "other"; legacy role1..roleN accepted), and lang, country, email, age, theme, themeId, creative, checkboxIds (JSON),
  * and an optional `code` (test code, COLOREAR_TEST_CODES). The server re-validates everything.
  *
@@ -30,11 +32,19 @@ export async function POST(req: Request) {
   const countryRaw = String(form.get("country") ?? "").toUpperCase() as CountryCode;
   const country = open.includes(countryRaw) ? countryRaw : open[0]!;
   const photos: Uint8Array[] = [];
+  const extraPhotos: Uint8Array[][] = [];
   const persons: PersonSubmission[] = [];
   for (let i = 1; i <= COLOREAR.maxPhotos; i++) {
     const f = form.get(`photo${i}`);
     if (!(f instanceof File) || f.size === 0) continue;
     photos.push(new Uint8Array(await f.arrayBuffer()));
+    // Extra photos of the same person: read up to the hard ceiling only; the engine rejects any count above the configured limit.
+    const more: Uint8Array[] = [];
+    for (let j = 2; j <= COLOREAR.photosPerPersonCeiling; j++) {
+      const x = form.get(`photo${i}_${j}`);
+      if (x instanceof File && x.size > 0) more.push(new Uint8Array(await x.arrayBuffer()));
+    }
+    extraPhotos.push(more);
     const roleId = String(form.get(`roleId${i}`) ?? "").slice(0, 40);
     // Closed roles (current form) or, for an old cached page, free text in role<i>.
     persons.push(roleId
@@ -61,6 +71,7 @@ export async function POST(req: Request) {
         email: String(form.get("email") ?? ""),
         persons,
         photos,
+        extraPhotos,
         theme: String(form.get("theme") ?? ""),
         themeId: String(form.get("themeId") ?? "") || undefined,
         age: String(form.get("age") ?? ""),

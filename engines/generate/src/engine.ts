@@ -2,7 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import type { Tracker } from "@lumen/analytics";
 import type { BaseProps } from "@lumen/analytics";
 import {
-  COLOREAR, COUNTRIES, IMAGE_COST_USD_CENTS, ageBandOf, colorearCountries, colorearLegalLocale, colorearPrice, colorearPublicUrl, colorearTestCodeLimits, formatPrice, isSelectableVariant, isThemeId, isValidAge, paperFor, themeLabel, toUsdCents,
+  COLOREAR, COUNTRIES, IMAGE_COST_USD_CENTS, ageBandOf, colorearCountries, colorearLegalLocale, colorearPhotoLimits, colorearPrice, colorearPublicUrl, colorearTestCodeLimits, formatPrice, isSelectableVariant, isThemeId, isValidAge, openaiImageFamily, paperFor, themeLabel, toUsdCents,
   addDays, DAY_MS, type AgeBand, type BrandConfig, type ColorearLang, type ColorearVariant, type CountryCode,
 } from "@lumen/config";
 import type { DeliveryProvider, Storage } from "@lumen/calls";
@@ -43,7 +43,10 @@ export interface ColorearCheckoutInput {
   country: CountryCode;
   email: string;
   persons: PersonSubmission[];
+  /** Photo 1 of each person (required), in the order of `persons`. */
   photos: Uint8Array[];
+  /** Optional extra photos of the same person (angles, light): `extraPhotos[i]` belongs to `persons[i]`. Up to colorearPhotoLimits() - 1 each. */
+  extraPhotos?: Uint8Array[][];
   /** Free text (sanitized) or a catalog theme label. */
   theme?: string;
   themeId?: string;
@@ -76,6 +79,8 @@ export interface OrderDetails {
   themeId: string;
   age: number;
   lang: ColorearLang;
+  /** Photos uploaded per person, in order (the first is the required one). Lets cleanup delete exactly those files. Absent = 1 each (older orders). */
+  photoCounts?: number[];
   /**
    * Orders made from another one (Trio credit, "otra aventura"): the character drawings copied from the parent. They replace
    * stage 1 of the run, so no photo is needed. Names and roles in `persons` are the parent's.
@@ -214,8 +219,14 @@ export class ColorearEngine {
         persons.push({ name: n.value, ...r.value });
       }
     }
-    if (input.photos.length !== input.persons.length || input.photos.length < 1) errors.photos = "One photo per person";
-    else if (input.photos.some((p) => p.byteLength > COLOREAR.maxPhotoBytes || !sniff(p))) errors.photos = "Invalid or too large photo";
+    if (input.photos.length !== input.persons.length || input.photos.length < 1) errors.photos = "A photo for each person";
+    else {
+      const limits = colorearPhotoLimits(this.d.env);
+      const extras = input.extraPhotos ?? [];
+      const all = [...input.photos, ...extras.flat()];
+      if (extras.length > input.photos.length || extras.some((list, i) => 1 + list.length > (i === 0 ? limits.main : limits.other))) errors.photos = "Too many photos for one person";
+      else if (all.some((p) => p.byteLength > COLOREAR.maxPhotoBytes || !sniff(p))) errors.photos = "Invalid or too large photo";
+    }
     let theme = "";
     if (input.theme && input.theme.trim()) {
       const t = sanitizeShortText(input.theme, 50);
@@ -242,12 +253,15 @@ export class ColorearEngine {
     const code = (input.testCode ?? "").trim() ? matchTestCode(this.d.env, input.testCode!) : null;
     const codeHash = code ? testCodeHash(this.d.env, code) : null;
     if (codeHash && (await this.testCodeOver(codeHash, null))) throw new ColorearValidationError({ code: "exhausted" });
-    const prepared: Uint8Array[] = [];
-    for (const p of input.photos) {
-      const out = await prepareUpload(p);
-      if (!out) throw new ColorearValidationError({ photos: "Unreadable photo" });
-      prepared.push(out);
-    }
+    // All photos of every person, re-encoded in parallel (EXIF/GPS stripped, orientation fixed): photo 1 first, then the extras of that person.
+    const prepared: Uint8Array[][] = await Promise.all(
+      input.photos.map(async (first, i) => {
+        const group = await Promise.all([first, ...(input.extraPhotos?.[i] ?? [])].map((p) => prepareUpload(p)));
+        if (group.some((g) => !g)) throw new ColorearValidationError({ photos: "Unreadable photo" });
+        return group as Uint8Array[];
+      }),
+    );
+    const photoCounts = prepared.map((g) => g.length);
     const now = this.d.now();
     const id = randomUUID();
     const variant: "single" | "bundle3" = input.variant === "bundle3" ? "bundle3" : "single";
@@ -255,9 +269,9 @@ export class ColorearEngine {
     const lang = input.lang;
     const languageCode = lang === "en" ? "en" : input.country === "ES" ? "es-ES" : "es-419";
     const names = joinNames(v.persons.map((p) => p.name), lang);
-    const details: OrderDetails = { v: 1, persons: v.persons, theme: v.theme, themeId: input.themeId && isThemeId(input.themeId) ? input.themeId : v.theme ? "custom" : "none", age: v.age, lang };
-    for (let i = 0; i < prepared.length; i++) await this.d.uploads.put(photoPath(id, i + 1), prepared[i]!, "image/jpeg");
-    const order = await this.d.db.orders.insert({
+    const details: OrderDetails = { v: 1, persons: v.persons, theme: v.theme, themeId: input.themeId && isThemeId(input.themeId) ? input.themeId : v.theme ? "custom" : "none", age: v.age, lang, photoCounts };
+    // If a put or the insert fails, no photo may stay behind without an order (nothing would ever sweep it).
+    const orderInput: Parameters<typeof this.d.db.orders.insert>[0] = {
       id,
       access_token: token(),
       product: COLOREAR.slug,
@@ -295,12 +309,20 @@ export class ColorearEngine {
       refund_amount_minor: null,
       purge_at: iso(addDays(now, COLOREAR.retentionDays + 1)),
       pii_purged_at: null,
-    });
+    };
+    let order: OrderRow;
+    try {
+      await Promise.all(prepared.flatMap((group, i) => group.map((bytes, j) => this.d.uploads.put(photoPath(id, i + 1, j + 1), bytes, "image/jpeg"))));
+      order = await this.d.db.orders.insert(orderInput);
+    } catch (err) {
+      await this.deletePhotos(id, photoCounts);
+      throw err;
+    }
     if (codeHash) {
       // Two requests can pass the first check together: re-check now that this order is stored; if a cap is reached it is cancelled, photos included.
       const over = await this.testCodeOver(codeHash, order.id);
       if (over) {
-        for (let i = 1; i <= prepared.length; i++) await this.d.uploads.delete(photoPath(id, i)).catch(() => undefined);
+        await this.deletePhotos(id, photoCounts);
         await this.d.db.orders.update(order.id, { status: "cancelled", purge_at: iso(now) });
         throw new ColorearValidationError({ code: "exhausted" });
       }
@@ -328,7 +350,7 @@ export class ColorearEngine {
     const base = this.props(updated);
     const resolved = resolveAllColorearCheckboxes(lang === "en" ? "en" : input.country === "ES" ? "es-ES" : "es-419", this.legalVars());
     await this.d.tracker.track("consent_given", { ...base, checkbox_ids: [...COLOREAR_CHECKBOX_ORDER], text_version_ids: resolved.map((c) => c.textVersionId) });
-    await this.d.tracker.track("checkout_started", { ...base, variant, amount_usd_cents: updated.amount_usd_cents, currency: updated.currency, payment_provider: session.provider });
+    await this.d.tracker.track("checkout_started", { ...base, variant, amount_usd_cents: updated.amount_usd_cents, currency: updated.currency, payment_provider: session.provider, photos_per_person: photoCounts });
     if (codeHash) {
       const limits = colorearTestCodeLimits(this.d.env);
       const used = await this.testCodeOrders(codeHash);
@@ -336,6 +358,20 @@ export class ColorearEngine {
       await this.d.tracker.track("test_code_redeemed", { ...base, variant, code_hash: codeHash, uses_total: used.length, uses_24h: used.filter((o) => new Date(o.window_start).getTime() > since).length, max_uses: limits.maxUses, daily_cap: limits.dailyCap });
     }
     return { order: updated, checkoutUrl: session.url };
+  }
+
+  // ------------------------------------------------------------------ photos
+
+  /** Deletes the stored photos of an order: `counts[k-1]` files for person k (photo 1 is the required one). Returns how many it looked for. */
+  private async deletePhotos(orderId: string, counts: number[]): Promise<number> {
+    const jobs = counts.flatMap((n, i) => Array.from({ length: n }, (_, j) => this.d.uploads.delete(photoPath(orderId, i + 1, j + 1)).catch(() => undefined)));
+    await Promise.all(jobs);
+    return jobs.length;
+  }
+
+  /** Photo counts of an order as recorded at checkout (orders from before several photos had 1 per person). */
+  private photoCountsOf(det: OrderDetails | null): number[] {
+    return det?.photoCounts ?? Array.from({ length: det?.persons.length ?? COLOREAR.maxPhotos }, () => 1);
   }
 
   // ------------------------------------------------------------------ test codes
@@ -630,6 +666,7 @@ export class ColorearEngine {
     const save = () => (saving = saving.then(() => this.putState(orderId, state)));
     const image = state.provider === this.d.image.name ? this.d.image : this.d.mockImage;
     const band = ageBandOf(det.age);
+    const counts = this.photoCountsOf(det);
     const roles = rolesOf(det.persons);
     const names = det.persons.map((p) => p.name);
     const quality = (state.quality as ImageQuality) ?? "medium";
@@ -683,12 +720,13 @@ export class ColorearEngine {
         await pool(state.characters.filter((c) => c.status === "pending"), concurrency, async (c) => {
           if (remaining() < 5000) throw new BudgetError();
           const role = roles[c.k - 1] ?? "person";
-          const photo = await this.d.uploads.get(photoPath(orderId, c.k));
+          // every photo of this person goes in as a reference (up to the limit set at checkout): more angles, closer likeness
+          const stored = await Promise.all(Array.from({ length: counts[c.k - 1] ?? 1 }, (_, j) => this.d.uploads.get(photoPath(orderId, c.k, j + 1))));
+          const refs: RefImage[] = stored.filter((p): p is NonNullable<typeof p> => !!p).map((p) => ({ bytes: p.bytes, mime: (p.contentType.includes("png") ? "image/png" : "image/jpeg") as RefImage["mime"] }));
           let result: Awaited<ReturnType<typeof render>> | null = null;
-          if (photo) {
-            const mime = (photo.contentType.includes("png") ? "image/png" : "image/jpeg") as RefImage["mime"];
+          if (refs.length) {
             try {
-              result = await render(`char${c.k}`, { prompt: buildCharacterPrompt(role, band), width: 1024, height: 1024, quality, refs: [{ bytes: photo.bytes, mime }], kind: "character", ageBand: band, hints: { roles: [role], setting: "", seed: c.k } }, {}, c);
+              result = await render(`char${c.k}`, { prompt: buildCharacterPrompt(role, band, refs.length), width: 1024, height: 1024, quality, refs, kind: "character", ageBand: band, hints: { roles: [role], setting: "", seed: c.k } }, {}, c);
             } catch (err) {
               if (!(err instanceof ModerationError)) throw err;
             }
@@ -712,9 +750,9 @@ export class ColorearEngine {
         });
         // the originals are no longer needed: erase them now (never later than 24 h in any case)
         if (!state.photosDeletedAt) {
-          for (const c of state.characters) await this.d.uploads.delete(photoPath(orderId, c.k));
+          const erased = await this.deletePhotos(orderId, counts);
           state.photosDeletedAt = iso(this.d.now());
-          await this.d.tracker.track("photos_deleted", { ...this.props(order), count: state.characters.length, reason: "characters_ready" });
+          await this.d.tracker.track("photos_deleted", { ...this.props(order), count: erased, reason: "characters_ready" });
           await save();
         }
       }
@@ -1109,22 +1147,22 @@ export class ColorearEngine {
     const kids = await this.d.db.orders.find({ parent_order_id: parent.id, variant: "credit" });
     for (const k of kids) {
       if (k.status === "cancelled" || k.status === "refunded" || k.pii_purged_at) continue;
-      await this.deleteFiles(k.id, null);
+      await this.deleteFiles(k);
       await this.d.db.orders.update(k.id, { status: "cancelled", purge_at: iso(this.d.now()) });
     }
   }
 
   // ------------------------------------------------------------------ refunds and cleanup
 
-  private async deleteFiles(orderId: string, state: GenState | null): Promise<void> {
-    const det = state;
+  /** Erases every file of an order: photos (all of them, as recorded in its details), character drawings, pages and the PDF. */
+  private async deleteFiles(order: OrderRow): Promise<void> {
+    const orderId = order.id;
     await this.d.storage.delete(pdfPath(orderId)).catch(() => undefined);
-    for (let k = 1; k <= COLOREAR.maxPhotos; k++) {
-      await this.d.uploads.delete(photoPath(orderId, k)).catch(() => undefined);
-      for (const ext of ["png", "svg"]) await this.d.storage.delete(charPath(orderId, k, ext)).catch(() => undefined);
-    }
+    // details can already be gone (a purged order swept again): then look for the most that could ever have been stored
+    const counts = this.details(order) ? this.photoCountsOf(this.details(order)) : Array.from({ length: COLOREAR.maxPhotos }, () => COLOREAR.photosPerPersonCeiling);
+    await this.deletePhotos(orderId, counts);
+    for (let k = 1; k <= COLOREAR.maxPhotos; k++) for (const ext of ["png", "svg"]) await this.d.storage.delete(charPath(orderId, k, ext)).catch(() => undefined);
     for (let n = 0; n <= COLOREAR.scenes; n++) for (const ext of ["png", "svg"]) await this.d.storage.delete(pagePath(orderId, n, ext)).catch(() => undefined);
-    void det;
   }
 
   async markRefunded(order: OrderRow, reason: string, automatic: boolean, callProvider = true): Promise<{ refunded: boolean; reason?: string }> {
@@ -1132,13 +1170,13 @@ export class ColorearEngine {
     if (!order.payment_id) {
       // Never paid, or a free Trio adventure that failed: cancelled, and the credit goes back to the Trio (creditsOf ignores cancelled books).
       await this.d.db.orders.update(order.id, { status: "cancelled" });
-      await this.deleteFiles(order.id, null);
+      await this.deleteFiles(order);
       return { refunded: false, reason: "not_paid" };
     }
     // A test-code order was never charged: there is nothing to give back at the provider.
     if (callProvider && !this.isTestCodeOrder(order)) await this.d.payments.refund({ paymentId: order.payment_id, currency: order.currency as never, reason });
     const now = this.d.now();
-    await this.deleteFiles(order.id, null);
+    await this.deleteFiles(order);
     await this.cancelCreditBooks(order);
     await this.d.db.orders.update(order.id, { status: "refunded", refunded_at: iso(now), refund_reason: reason, refund_amount_minor: order.amount_minor, purge_at: iso(now) });
     await this.d.tracker.track("refunded", { ...this.props(order), reason, amount_usd_cents: order.amount_usd_cents, automatic });
@@ -1219,8 +1257,8 @@ export class ColorearEngine {
       const age = now.getTime() - new Date(o.created_at).getTime();
       const limit = o.status === "created" ? 2 * 3600_000 : COLOREAR.photoMaxHours * 3600_000;
       if (age > limit) {
-        for (let k = 1; k <= COLOREAR.maxPhotos; k++) await this.d.uploads.delete(photoPath(o.id, k));
-        await this.d.tracker.track("photos_deleted", { ...this.props(o), count: COLOREAR.maxPhotos, reason: o.status === "created" ? "unpaid" : "retention" });
+        const erased = await this.deletePhotos(o.id, this.photoCountsOf(this.details(o)));
+        await this.d.tracker.track("photos_deleted", { ...this.props(o), count: erased, reason: o.status === "created" ? "unpaid" : "retention" });
         out.photosErased++;
         if (o.status === "created") await this.d.db.orders.update(o.id, { status: "cancelled", purge_at: iso(now) });
       }
@@ -1255,7 +1293,7 @@ export class ColorearEngine {
     const due = await this.d.db.orders.find({ product: COLOREAR.slug, purge_at: { lte: iso(now) } });
     for (const o of due) {
       if (o.status === "purged" && o.pii_purged_at) continue;
-      await this.deleteFiles(o.id, null);
+      await this.deleteFiles(o);
       await this.d.db.orders.update(o.id, { email: null, child_first_name: null, child_age: null, details: null, consent_draft: null, pii_purged_at: o.pii_purged_at ?? iso(now), status: o.status === "refunded" || o.status === "cancelled" ? o.status : "purged" });
       out.purged++;
     }
@@ -1379,7 +1417,8 @@ export class ColorearEngine {
 
   /** Estimated cost per book in USD cents for a provider, for the cost budget in docs. */
   static estimateCostCents(model: string, quality: ImageQuality, persons: number): number {
-    const price = IMAGE_COST_USD_CENTS[/mini/.test(model) ? "openai-mini" : "openai"][quality];
+    const family = openaiImageFamily(model);
+    const price = IMAGE_COST_USD_CENTS[family === "mini" ? "openai-mini" : family === "v1" ? "openai" : "openai-v2"][quality];
     return price * (persons + COLOREAR.scenes + 1);
   }
 }

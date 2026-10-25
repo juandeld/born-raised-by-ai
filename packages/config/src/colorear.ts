@@ -12,8 +12,14 @@ export const COLOREAR = {
   pagesTotal: 24,
   scenes: 22,
   maxPhotos: 5,
+  /** Photos per person: how many the buyer may add (photo 1 is required, the rest improve the likeness). Env: COLOREAR_MAX_PHOTOS_MAIN / _OTHER. */
+  photosPerPersonDefault: 3,
+  /** Hard ceiling for the two variables above; also how many files per person cleanup looks for. */
+  photosPerPersonCeiling: 5,
   /** Server-side limit per photo after the browser compressed it (Vercel body limit is 4.5 MB per request). */
   maxPhotoBytes: 900_000,
+  /** Budget for ALL photos of one submit: Vercel rejects a body over 4.5 MB, and the form fields need a little room. */
+  uploadBudgetBytes: 4_000_000,
   /** Original upload limit shown to the buyer (compressed in the browser before sending). */
   maxUploadMb: 10,
   ageMin: 3,
@@ -106,6 +112,31 @@ export function colorearTestCodeLimits(env: Record<string, string | undefined> =
     return Number.isFinite(n) && n >= 0 ? Math.floor(n) : d;
   };
   return { maxUses: num(env.COLOREAR_TEST_CODE_MAX_USES, COLOREAR_TEST_CODE_DEFAULTS.maxUses), dailyCap: num(env.COLOREAR_TEST_CODE_DAILY_CAP, COLOREAR_TEST_CODE_DEFAULTS.dailyCap) };
+}
+
+/**
+ * How many photos one person (or pet) may have: `main` for the protagonist (card 1), `other` for the rest.
+ * `COLOREAR_MAX_PHOTOS_MAIN` and `COLOREAR_MAX_PHOTOS_OTHER`, default 3 each, clamped to 1..5. (Juan can lower `other` to 2 to save cost.)
+ */
+export function colorearPhotoLimits(env: Record<string, string | undefined> = process.env): { main: number; other: number } {
+  const num = (v: string | undefined) => {
+    const n = Number(v);
+    return v === undefined || v.trim() === "" || !Number.isFinite(n) ? COLOREAR.photosPerPersonDefault : Math.min(COLOREAR.photosPerPersonCeiling, Math.max(1, Math.floor(n)));
+  };
+  return { main: num(env.COLOREAR_MAX_PHOTOS_MAIN), other: num(env.COLOREAR_MAX_PHOTOS_OTHER) };
+}
+
+/** Most photos one order can hold with these limits (5 people: the protagonist plus 4 others). */
+export function colorearMaxPhotosTotal(limits: { main: number; other: number }): number {
+  return limits.main + (COLOREAR.maxPhotos - 1) * limits.other;
+}
+
+/**
+ * Size each photo may have so that `count` of them fit one request (Vercel rejects a body over 4.5 MB): 640 KB (the normal target) when
+ * they fit, down to 120 KB. The browser compresses to 640 KB when the buyer picks a photo and only re-encodes smaller if the total is too big.
+ */
+export function colorearPhotoBudget(count: number): number {
+  return Math.min(640_000, Math.max(120_000, Math.floor(COLOREAR.uploadBudgetBytes / Math.max(1, count))));
 }
 
 export type ColorearLang = "es" | "en";
@@ -202,13 +233,34 @@ export function imageProviderName(env: Record<string, string | undefined> = proc
   return v === "openai" || v === "nanobanana" ? v : "mock";
 }
 
+/** Price family of an OpenAI image model: gpt-image-1-mini, gpt-image-1 (shut down 23-oct-2026) or the 2.5 / 2 generation (flare, sunburst). */
+export type OpenAIImageFamily = "mini" | "v1" | "v2";
+
+export function openaiImageFamily(model: string): OpenAIImageFamily {
+  if (/mini/i.test(model)) return "mini";
+  return /^gpt-image-1$/i.test(model.trim()) ? "v1" : "v2";
+}
+
+/**
+ * Token prices per 1M (USD) by family, for costing an image from the API `usage`. [no verificado] mini and v1 come from earlier
+ * runs (docs/proveedores/openai.md); v2 (gpt-image-2.5-flare and -sunburst, gpt-image-2) from third-party pages that quote OpenAI:
+ * text in $5, image in $8, image out $30. Confirm against the first invoice before switching the production model.
+ */
+export const OPENAI_IMAGE_TOKEN_USD_PER_M: Record<OpenAIImageFamily, { out: number; text: number; image: number }> = {
+  mini: { out: 8, text: 2, image: 2.5 },
+  v1: { out: 40, text: 5, image: 10 },
+  v2: { out: 30, text: 5, image: 8 },
+};
+
 /**
  * Estimated cost of one 1024x1536 image in USD cents, by provider and quality. [no verificado] taken from public OpenAI
  * pricing as remembered (low ~ $0.016, medium ~ $0.063, high ~ $0.25); confirm with the first real invoice.
+ * `openai-v2` (2.5 flare / sunburst): output-only estimates from a third-party table (low $0.005, medium $0.010, high $0.041), plus the input.
  */
-export const IMAGE_COST_USD_CENTS: Record<ImageProviderName | "openai-mini", Record<"low" | "medium" | "high", number>> = {
+export const IMAGE_COST_USD_CENTS: Record<ImageProviderName | "openai-mini" | "openai-v2", Record<"low" | "medium" | "high", number>> = {
   openai: { low: 1.6, medium: 6.3, high: 25 },
   "openai-mini": { low: 0.6, medium: 1.5, high: 5.2 },
+  "openai-v2": { low: 0.6, medium: 1.2, high: 4.5 },
   nanobanana: { low: 3.4, medium: 3.4, high: 3.4 },
   mock: { low: 0, medium: 0, high: 0 },
 };

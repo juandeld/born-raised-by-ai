@@ -88,3 +88,31 @@ Cómo funciona (aprobado por el arquitecto, flujo de pago):
 - Tope de costo en el peor caso: `COLOREAR_TEST_CODE_MAX_USES` pedidos, cada Trío puede generar 3 libros (el tope por libro sigue siendo `COLOREAR_MAX_COST_USD`, 4 USD por defecto).
 - Requisito para probar el Trío: la migración `0004_colorear_variants.sql` debe estar aplicada en Supabase (ver sección de Polar). Sin ella, el pedido de un Trío falla al guardarse.
 - Para revocar: borrar `COLOREAR_TEST_CODES` en Vercel y desplegar. No hace falta tocar la base.
+
+## Hasta 3 fotos por persona (colorear)
+
+Decisión de Juan del 25-oct: cada persona o mascota puede tener su foto obligatoria más dos opcionales (otros ángulos) para que el personaje se parezca más. **Queda activo con el próximo despliegue sin cargar ninguna variable** (los valores por defecto ya son 3 y 3).
+
+| Variable | Por defecto | Qué hace |
+|---|---|---|
+| `COLOREAR_MAX_PHOTOS_MAIN` | `3` | Fotos máximas del protagonista (tarjeta 1). Entre 1 y 5. |
+| `COLOREAR_MAX_PHOTOS_OTHER` | `3` | Fotos máximas de cada una de las otras personas o mascotas. Entre 1 y 5. Para limitar a 3 y 2, cargar `COLOREAR_MAX_PHOTOS_OTHER=2` y desplegar. |
+
+Cómo funciona:
+
+- **Formulario**: cada tarjeta muestra tres casillas de foto (la primera "Obligatoria", las otras "Opcional") con miniatura y una X para quitar; el botón de la siguiente casilla libre acepta varias fotos a la vez desde la galería. Texto "Añade hasta 3 fotos: más ángulos = más parecido" (el número sale de la variable). Captura a 390 px: `docs/diseno/capturas/colorear-3-fotos.png`.
+- **Subida**: el navegador comprime cada foto a 640 KB como antes; si todas juntas pasarían de 4 MB (Vercel rechaza cuerpos de más de 4,5 MB), justo antes de enviar reduce las más pesadas a `4 MB / n` (mínimo 120 KB; con las 15 fotos del máximo son unos 266 KB cada una). En el caso normal (una o dos personas) no se recomprime nada. El servidor guarda y reprocesa las fotos en paralelo (`Promise.all`), sin aumentar el tiempo del cobro de forma apreciable.
+- **Motor**: `photo<i>` es la foto obligatoria de la persona i y `photo<i>_2`, `photo<i>_3` las extra; se guardan en `orders/<id>/photo-<i>.jpg` y `photo-<i>-<j>.jpg`. Las tres van como imágenes de referencia en la misma llamada que dibuja el personaje (el endpoint de edición admite hasta 16). No hay collage. Las escenas y la portada siguen usando solo los dibujos de los personajes, nunca las fotos. Si el proveedor rechaza las fotos de una persona, se dibuja desde la descripción y no se reintentan las mismas fotos (condición 5 de `docs/proveedores/openai.md`).
+- **Borrado**: sin cambios (24 h como máximo, 2 h si no se pagó). El pedido guarda cuántas fotos tiene cada persona (`details.photoCounts`) y el barrido, el reembolso y el borrado de personajes las eliminan todas; los pedidos anteriores (una foto por persona) siguen funcionando. Si falla el guardado del pedido, las fotos subidas se borran en el acto.
+- **Analytics**: `checkout_started` lleva `photos_per_person` (arreglo de números, por ejemplo `[3,3]`); `photos_deleted.count` cuenta todas las fotos.
+- **Texto legal**: el aviso dice "una o varias de cada persona o mascota, de hasta 5 personas"; está en la lista de `legal-compliance` (`docs/proveedores/openai.md`). La versión `colorear-legal-v4` no se cambió.
+
+### Costo de las fotos extra y del modelo [no verificado: no hay clave de API en este entorno]
+
+No se pudo medir con la API real (sin `OPENAI_API_KEY` ni fotos de personas con licencia). Lo que sí está hecho y probado contra un servidor falso que imita la API (cuenta las partes `image[]`, devuelve tokens de uso):
+
+- `npm run colorear:photo-cost -- --photos <carpeta con una subcarpeta por persona> --out <carpeta fuera del repo> --dry-run` muestra el plan y el peor caso. Sin `--dry-run` y con `OPENAI_API_KEY` mide los 8 casos por defecto (modelo actual y `gpt-image-2.5-flare`, calidad baja y media, 1 y 3 fotos por persona), con tope duro de 10 USD (`--max-total`; el plan por defecto estima 8,5 USD en el peor caso con margen del doble y se salta cualquier caso que lo pase), y escribe en `--out` la tabla `results.md` (costo del libro y del paso de personajes, segundos, imágenes, reintentos, costo por foto extra), `book.pdf`, los personajes y dos páginas por caso. Hay que usar fotos con licencia o del equipo, nunca de clientes.
+- Estimación analítica (supone ~1.050 tokens de imagen por foto de entrada, de la referencia oficial ~1.024 por foto de 1024 px; tarifas de entrada de imagen: mini 2,5 USD y 2.5 de 8 USD por millón): **una foto extra cuesta ≈ 0,0026 USD con mini y ≈ 0,0084 USD con flare** (peor caso, el triple de tokens: 0,008 y 0,025). Un pedido de 2 personas con 3 fotos cada una (4 extra) sube ≈ 0,01 USD con mini y ≈ 0,034 USD con flare; el máximo de 15 fotos (10 extra) sube ≈ 0,026 y ≈ 0,084 USD. Frente a 12,99 USD de precio, lo más alto es el 0,65 %.
+- **Limitar a 3 el protagonista y 2 las otras** ahorra 1 foto por cada persona adicional que suba tres: en un pedido de 2 personas ≈ 0,003 USD con mini o 0,008 con flare; en el de 5, ≈ 0,010 y 0,034 USD (4 fotos). Es decir, menos del 0,3 % del precio incluso en el caso peor: el costo no justifica limitarlo. El costo que sí mueve el libro es el modelo (los dibujos de escenas llevan los personajes como referencia, y esa entrada cuesta 3,2 veces más con los modelos 2.5 que con mini) y eso lo decide la medición real.
+- Referencia real anterior (sin referencias, `products/colorear/samples/calidad/costos.json`): mini cuesta 0,37 centavos por imagen en calidad baja y 1,31 en media, es decir ≈ 0,09 y 0,33 USD por libro de 25 imágenes antes de los tokens de las referencias.
+- Modelo de producción: **no se cambió**. En el código ningún valor por defecto apunta a `gpt-image-1` y `.env.example` no define `OPENAI_IMAGE_MODEL` (el único valor por defecto es `gpt-image-1-mini`, que se apaga el 2026-12-01; el script de medición rechaza `gpt-image-1`). Solo tres briefs históricos del 18-oct (`docs/briefs/colorear-H1b-*.md`, `colorear-H3-pricing.md`) lo nombran como decisión de esa fecha. El valor de `OPENAI_IMAGE_MODEL` en Vercel no se pudo comprobar desde aquí: Juan debe mirarlo en el panel (si no está definido, se usa el mini).
