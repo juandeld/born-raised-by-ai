@@ -26,7 +26,8 @@ export interface CostRates {
 export const COST_RATES: CostRates = {
   elevenlabsPerMin: 0.08,
   elevenlabsBurstPerMin: 0.16,
-  twilioPerMin: { US: 0.014, MX: 0.0473, GB: 0.0305, ES: 0.18 },
+  // GT: placeholder equal to MX [no verificado]; Santa is not sold in Guatemala (only the type needs the key).
+  twilioPerMin: { US: 0.014, MX: 0.0473, GB: 0.0305, ES: 0.18, GT: 0.0473 },
   twilioRecordingPerMin: 0.0025,
   llmPerMin: 0.0086,
   polar: { pct: 0.05, fixedUsd: 0.5, intlPct: 0.015 },
@@ -40,4 +41,5 @@ export const EXPECTED_VARIABLE_COST_USD: Record<CountryCode, { min: number; max:
   MX: { min: 0.69, max: 0.81 },
   GB: { min: 0.6, max: 0.72 },
   ES: { min: 1.42, max: 1.54 },
+  GT: { min: 0.69, max: 0.81 }, // placeholder equal to MX; Santa is not sold in Guatemala
 };

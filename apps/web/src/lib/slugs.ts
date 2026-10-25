@@ -44,6 +44,7 @@ export function timezonesFor(country: CountryCode): string[] {
     MX: ["America/Mexico_City", "America/Cancun", "America/Tijuana", "America/Hermosillo", "America/Chihuahua"],
     ES: ["Europe/Madrid", "Atlantic/Canary"],
     GB: ["Europe/London"],
+    GT: ["America/Guatemala"],
     US: ["America/New_York", "America/Chicago", "America/Denver", "America/Phoenix", "America/Los_Angeles", "America/Anchorage", "Pacific/Honolulu"],
   };
   const list = extra[country];

@@ -95,7 +95,7 @@ function RolePicker({ idx, item, lang, c, onChange }: { idx: number; item: Item;
   );
 }
 
-export function ColorearForm({ lang, countries, defaultCountry, themes, creative, codeEnabled = false, inviteOnly = false, photoLimits = { main: COLOREAR.photosPerPersonDefault, other: COLOREAR.photosPerPersonDefault } }: { lang: ColorearLang; countries: Record<string, CountryLegal>; defaultCountry: string; themes: Array<{ id: string; label: string }>; creative: string; codeEnabled?: boolean; inviteOnly?: boolean; photoLimits?: { main: number; other: number } }) {
+export function ColorearForm({ lang, countries, defaultCountry, themes, creative, codeEnabled = false, adultLevel = false, inviteOnly = false, photoLimits = { main: COLOREAR.photosPerPersonDefault, other: COLOREAR.photosPerPersonDefault } }: { lang: ColorearLang; countries: Record<string, CountryLegal>; defaultCountry: string; themes: Array<{ id: string; label: string }>; creative: string; codeEnabled?: boolean; adultLevel?: boolean; inviteOnly?: boolean; photoLimits?: { main: number; other: number } }) {
   const c = COLOREAR_COPY[lang].form;
   const [items, setItems] = useState<Item[]>(() => [blankItem(0)]);
   const [tried, setTried] = useState(false);
@@ -433,7 +433,7 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
         <p aria-hidden className="c-h text-lg">{c.age.label}</p>
         <p id="age-hint" className="text-sm text-lapiz-muted">{c.age.hint}</p>
         <div className="mt-3 grid gap-3">
-          {AGE_LEVELS.map((lv, i) => {
+          {AGE_LEVELS.map((lv, i) => (lv.band === "adult" && !adultLevel ? null : { lv, i })).filter((x): x is { lv: (typeof AGE_LEVELS)[number]; i: number } => !!x).map(({ lv, i }) => {
             const on = age === String(lv.age);
             const text = c.age.levels[i]!;
             return (

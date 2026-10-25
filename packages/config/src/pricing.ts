@@ -3,7 +3,7 @@
  * Amounts are in minor units (cents) of the local currency.
  * Change prices here only (pricing agent: +-10 % without approval, see docs/reglas-de-decision.md).
  */
-export type CountryCode = "US" | "ES" | "GB" | "MX";
+export type CountryCode = "US" | "ES" | "GB" | "MX" | "GT";
 export type Currency = "USD" | "EUR" | "GBP" | "MXN";
 export type Variant = "single" | "bundle";
 export type Locale = "es-419" | "es-ES" | "en";
@@ -27,6 +27,10 @@ export interface CountryConfig {
 
 export const COUNTRIES: Record<CountryCode, CountryConfig> = {
   US: { code: "US", currency: "USD", defaultTimezone: "America/New_York", preludeLocale: "en-US", priceFormatLocale: "en-US", prices: { single: 1499, bundle: 2499 }, callingCode: "1" },
+  // Guatemala: Pintoria (colorear) is sold here in USD (launch: US + GT). "es-US" formats as "$12.99"; "es-GT" would print "USD 12.99" with the ICU
+  // shipped by Node. Jinglo (Santa calls) is NOT sold in Guatemala: ENABLED_COUNTRIES leaves it out, and `prices` / `callingCode` here only satisfy
+  // the type (placeholders copied from US, never offered). Do not enable GT for Santa without prices, call windows and rates of its own.
+  GT: { code: "GT", currency: "USD", defaultTimezone: "America/Guatemala", preludeLocale: "es-419", priceFormatLocale: "es-US", prices: { single: 1499, bundle: 2499 }, callingCode: "502" },
   ES: { code: "ES", currency: "EUR", defaultTimezone: "Europe/Madrid", preludeLocale: "es-ES", priceFormatLocale: "es-ES", prices: { single: 1299, bundle: 1999 }, callingCode: "34" },
   GB: { code: "GB", currency: "GBP", defaultTimezone: "Europe/London", preludeLocale: "en-US", priceFormatLocale: "en-GB", prices: { single: 1199, bundle: 1999 }, callingCode: "44" },
   MX: { code: "MX", currency: "MXN", defaultTimezone: "America/Mexico_City", preludeLocale: "es-419", priceFormatLocale: "es-MX", prices: { single: 19900, bundle: 34900 }, callingCode: "52" },

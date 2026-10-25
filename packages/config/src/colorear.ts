@@ -69,9 +69,12 @@ export function colorearPublicUrl(env: Record<string, string | undefined> = proc
  * Prices in minor units of the local currency (docs/pricing/colorear.md, section 1.1; approved by Juan on 19-oct).
  * They must match the Polar products (4 currencies each). The Trio is one step below the price of two single books in every
  * currency, so "3 for less than the price of 2" is literally true.
+ * Pintoria launch (25-oct): the book is offered in United States and Guatemala, both in USD at the same price ($12.99 / Trio $24.99 /
+ * "otra aventura" $9.49). GT is a copy of the US row. MX, ES and GB keep their prices here but are not offered by default (COLOREAR_COUNTRIES).
  */
 export const COLOREAR_PRICES: Record<CountryCode, Record<ColorearVariant, { amountMinor: number; currency: Currency }>> = {
   US: { single: { amountMinor: 1299, currency: "USD" }, bundle3: { amountMinor: 2499, currency: "USD" }, add1: { amountMinor: 949, currency: "USD" } },
+  GT: { single: { amountMinor: 1299, currency: "USD" }, bundle3: { amountMinor: 2499, currency: "USD" }, add1: { amountMinor: 949, currency: "USD" } },
   ES: { single: { amountMinor: 1199, currency: "EUR" }, bundle3: { amountMinor: 2299, currency: "EUR" }, add1: { amountMinor: 849, currency: "EUR" } },
   GB: { single: { amountMinor: 999, currency: "GBP" }, bundle3: { amountMinor: 1899, currency: "GBP" }, add1: { amountMinor: 749, currency: "GBP" } },
   MX: { single: { amountMinor: 22900, currency: "MXN" }, bundle3: { amountMinor: 42900, currency: "MXN" }, add1: { amountMinor: 16900, currency: "MXN" } },
@@ -81,11 +84,15 @@ export function colorearPrice(country: CountryCode, variant: ColorearVariant = "
   return COLOREAR_PRICES[country][variant];
 }
 
-/** Countries where the book is sold. No calls are involved, so US is open (organic channels; ads there stay gated by marketing rules). */
+/**
+ * Countries where the book is sold: `COLOREAR_COUNTRIES`, default `US,GT` (both USD). MX, ES and GB are hidden by default, not deleted:
+ * their prices and legal texts stay, and listing them in the variable brings them back. No calls are involved, so US is open
+ * (organic channels; ads there stay gated by marketing rules).
+ */
 export function colorearCountries(env: Record<string, string | undefined> = process.env): CountryCode[] {
-  const raw = env.COLOREAR_COUNTRIES ?? "MX,ES,GB,US";
+  const raw = env.COLOREAR_COUNTRIES ?? "US,GT";
   const list = raw.split(",").map((s) => s.trim().toUpperCase()).filter(isCountry);
-  return list.length ? list : ["MX"];
+  return list.length ? list : ["US"];
 }
 
 /**
@@ -226,23 +233,25 @@ export function isColorearLang(v: string | undefined | null): v is ColorearLang 
 }
 
 /** Default country per page language. */
-export const COLOREAR_DEFAULT_COUNTRY: Record<ColorearLang, CountryCode> = { es: "MX", en: "US" };
+export const COLOREAR_DEFAULT_COUNTRY: Record<ColorearLang, CountryCode> = { es: "GT", en: "US" };
 
 export function colorearCountriesFor(lang: ColorearLang, env: Record<string, string | undefined> = process.env): CountryCode[] {
   const open = colorearCountries(env);
-  const pref: Record<ColorearLang, CountryCode[]> = { es: ["MX", "ES"], en: ["US", "GB"] };
+  const pref: Record<ColorearLang, CountryCode[]> = { es: ["GT", "US", "MX", "ES"], en: ["US", "GT", "GB"] };
   const list = pref[lang].filter((c) => open.includes(c));
   return list.length ? list : [open[0]!];
 }
 
 /** Legal text variant of each country (es-ES differs from es-419 in the checkboxes). */
-export function colorearLegalLocale(country: CountryCode): "es-419" | "es-ES" | "en" {
+export function colorearLegalLocale(country: CountryCode, lang?: ColorearLang): "es-419" | "es-ES" | "en" {
+  // The legal text follows the language of the page the buyer reads (US and GT are offered in both languages).
+  if (lang && (country === "US" || country === "GT")) return lang === "en" ? "en" : "es-419";
   return country === "ES" ? "es-ES" : country === "US" || country === "GB" ? "en" : "es-419";
 }
 
 /** Paper of the PDF: Letter for the Americas, A4 elsewhere. */
 export function paperFor(country: CountryCode): "letter" | "a4" {
-  return country === "MX" || country === "US" ? "letter" : "a4";
+  return country === "MX" || country === "US" || country === "GT" ? "letter" : "a4";
 }
 
 export type AgeBand = "3-4" | "5-6" | "7-8" | "9-12" | "adult";
@@ -255,6 +264,11 @@ export function ageBandOf(age: number): AgeBand {
 export const AGE_LEVELS: ReadonlyArray<{ band: AgeBand; age: number }> = [
   { band: "3-4", age: 4 }, { band: "5-6", age: 6 }, { band: "7-8", age: 8 }, { band: "9-12", age: 11 }, { band: "adult", age: 18 },
 ];
+
+/** `COLOREAR_ADULT_LEVEL=1` turns on the "Adults" detail level (off by default: postponed to a later version). */
+export function colorearAdultLevelEnabled(env: Record<string, string | undefined> = process.env): boolean {
+  return ["1", "true", "on"].includes((env.COLOREAR_ADULT_LEVEL ?? "").trim().toLowerCase());
+}
 
 export function isValidAge(age: number): boolean {
   return Number.isInteger(age) && age >= COLOREAR.ageMin && age <= COLOREAR.ageMax;

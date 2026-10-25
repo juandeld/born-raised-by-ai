@@ -3,6 +3,8 @@
 `pricing` · v1 · 19-oct-2026 · Producto: `colorear` (marca Pintoria) · Insumos: `docs/marketing/colorear.md`, `docs/productos/colorear.md`, `docs/reglas-de-decision.md`, `docs/investigacion/b2c.md`, `packages/config/src/colorear.ts`
 **[EST]** = estimación mía con los supuestos de la sección 7. **[no verificado]** = no pude confirmarlo. Modelo reproducible en la sección 8.
 
+> **Lanzamiento (25-oct-2026): solo Estados Unidos y Guatemala, ambos en USD.** Una aventura $12.99, Trío $24.99, "otra aventura" $9.49 (los valores de EE. UU. de las tablas de abajo; Guatemala copia la fila de EE. UU.). México, España y Reino Unido quedan ocultos con `COLOREAR_COUNTRIES` (por defecto `US,GT`), no borrados: sus precios y tablas siguen vigentes para reabrirlos. El nivel "Adultos" también está oculto (`COLOREAR_ADULT_LEVEL`, apagado por defecto): el producto se comunica como "De 3 a 12 años". El escalón Cinco no se ofrece en el selector actual.
+
 ## 0. Respuesta corta
 
 1. **Lanzar una escalera de 3 escalones** en lugar de 4 SKUs sueltos: **1 aventura / Trío (default destacado) / Cinco**. El 48 págs desaparece (el Trío da 72 págs y 3 historias por poco más); el Pack Fiesta sale del selector (queda como landing de campaña, ver 1.4).

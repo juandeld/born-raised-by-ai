@@ -68,7 +68,7 @@ class Limited implements ImageProvider {
 async function run(band: (typeof AGE_LEVELS)[number], provider: ImageProvider) {
   const db = createMemoryDb();
   const sink = new MemorySink();
-  const env = { COLOREAR_COUNTRIES: "MX", COLOREAR_PUBLIC_URL: "https://www.pintoria.app", LEGAL_ADDRESS: "Calle 1, Guatemala", PHONE_HASH_SALT: "s", COLOREAR_TEST_CODES: "PROMO2026", COLOREAR_MOCK_REAL_DAILY_CAP: "0" };
+  const env = { COLOREAR_COUNTRIES: "MX", COLOREAR_PUBLIC_URL: "https://www.pintoria.app", LEGAL_ADDRESS: "Calle 1, Guatemala", PHONE_HASH_SALT: "s", COLOREAR_TEST_CODES: "PROMO2026", COLOREAR_MOCK_REAL_DAILY_CAP: "0", COLOREAR_ADULT_LEVEL: "1" };
   const now = new Date("2026-11-20T15:00:00Z");
   const engine = new ColorearEngine({
     db, storage: new MemoryStorage(), uploads: new MemoryStorage(), delivery: new MockDeliveryProvider(), image: provider, mockImage: new MockImageProvider(), story: new TemplateStoryProvider(),

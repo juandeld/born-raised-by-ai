@@ -9,7 +9,7 @@ export interface OrderRow {
   /** Colorear: the order this one was made from (a Trio credit or an "otra aventura" purchase reuse its characters). */
   parent_order_id?: string | null;
   calls_included: number;
-  country: "US" | "ES" | "GB" | "MX";
+  country: "US" | "ES" | "GB" | "MX" | "GT";
   locale: string;
   language: string;
   currency: string;

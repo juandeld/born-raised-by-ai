@@ -3,7 +3,7 @@ import type { Tracker } from "@lumen/analytics";
 import type { BaseProps } from "@lumen/analytics";
 import { piiHashKey } from "@lumen/config/secrets";
 import {
-  COLOREAR, COUNTRIES, IMAGE_COST_USD_CENTS, ageBandOf, booksIn, colorearCharacterStage, colorearCountries, colorearLegalLocale, colorearMockPayAllowed, colorearPhotoLimits, colorearPrice, colorearPublicUrl, colorearTestCodeLimits, formatPrice, isSelectableVariant, isProtagonistRole, isThemeId, isValidAge, openaiImageFamily, paperFor, themeLabel, toUsdCents,
+  COLOREAR, COUNTRIES, IMAGE_COST_USD_CENTS, ageBandOf, booksIn, colorearAdultLevelEnabled, colorearCharacterStage, colorearCountries, colorearLegalLocale, colorearMockPayAllowed, colorearPhotoLimits, colorearPrice, colorearPublicUrl, colorearTestCodeLimits, formatPrice, isSelectableVariant, isProtagonistRole, isThemeId, isValidAge, openaiImageFamily, paperFor, themeLabel, toUsdCents,
   addDays, DAY_MS, type AgeBand, type BrandConfig, type ColorearLang, type ColorearVariant, type CountryCode,
 } from "@lumen/config";
 import type { DeliveryProvider, Storage } from "@lumen/calls";
@@ -287,7 +287,8 @@ export class ColorearEngine {
       else theme = t.value;
     }
     const age = Number(input.age);
-    if (!isValidAge(age)) errors.age = "Choose one of the five levels";
+    // The "Adults" level is off by default (COLOREAR_ADULT_LEVEL): the server refuses it even if the form is forged. Ages 3 to 12 stay open.
+    if (!isValidAge(age) || (ageBandOf(age) === "adult" && !colorearAdultLevelEnabled(this.d.env))) errors.age = "Choose one of the detail levels";
     const checked = new Set(input.checkboxIds);
     if (!COLOREAR_CHECKBOX_ORDER.every((id) => checked.has(id))) errors.consent = "All consent boxes are required";
     if (input.variant !== undefined && !isSelectableVariant(input.variant)) errors.variant = "Unknown option";
@@ -342,7 +343,7 @@ export class ColorearEngine {
       variant,
       calls_included: 0,
       country: input.country,
-      locale: colorearLegalLocale(input.country),
+      locale: colorearLegalLocale(input.country, input.lang),
       language: languageCode,
       currency: price.currency,
       // A test-code order has no price: it is never charged and never refunded.

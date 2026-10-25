@@ -1,7 +1,7 @@
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 import { MemorySink, MultiSink, TableSink, Tracker } from "@lumen/analytics";
-import { AGE_LEVELS, COLOREAR, ageBandOf, brandConfig, isValidAge, type AgeBand } from "@lumen/config";
+import { AGE_LEVELS, COLOREAR, ageBandOf, brandConfig, colorearAdultLevelEnabled, isValidAge, type AgeBand } from "@lumen/config";
 import { MemoryStorage, MockDeliveryProvider } from "@lumen/calls";
 import { createMemoryDb } from "@lumen/db";
 import { MockPaymentProvider } from "@lumen/payments";
@@ -73,7 +73,7 @@ describe("end to end with the mock engine: each level sends its own prompt", () 
     const db = createMemoryDb();
     const sink = new MemorySink();
     const rec = new Recorder();
-    const env = { COLOREAR_COUNTRIES: "MX", COLOREAR_PUBLIC_URL: "https://www.pintoria.app", LEGAL_ADDRESS: "Calle 1, Guatemala", PHONE_HASH_SALT: "s", COLOREAR_TEST_CODES: "PROMO2026", COLOREAR_MOCK_REAL_DAILY_CAP: "0" };
+    const env = { COLOREAR_COUNTRIES: "MX", COLOREAR_PUBLIC_URL: "https://www.pintoria.app", LEGAL_ADDRESS: "Calle 1, Guatemala", PHONE_HASH_SALT: "s", COLOREAR_TEST_CODES: "PROMO2026", COLOREAR_MOCK_REAL_DAILY_CAP: "0", COLOREAR_ADULT_LEVEL: "1" }; // the adult level is closed by default: this test opens it to cover all five
     const now = new Date("2026-11-20T15:00:00Z");
     const engine = new ColorearEngine({
       db, storage: new MemoryStorage(), uploads: new MemoryStorage(), delivery: new MockDeliveryProvider(), image: rec, mockImage: new MockImageProvider(), story: new TemplateStoryProvider(),
@@ -93,6 +93,24 @@ describe("end to end with the mock engine: each level sends its own prompt", () 
     for (const r of rec.seen.filter((r) => r.kind !== "character")) expect(r.prompt, `${band} ${r.kind}`).toContain(rule);
     expect(sink.events.find((e) => e.name === "generation_started")!.props).toMatchObject({ age_band: band });
   }, 60_000);
+
+  it("the adult level is closed unless COLOREAR_ADULT_LEVEL is on, and the other levels stay open", async () => {
+    const mk = (extra: Record<string, string>) => {
+      const db = createMemoryDb();
+      const env = { COLOREAR_COUNTRIES: "MX", COLOREAR_PUBLIC_URL: "https://www.pintoria.app", LEGAL_ADDRESS: "Calle 1, Guatemala", PHONE_HASH_SALT: "s", ...extra };
+      return new ColorearEngine({ db, storage: new MemoryStorage(), uploads: new MemoryStorage(), delivery: new MockDeliveryProvider(), image: new MockImageProvider(), mockImage: new MockImageProvider(), story: new TemplateStoryProvider(),
+        tracker: new Tracker(new MultiSink([new TableSink(db.events as never)]), () => new Date()), payments: new MockPaymentProvider("http://localhost:3000"), env, now: () => new Date(), brand: { ...brandConfig(env), brand: "Pintoria" } });
+    };
+    const errs = (e: ColorearEngine, age: number) => e.validate({ lang: "es", country: "MX", email: "a@example.com", persons: [{ name: "A", role: "niña" }], photos: [], theme: "", age, checkboxIds: [], ip: null } as never).errors.age;
+    const off = mk({});
+    expect(errs(off, 18)).toBeTruthy();
+    expect(errs(off, 13)).toBeTruthy();
+    for (const a of [3, 4, 6, 8, 11, 12]) expect(errs(off, a), `age ${a}`).toBeUndefined();
+    for (const on of ["1", "true", "on", " ON "]) expect(errs(mk({ COLOREAR_ADULT_LEVEL: on }), 18), on).toBeUndefined();
+    for (const no of ["", "0", "false", "off", "yes"]) expect(errs(mk({ COLOREAR_ADULT_LEVEL: no }), 18), no).toBeTruthy();
+    expect(colorearAdultLevelEnabled({})).toBe(false);
+    expect(colorearAdultLevelEnabled({ COLOREAR_ADULT_LEVEL: "true" })).toBe(true);
+  });
 
   it("the form value of an unknown level is rejected", async () => {
     const db = createMemoryDb();
