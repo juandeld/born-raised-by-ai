@@ -38,18 +38,21 @@ export class ResendDeliveryProvider implements DeliveryProvider {
     private readonly apiKey: string,
     private readonly from: string,
     private readonly fetchFn: typeof fetch = fetch,
+    /** Where the buyer's replies go. Santa sends none (unchanged); Pintoria sets its support address. */
+    private readonly replyTo?: string,
   ) {}
 
-  static fromEnv(env: Record<string, string | undefined>): ResendDeliveryProvider {
+  /** `opts.from` / `opts.replyTo` let a product use its own sender; without them the shared RESEND_FROM is used, as before. */
+  static fromEnv(env: Record<string, string | undefined>, opts: { from?: string; replyTo?: string } = {}): ResendDeliveryProvider {
     if (!env.RESEND_API_KEY) throw new Error("RESEND_API_KEY is required for EMAIL_PROVIDER=resend");
-    return new ResendDeliveryProvider(env.RESEND_API_KEY, env.RESEND_FROM ?? "Jinglo <hola@lumen-labs.co>");
+    return new ResendDeliveryProvider(env.RESEND_API_KEY, opts.from ?? env.RESEND_FROM ?? "Jinglo <hola@lumen-labs.co>", fetch, opts.replyTo);
   }
 
   async send(msg: OutboundMessage): Promise<SendResult> {
     const res = await this.fetchFn("https://api.resend.com/emails", {
       method: "POST",
       headers: { authorization: `Bearer ${this.apiKey}`, "content-type": "application/json" },
-      body: JSON.stringify({ from: this.from, to: [msg.to], subject: msg.subject, text: msg.text, ...(msg.html ? { html: msg.html } : {}) }),
+      body: JSON.stringify({ from: this.from, to: [msg.to], subject: msg.subject, text: msg.text, ...(msg.html ? { html: msg.html } : {}), ...(this.replyTo ? { reply_to: this.replyTo } : {}) }),
     });
     if (!res.ok) return { channel: "email", status: "failed", provider: this.name, providerId: null, error: `${res.status} ${(await res.text().catch(() => "")).slice(0, 300)}` };
     const j = (await res.json()) as { id?: string };

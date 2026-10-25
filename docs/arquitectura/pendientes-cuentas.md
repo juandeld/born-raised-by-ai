@@ -116,3 +116,21 @@ No se pudo medir con la API real (sin `OPENAI_API_KEY` ni fotos de personas con 
 - **Limitar a 3 el protagonista y 2 las otras** ahorra 1 foto por cada persona adicional que suba tres: en un pedido de 2 personas ≈ 0,003 USD con mini o 0,008 con flare; en el de 5, ≈ 0,010 y 0,034 USD (4 fotos). Es decir, menos del 0,3 % del precio incluso en el caso peor: el costo no justifica limitarlo. El costo que sí mueve el libro es el modelo (los dibujos de escenas llevan los personajes como referencia, y esa entrada cuesta 3,2 veces más con los modelos 2.5 que con mini) y eso lo decide la medición real.
 - Referencia real anterior (sin referencias, `products/colorear/samples/calidad/costos.json`): mini cuesta 0,37 centavos por imagen en calidad baja y 1,31 en media, es decir ≈ 0,09 y 0,33 USD por libro de 25 imágenes antes de los tokens de las referencias.
 - Modelo de producción: **no se cambió**. En el código ningún valor por defecto apunta a `gpt-image-1` y `.env.example` no define `OPENAI_IMAGE_MODEL` (el único valor por defecto es `gpt-image-1-mini`, que se apaga el 2026-12-01; el script de medición rechaza `gpt-image-1`). Solo tres briefs históricos del 18-oct (`docs/briefs/colorear-H1b-*.md`, `colorear-H3-pricing.md`) lo nombran como decisión de esa fecha. El valor de `OPENAI_IMAGE_MODEL` en Vercel no se pudo comprobar desde aquí: Juan debe mirarlo en el panel (si no está definido, se usa el mini).
+
+## Remitente de los correos de Pintoria
+
+`RESEND_FROM` es compartida con Santa y vale `Jinglo <hola@lumen-labs.co>` en producción (`docs/arquitectura/dominio-lumen-labs.md`). Los correos de colorear ya no la usan tal cual (`createColorearEngine`, `colorearResendFrom` en `packages/config/src/colorear.ts`):
+
+- **Remitente (`From`)**: si existe `COLOREAR_RESEND_FROM` (y trae una dirección), esa. Si no, el nombre de marca (`COLOREAR_BRAND_NAME`, por defecto `Pintoria`) con la **misma dirección** que tenga `RESEND_FROM`: hoy `Pintoria <hola@lumen-labs.co>`. Funciona con el dominio ya verificado en Resend, sin tocar DNS ni cargar variables nuevas.
+- **`reply_to`**: la dirección de soporte que usan los textos legales (`SUPPORT_EMAIL`, por defecto `soporte@lumen-labs.co`; es el `{{EMAIL_SOPORTE}}` del pie de los correos y de la página de contacto). Antes no se enviaba ningún `reply_to`; ahora sí en todos los correos de colorear (recibo, entrega, reembolso, recordatorios). **Santa no cambia**: mismo `RESEND_FROM` y sin `reply_to`.
+- **Prueba automática** (`tests/colorear-email-sender.test.ts`): ciclo completo contra la API de correo simulada; ningún correo de colorear lleva "Jinglo" en `from`, `reply_to`, asunto, texto ni html, ni en ningún tipo, idioma o variante de mensaje.
+
+Paso futuro, cuando Juan quiera que los correos salgan de `pintoria.app`:
+
+1. En Resend, Domains, añadir `pintoria.app`; Resend muestra los registros exactos (mandan los suyos).
+2. Crearlos en el DNS de `pintoria.app` (donde estén sus nameservers): un TXT SPF (normalmente `v=spf1 include:amazonses.com ~all`, en el subdominio `send`), el registro DKIM (`resend._domainkey`) y, opcional, un TXT DMARC (`_dmarc`). Si ya hay un SPF en el nombre, combinarlo en uno solo.
+3. Esperar a que Resend marque el dominio como `verified`.
+4. Cargar en Vercel (Production y Preview) `COLOREAR_RESEND_FROM="Pintoria <hola@pintoria.app>"` y desplegar. Conviene que `SUPPORT_EMAIL` (o `reply_to`) apunte a un buzón que exista en ese dominio, o seguir con `soporte@lumen-labs.co`.
+5. Mandar un pedido de prueba (código de prueba) a un correo ajeno y revisar cabeceras: `From` de `pintoria.app` con SPF y DKIM en `pass`.
+
+Hasta el paso 4 no se debe cargar `COLOREAR_RESEND_FROM`: un remitente de un dominio sin verificar hace que Resend rechace todos los correos (403) y la entrega solo queda en la pantalla de estado.

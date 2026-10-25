@@ -35,8 +35,9 @@ export function createTelephony(env: Env): TelephonyProvider {
       return new MockTelephonyProvider();
   }
 }
-export function createDelivery(env: Env): DeliveryProvider {
-  return (env.EMAIL_PROVIDER ?? "mock") === "resend" ? ResendDeliveryProvider.fromEnv(env) : new MockDeliveryProvider();
+/** `opts` is for a product with its own sender (colorear); Santa calls it without them and keeps RESEND_FROM and no reply-to. */
+export function createDelivery(env: Env, opts: { from?: string; replyTo?: string } = {}): DeliveryProvider {
+  return (env.EMAIL_PROVIDER ?? "mock") === "resend" ? ResendDeliveryProvider.fromEnv(env, opts) : new MockDeliveryProvider();
 }
 export function createStorage(env: Env, db: Db): Storage {
   const kind = env.STORAGE_PROVIDER ?? (db.kind === "supabase" ? "supabase" : "fs");

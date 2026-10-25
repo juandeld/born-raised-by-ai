@@ -1,4 +1,4 @@
-import { brandConfig } from "@lumen/config";
+import { brandConfig, colorearBrandName, colorearResendFrom } from "@lumen/config";
 import { FsStorage, MemoryStorage, SupabaseStorage, createDelivery, createStorage, createTracker, type Storage } from "@lumen/calls";
 import { getDb } from "@lumen/db";
 import { createPaymentProvider } from "@lumen/payments";
@@ -31,11 +31,13 @@ export function createColorearEngine(opts: CreateColorearOptions = {}): Colorear
   const o = opts.overrides ?? {};
   const db = o.db ?? getDb(env);
   const storage = o.storage ?? createStorage(env, db);
+  // Colorear is sold as Pintoria: its emails come from "Pintoria <...>" and replies go to the support address of the legal texts.
+  const brand = o.brand ?? { ...brandConfig(env), brand: colorearBrandName(env) };
   const deps: ColorearDeps = {
     db,
     storage,
     uploads: o.uploads ?? createUploads(env, storage, db.kind),
-    delivery: o.delivery ?? createDelivery(env),
+    delivery: o.delivery ?? createDelivery(env, { from: colorearResendFrom(env), replyTo: brand.supportEmail }),
     tracker: o.tracker ?? createTracker(env, db),
     payments: o.payments ?? createPaymentProvider(env),
     image: o.image ?? createImageProvider(env),
@@ -43,7 +45,7 @@ export function createColorearEngine(opts: CreateColorearOptions = {}): Colorear
     story: o.story ?? new FallbackStoryProvider(AnthropicStoryProvider.fromEnv(env)),
     env,
     now: o.now ?? (() => new Date()),
-    brand: o.brand ?? { ...brandConfig(env), brand: env.COLOREAR_BRAND_NAME ?? "Pintoria" },
+    brand,
     continueRun: o.continueRun,
   };
   return new ColorearEngine(deps);

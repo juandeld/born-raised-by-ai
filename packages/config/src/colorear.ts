@@ -139,6 +139,31 @@ export function colorearPhotoBudget(count: number): number {
   return Math.min(640_000, Math.max(120_000, Math.floor(COLOREAR.uploadBudgetBytes / Math.max(1, count))));
 }
 
+/** Brand shown to colorear buyers: COLOREAR_BRAND_NAME, default "Pintoria". Never the Santa brand (BRAND_NAME). */
+export function colorearBrandName(env: Record<string, string | undefined> = process.env): string {
+  return env.COLOREAR_BRAND_NAME?.trim() || "Pintoria";
+}
+
+/** Plain address inside "Name <addr>" (or a bare address); null when there is none. */
+function addressOf(from: string | undefined): string | null {
+  const v = (from ?? "").trim();
+  const angled = /<([^<>\s@]+@[^<>\s@]+)>/.exec(v);
+  if (angled) return angled[1]!;
+  return /^[^\s<>@]+@[^\s<>@]+$/.test(v) ? v : null;
+}
+
+/**
+ * `From` of every colorear email. `COLOREAR_RESEND_FROM` when set (and it holds an address); otherwise the brand name ("Pintoria") with the
+ * SAME address as `RESEND_FROM` (shared with Santa, whose display name is "Jinglo"), which needs no new DNS: "Pintoria <hola@lumen-labs.co>".
+ * Once pintoria.app is verified in Resend, set COLOREAR_RESEND_FROM="Pintoria <hola@pintoria.app>".
+ */
+export function colorearResendFrom(env: Record<string, string | undefined> = process.env): string {
+  const own = env.COLOREAR_RESEND_FROM?.trim();
+  if (own && addressOf(own)) return own;
+  const name = colorearBrandName(env).replace(/[<>"\r\n]/g, "").trim() || "Pintoria";
+  return `${name} <${addressOf(env.RESEND_FROM) ?? "hola@lumen-labs.co"}>`;
+}
+
 export type ColorearLang = "es" | "en";
 export const COLOREAR_LANGS: ColorearLang[] = ["es", "en"];
 
