@@ -245,7 +245,7 @@ export class ColorearEngine {
           errors.persons = `Invalid person (name:${n.reason})`;
           break;
         }
-        const r = resolvePersonRole(p, idx, Number.isFinite(ageNum) ? ageNum : COLOREAR.ageMin);
+        const r = resolvePersonRole(p, idx, Number.isFinite(ageNum) ? Math.min(ageNum, 12) : COLOREAR.ageMin);
         if (!r.ok) {
           errors.persons = `Invalid person (role:${r.reason})`;
           break;
@@ -268,7 +268,7 @@ export class ColorearEngine {
       else theme = t.value;
     }
     const age = Number(input.age);
-    if (!isValidAge(age)) errors.age = "Age must be 3 to 8";
+    if (!isValidAge(age)) errors.age = "Choose one of the five levels";
     const checked = new Set(input.checkboxIds);
     if (!COLOREAR_CHECKBOX_ORDER.every((id) => checked.has(id))) errors.consent = "All consent boxes are required";
     if (input.variant !== undefined && !isSelectableVariant(input.variant)) errors.variant = "Unknown option";

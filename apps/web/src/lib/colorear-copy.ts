@@ -23,7 +23,8 @@ export interface ColorearCopy {
       missing: { photo: string; name: string; role: string; protagonistRole: string; join: (parts: string[]) => string };
     };
     bundle: { title: string; hint: string; one: { name: string; text: string }; trio: { name: string; badge: string; tagline: string; text: string }; anchor: (total: string) => string; firstTheme: string };
-    age: { label: string; hint: string };
+    /** The five detail levels (same order as AGE_LEVELS in config): the title is what the card shows, the text says what to expect. */
+    age: { label: string; hint: string; levels: Array<{ title: string; text: string }>; sample: string; patternSample: string };
     theme: { label: string; hint: string; ph: string; own: string; picked: string };
     email: { label: string; hint: string };
     country: { label: string };
@@ -64,7 +65,7 @@ export interface ColorearCopy {
 const ES: ColorearCopy = {
   htmlLang: "es",
   siteTitle: "Pintoria: tu familia para colorear",
-  siteDescription: "Sube fotos de tu familia y recibe un libro para colorear de 24 páginas donde ellos son los protagonistas. Pago único.",
+  siteDescription: "Sube fotos de tu familia y recibe un libro para colorear de 24 páginas donde ellos son los protagonistas, para niños y adultos. Pago único.",
   nav: { privacy: "Privacidad", terms: "Términos", support: "Soporte", other: "English" },
   hero: {
     kicker: "Un libro para colorear con tu familia adentro",
@@ -72,7 +73,7 @@ const ES: ColorearCopy = {
     text: "Sube fotos de 1 a 5 personas o mascotas, cuéntanos cómo se llaman y creamos una aventura de 24 páginas en la que ellos son los protagonistas. Lista en minutos, para imprimir en casa.",
     cta: "Crear mi libro",
     price: (p) => `${p} una sola vez. Sin suscripción.`,
-    badges: ["24 páginas", "Para niños de 3 a 8 años", "Fotos borradas en menos de 24 h"],
+    badges: ["24 páginas", "De 3 años a adultos", "Fotos borradas en menos de 24 h"],
   },
   steps: {
     title: "Así funciona",
@@ -100,7 +101,7 @@ const ES: ColorearCopy = {
   faq: {
     title: "Preguntas frecuentes",
     items: [
-      { q: "¿Cómo lo hacen?", a: "Detrás de cada libro hay un proceso con varias etapas: convertimos cada foto en un personaje de dibujo que se mantiene reconocible en las 24 páginas, escribimos una historia con principio, aventura y final pensada para la edad del niño, y cada página pasa por revisión automática de calidad (trazo limpio, sin color ni sombreados, apto para colorear) y se vuelve a dibujar si no la supera. Al final maquetamos todo en un PDF listo para imprimir en Carta o A4. Todo con privacidad por diseño: las fotos se borran en cuanto los personajes están listos, siempre antes de 24 horas. Las ilustraciones y la historia se crean con nuestro proceso propio asistido por inteligencia artificial y pueden tener imperfecciones." },
+      { q: "¿Cómo lo hacen?", a: "Detrás de cada libro hay un proceso con varias etapas: convertimos cada foto en un personaje de dibujo que se mantiene reconocible en las 24 páginas, escribimos una historia con principio, aventura y final pensada para la edad de quien va a colorear, y cada página pasa por revisión automática de calidad (trazo limpio, sin color ni sombreados, apto para colorear) y se vuelve a dibujar si no la supera. Al final maquetamos todo en un PDF listo para imprimir en Carta o A4. Todo con privacidad por diseño: las fotos se borran en cuanto los personajes están listos, siempre antes de 24 horas. Las ilustraciones y la historia se crean con nuestro proceso propio asistido por inteligencia artificial y pueden tener imperfecciones." },
       { q: "¿Cuánto tarda?", a: "Normalmente entre 5 y 15 minutos. Verás cómo van apareciendo los personajes y las páginas, y te lo enviamos por correo." },
       { q: "¿Qué fotos funcionan mejor?", a: "Fotos claras, con buena luz y la cara visible, de una sola persona o mascota en cada foto. Si subes varias de la misma persona (de frente, de perfil, sonriendo), el parecido mejora. Puedes subir fotos o capturas de tu teléfono, de cualquier tamaño: las reducimos en tu dispositivo antes de enviarlas." },
       { q: "¿Qué pasa con las fotos?", a: "Se usan solo para generar los dibujos de tu libro y se borran en cuanto están listos, siempre antes de 24 horas. Nunca se usan para entrenar modelos. Los dibujos de los personajes (no las fotos) se guardan solo para que puedas pedir otra aventura sin subir fotos: 48 horas después de la entrega, o hasta 30 días si compras el Trío; puedes borrarlos antes. El libro terminado se guarda 30 días para que puedas volver a descargarlo, y luego se borra." },
@@ -129,7 +130,7 @@ const ES: ColorearCopy = {
       name: "Nombre",
       role: "Quién es",
       protagonist: "Protagonista del libro",
-      protagonistHint: "Usamos la edad que elijas más abajo.",
+      protagonistHint: "Usamos el nivel de detalle que elijas más abajo.",
       companion: "Quién es para el protagonista",
       otherLabel: "Cuéntanos quién es (opcional)",
       otherPh: "vecina, maestro...",
@@ -152,7 +153,19 @@ const ES: ColorearCopy = {
         join: (parts) => `Falta ${parts.length > 1 ? parts.slice(0, -1).join(", ") + " y " + parts[parts.length - 1] : parts[0]}.`,
       },
     },
-    age: { label: "Edad de quien va a colorear", hint: "Ajusta la dificultad de los dibujos." },
+    age: {
+      label: "Nivel de detalle: ¿quién va a colorear?",
+      hint: "Elige la opción que más se parezca a quien va a colorear. Cambia lo fino de las líneas y cuántos detalles tiene cada dibujo.",
+      levels: [
+        { title: "3 a 4 años", text: "Contornos muy gruesos, figuras grandes, casi sin fondo." },
+        { title: "5 a 6 años", text: "Contornos gruesos, figuras sencillas y unos pocos elementos de fondo." },
+        { title: "7 a 8 años", text: "Más detalle: fondos con nubes, plantas y ladrillos, patrones sencillos en la ropa y zonas medianas para lápices de color." },
+        { title: "9 a 12 años", text: "Escenas ricas, con líneas más finas, texturas y patrones, y muchas zonas medianas y pequeñas." },
+        { title: "Adultos: relajante, estilo mandala", text: "Muy detallado. Los personajes se reconocen y el fondo y la ropa se llenan de patrones tipo mandala, con líneas finas y limpias." },
+      ],
+      sample: "Dibujo de ejemplo del estilo del libro",
+      patternSample: "Muestra del tipo de patrón de este nivel, no es una página del libro",
+    },
     theme: { label: "Elige la aventura", hint: "Toda la historia gira en torno a este tema. Si no eliges ninguno, te sorprendemos.", ph: "dinosaurios, mi ciudad, el cumpleaños de Sofía...", own: "O escribe la tuya", picked: "Elegida" },
     bundle: {
       title: "Elige cuántas aventuras",
@@ -181,7 +194,7 @@ const ES: ColorearCopy = {
       photos: "Sube la foto del protagonista.",
       theme: "Ese tema no se puede usar. Prueba con otro.",
       email: "Revisa tu correo.",
-      age: "Elige una edad de 3 a 8 años.",
+      age: "Elige un nivel de detalle.",
       consent: "Necesitamos que confirmes todos los puntos.",
       country: "Elige un país.",
       rate: "Demasiados intentos. Espera un minuto.",
@@ -256,7 +269,7 @@ const ES: ColorearCopy = {
 const EN: ColorearCopy = {
   htmlLang: "en",
   siteTitle: "Pintoria: your family to color",
-  siteDescription: "Upload photos of your family and get a 24-page coloring book where they are the heroes. One-time payment.",
+  siteDescription: "Upload photos of your family and get a 24-page coloring book where they are the heroes, for kids and adults. One-time payment.",
   nav: { privacy: "Privacy", terms: "Terms", support: "Support", other: "Español" },
   hero: {
     kicker: "A coloring book with your family inside",
@@ -264,7 +277,7 @@ const EN: ColorearCopy = {
     text: "Upload photos of 1 to 5 people or pets, tell us their names, and we create a 24-page adventure starring them. Ready in minutes, to print at home.",
     cta: "Create my book",
     price: (p) => `${p} one time. No subscription.`,
-    badges: ["24 pages", "For kids aged 3 to 8", "Photos deleted within 24 h"],
+    badges: ["24 pages", "From age 3 to adults", "Photos deleted within 24 h"],
   },
   steps: {
     title: "How it works",
@@ -292,7 +305,7 @@ const EN: ColorearCopy = {
   faq: {
     title: "Frequently asked questions",
     items: [
-      { q: "How does it work?", a: "Behind every book is a multi-stage process: we turn each photo into a cartoon character that stays recognizable across all 24 pages, write a story with a beginning, an adventure and an ending suited to the child's age, and every page goes through automatic quality review (clean linework, no color or shading, ready to color) and is redrawn if it does not pass. Finally we lay everything out as a print-ready PDF for Letter or A4. Privacy by design throughout: photos are deleted as soon as the characters are ready, always within 24 hours. The illustrations and the story are created with our own illustration process assisted by artificial intelligence and may have imperfections." },
+      { q: "How does it work?", a: "Behind every book is a multi-stage process: we turn each photo into a cartoon character that stays recognizable across all 24 pages, write a story with a beginning, an adventure and an ending suited to the age of whoever will color, and every page goes through automatic quality review (clean linework, no color or shading, ready to color) and is redrawn if it does not pass. Finally we lay everything out as a print-ready PDF for Letter or A4. Privacy by design throughout: photos are deleted as soon as the characters are ready, always within 24 hours. The illustrations and the story are created with our own illustration process assisted by artificial intelligence and may have imperfections." },
       { q: "How long does it take?", a: "Usually 5 to 15 minutes. You will see the characters and pages appear, and we also email it to you." },
       { q: "Which photos work best?", a: "Clear photos with good light and the face visible, with only one person or pet in each photo. If you upload several of the same person (facing the camera, in profile, smiling), the likeness gets closer. You can upload phone photos or screenshots, any size: we shrink them on your device before sending." },
       { q: "What happens to the photos?", a: "They are used only to create the drawings for your book and are deleted as soon as they are ready, always within 24 hours. They are never used to train models. The drawings of the characters (not the photos) are kept only so you can order another adventure without uploading photos: 48 hours after delivery, or up to 30 days if you buy the Trio; you can delete them sooner. The finished book is kept 30 days so you can download it again, then deleted." },
@@ -321,7 +334,7 @@ const EN: ColorearCopy = {
       name: "Name",
       role: "Who they are",
       protagonist: "Main character of the book",
-      protagonistHint: "We use the age you choose below.",
+      protagonistHint: "We use the level of detail you choose below.",
       companion: "Who they are to the main character",
       otherLabel: "Tell us who they are (optional)",
       otherPh: "neighbor, teacher...",
@@ -344,7 +357,19 @@ const EN: ColorearCopy = {
         join: (parts) => `Missing ${parts.length > 1 ? parts.slice(0, -1).join(", ") + " and " + parts[parts.length - 1] : parts[0]}.`,
       },
     },
-    age: { label: "Age of the child who will color", hint: "Adjusts how detailed the drawings are." },
+    age: {
+      label: "Level of detail: who will be coloring?",
+      hint: "Choose the option closest to the person who will color. It changes how fine the lines are and how much detail each drawing has.",
+      levels: [
+        { title: "Ages 3 to 4", text: "Very thick outlines, big shapes, almost no background." },
+        { title: "Ages 5 to 6", text: "Thick outlines, simple shapes and a few background elements." },
+        { title: "Ages 7 to 8", text: "More detail: backgrounds with clouds, plants and bricks, simple patterns on clothes and medium areas for colored pencils." },
+        { title: "Ages 9 to 12", text: "Rich scenes with finer lines, textures and patterns, and many medium and small areas." },
+        { title: "Adults: relaxing, mandala style", text: "Very detailed. The characters stay recognizable and the background and clothes fill with mandala-style patterns, in fine, clean lines." },
+      ],
+      sample: "Example drawing in the style of the book",
+      patternSample: "Sample of the kind of pattern of this level, not a page of the book",
+    },
     theme: { label: "Choose the adventure", hint: "The whole story is built around this theme. If you pick none, we surprise you.", ph: "dinosaurs, my city, Sofia's birthday...", own: "Or write your own", picked: "Selected" },
     bundle: {
       title: "Choose how many adventures",
@@ -373,7 +398,7 @@ const EN: ColorearCopy = {
       photos: "Add the main character's photo.",
       theme: "That theme cannot be used. Try another one.",
       email: "Check your email address.",
-      age: "Choose an age from 3 to 8.",
+      age: "Choose a level of detail.",
       consent: "We need you to confirm every point.",
       country: "Choose a country.",
       rate: "Too many attempts. Wait a minute.",

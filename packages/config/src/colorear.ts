@@ -27,7 +27,8 @@ export const COLOREAR = {
    */
   maxOriginalBytes: 60 * 1024 * 1024,
   ageMin: 3,
-  ageMax: 8,
+  /** 18 stands for "adults": the form offers five detail levels, each sent as one representative age (4, 6, 8, 11, 18). */
+  ageMax: 18,
   refundWindowDays: 7,
   /** Finished book (PDF) is deleted this many days after delivery (D8). */
   retentionDays: RETENTION_DAYS.order,
@@ -244,11 +245,16 @@ export function paperFor(country: CountryCode): "letter" | "a4" {
   return country === "MX" || country === "US" ? "letter" : "a4";
 }
 
-export type AgeBand = "3-4" | "5-6" | "7-8";
+export type AgeBand = "3-4" | "5-6" | "7-8" | "9-12" | "adult";
 
 export function ageBandOf(age: number): AgeBand {
-  return age <= 4 ? "3-4" : age <= 6 ? "5-6" : "7-8";
+  return age <= 4 ? "3-4" : age <= 6 ? "5-6" : age <= 8 ? "7-8" : age <= 12 ? "9-12" : "adult";
 }
+
+/** The five detail levels of the form, in order. `age` is the value the form posts (any age of the band maps to the same level). */
+export const AGE_LEVELS: ReadonlyArray<{ band: AgeBand; age: number }> = [
+  { band: "3-4", age: 4 }, { band: "5-6", age: 6 }, { band: "7-8", age: 8 }, { band: "9-12", age: 11 }, { band: "adult", age: 18 },
+];
 
 export function isValidAge(age: number): boolean {
   return Number.isInteger(age) && age >= COLOREAR.ageMin && age <= COLOREAR.ageMax;

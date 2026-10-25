@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { COLOREAR, COMPANION_ROLE_IDS, PROTAGONIST_ROLE_IDS, ROLE_OTHER_MAX, colorearPhotoBudget, roleChipLabel, type ColorearLang, type ColorearRoleId } from "@lumen/config";
+import { AGE_LEVELS, COLOREAR, COMPANION_ROLE_IDS, PROTAGONIST_ROLE_IDS, ROLE_OTHER_MAX, colorearPhotoBudget, roleChipLabel, type ColorearLang, type ColorearRoleId } from "@lumen/config";
 import { COLOREAR_COPY, type ColorearCopy } from "@/lib/colorear-copy";
 import { PhotoPrepError, preparePhoto, shrinkPhoto } from "@/lib/photo-prep";
 import { PencilIcon, ThemeIcon } from "./ThemeIcon";
+import { LevelThumb } from "./LevelThumb";
 
 export interface CountryLegal {
   country: string;
@@ -427,17 +428,31 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
         <p className="sr-only" role="status" aria-live="polite">{live}</p>
       </div>
 
-      <div className={card}>
-        <label className="block">
-          <span className="c-h text-lg">{c.age.label}</span>
-          <span className="block text-sm text-lapiz-muted">{c.age.hint}</span>
-          <select className={input} value={age} onChange={(e) => setAge(e.target.value)}>
-            <option value="">-</option>
-            {[3, 4, 5, 6, 7, 8].map((n) => <option key={n} value={n}>{n}</option>)}
-          </select>
-        </label>
+      <fieldset className={card} aria-describedby="age-hint">
+        <legend className="sr-only">{c.age.label}</legend>
+        <p aria-hidden className="c-h text-lg">{c.age.label}</p>
+        <p id="age-hint" className="text-sm text-lapiz-muted">{c.age.hint}</p>
+        <div className="mt-3 grid gap-3">
+          {AGE_LEVELS.map((lv, i) => {
+            const on = age === String(lv.age);
+            const text = c.age.levels[i]!;
+            return (
+              <label key={lv.band} className={`relative flex min-h-[44px] cursor-pointer items-center gap-3 rounded-2xl border bg-white p-3 transition-colors focus-within:ring-4 focus-within:ring-lapiz-gold/60 ${on ? "border-[2.5px] border-lapiz-teal bg-lapiz-tint" : "border-lapiz-line hover:border-lapiz-teal/60"}`}>
+                <input type="radio" name="age" value={lv.age} checked={on} className="sr-only" onChange={() => setAge(String(lv.age))} />
+                <LevelThumb index={i} sample={c.age.sample} patternSample={c.age.patternSample} />
+                <span className="min-w-0 flex-1">
+                  <span className="c-h block text-lg leading-tight">{text.title}</span>
+                  <span className="block text-sm text-lapiz-muted">{text.text}</span>
+                </span>
+                <span aria-hidden className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 ${on ? "border-lapiz-teal bg-lapiz-teal" : "border-lapiz-line bg-white"}`}>
+                  {on && <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="#fff" strokeWidth="2.200" strokeLinecap="round" strokeLinejoin="round"><path d="M3 8.500l3.200 3L13 4.500" /></svg>}
+                </span>
+              </label>
+            );
+          })}
+        </div>
         {err("age")}
-      </div>
+      </fieldset>
 
       <fieldset className="rounded-2xl border border-lapiz-teal/50 bg-white p-5 sm:p-6" aria-describedby="theme-hint">
         <legend className="sr-only">{c.theme.label}</legend>

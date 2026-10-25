@@ -142,9 +142,37 @@ export class TemplateStoryProvider implements StoryProvider {
       if (b.star === 0) visual = visual.replace("{all}", present.map((k) => `{${k}}`).join(" and "));
       // A free-text theme is never pasted into the sentence (it is not a place); it only guides the drawing.
       const hint = !pack && req.theme && i % 3 === 0 ? `, inspired by the theme: ${req.theme}` : "";
-      return { n: i + 1, text: (req.lang === "es" ? b.es : b.en)(pl, ""), present, visual: `${visual}${hint}` };
+      return { n: i + 1, text: adaptTone((req.lang === "es" ? b.es : b.en)(pl, ""), req.band), present, visual: `${visual}${hint}` };
     });
     return { title: req.lang === "es" ? "Una gran aventura" : "A Big Adventure", scenes, writer: "template" };
+  }
+}
+
+/**
+ * The story text follows the detail level. 3-4: one short sentence, easy to read aloud. 9-12: as is. Adults: warm and brief, without the
+ * exclamation marks and the baby voice of a children's book. Never returns less than 8 characters (the story validator's minimum).
+ */
+export function adaptTone(text: string, band: AgeBand): string {
+  if (band === "adult") {
+    const t = text.replace(/[¡]/g, "").replace(/!/g, ".").replace(/\.\.+/g, ".").replace(/\? ?\./g, "?").replace(/\s+/g, " ").trim();
+    return t.length >= 8 ? t : text;
+  }
+  if (band === "3-4") {
+    // the first sentence that says something (an interjection like "¡Plop!" is not one)
+    const first = text.split(/(?<=[.!?])\s+/).find((x) => x.length >= 14);
+    return first ?? text;
+  }
+  return text;
+}
+
+/** Who the story is written for, per detail level (the story text of the adults is not read to a small child). */
+export function audienceOf(band: AgeBand): { who: string; style: string } {
+  switch (band) {
+    case "3-4": return { who: "children aged 3 to 4", style: "Each scene \"text\" is ONE very short, very simple sentence (max 12 words) read aloud to a toddler." };
+    case "5-6": return { who: "children aged 5 to 6", style: "Each scene \"text\" is 1 or 2 short, simple sentences (max 25 words) read aloud to a young child." };
+    case "7-8": return { who: "children aged 7 to 8", style: "Each scene \"text\" is 1 or 2 short sentences (max 30 words) a child can read alone, with a little humor." };
+    case "9-12": return { who: "children aged 9 to 12", style: "Each scene \"text\" is 1 or 2 sentences (max 35 words), lively and a little witty, never babyish." };
+    default: return { who: "adults who color to relax", style: "Each scene \"text\" is 1 or 2 sentences (max 30 words) in a warm, calm, brief tone, never childish: no baby talk, no diminutives, few exclamation marks." };
   }
 }
 
@@ -188,13 +216,13 @@ export class AnthropicStoryProvider implements StoryProvider {
     const n = req.roles.length;
     const lang = req.lang === "es" ? "Spanish (neutral Latin American)" : "English";
     const system =
-      "You write short, warm adventure stories for children's coloring books. Reply with JSON only, no markdown. " +
+      "You write short, warm adventure stories for coloring books. Reply with JSON only, no markdown. " +
       "Never mention brands, licensed characters, real celebrities, or scary, violent or inappropriate things. Keep it gentle, funny and kind.";
     const user =
-      `Write a story of exactly ${COLOREAR.scenes} scenes for a coloring book for children aged ${req.band}. ` +
+      `Write a story of exactly ${COLOREAR.scenes} scenes for a coloring book for ${audienceOf(req.band).who}. ` +
       `The main characters are (refer to them ONLY with the tokens {1}..{${n}}, never invent names): ${req.roles.map((r, i) => `{${i + 1}} = ${r}${req.labels?.[i] ? ` (in the story call this character "${req.labels[i]}" when a role word is needed, never a name)` : ""}`).join("; ")}. ` +
       `${req.theme ? `Adventure theme: "${req.theme}". EVERY scene must clearly take place in, or involve, this theme (its places, creatures, objects), and the "visual" of every scene must show it. Use it naturally ("in space", "on the farm", "a rocket"): never paste the theme name as if it were a place. ` : "Choose a magical, friendly adventure. "}` +
-      `Language of "text": ${lang}. Each scene "text" is 1 or 2 short, simple sentences (max 25 words) read aloud to a young child. ` +
+      `Language of "text": ${lang}. ${audienceOf(req.band).style} ` +
       `Use {all} for "all the characters". Each scene "visual" is an English description of ONE drawing (what is seen: characters using tokens {k}, setting, action), simple enough to color. ` +
       `"present" lists the character numbers that appear in the drawing. Arc: setup, quest, small obstacle, friendly helper, funny moment, treasure or goal, celebration, return home, bedtime. ` +
       `JSON shape: {"title": string (in ${lang}, max 6 words, no tokens), "scenes": [{"text": string, "present": number[], "visual": string}, ... ${COLOREAR.scenes} items]}`;

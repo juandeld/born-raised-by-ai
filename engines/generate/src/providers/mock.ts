@@ -7,7 +7,7 @@ export class MockImageProvider implements ImageProvider {
   readonly name = "mock" as const;
   readonly model = "mock-line-art";
   async render(req: ImageRequest): Promise<GeneratedImage> {
-    const art = new Art(req.width, req.height, req.ageBand === "3-4" ? 14 : req.ageBand === "5-6" ? 11 : 9);
+    const art = new Art(req.width, req.height, { "3-4": 14, "5-6": 11, "7-8": 9, "9-12": 7, adult: 5 }[req.ageBand]);
     const { roles, seed, setting } = req.hints;
     const looks = roles.map((r, i) => lookOf(r, i));
     if (req.kind === "character") {

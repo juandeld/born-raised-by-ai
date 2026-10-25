@@ -77,7 +77,7 @@ describe("colorear checkout validation", () => {
     await bad({ checkboxIds: ["K1"] }, "consent");
     await bad({ photos: [await photo()] }, "photos");
     await bad({ photos: [new Uint8Array([1, 2, 3, 4]), await photo()] }, "photos");
-    await bad({ age: 12 }, "age");
+    await bad({ age: 19 }, "age");
     await bad({ email: "nope" }, "email");
     expect((await h.db.orders.find()).length).toBe(0);
   });
