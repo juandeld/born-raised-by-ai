@@ -1,8 +1,9 @@
 import type { ColorearLang } from "@lumen/config";
 
 /**
- * Terms of service of the coloring book. Version colorear-legal-v4 (D26): adds the Trio (3 adventures), the 48-hour "another adventure" offer,
- * retention of the character drawings, and the Trio refund rule (kept in step with colorearTrioRefund in @lumen/legal).
+ * Terms of service of the coloring book. Version colorear-legal-v5 (the terms text is the one of v4, D26, which added the Trio (3 adventures),
+ * the 48-hour "another adventure" offer, retention of the character drawings, and the Trio refund rule, kept in step with colorearTrioRefund
+ * in @lumen/legal; v5 changed the notice and the ids, see packages/legal/src/colorear.ts).
  * Drafted by lider-proyecto from the capitulo and docs/legal, reviewed by legal-compliance; pending written approval of the PR before real charges.
  */
 export const COLOREAR_TERMS: Record<ColorearLang, { title: string; sections: Array<{ h: string; p: string }> }> = {

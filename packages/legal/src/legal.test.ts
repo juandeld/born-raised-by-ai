@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { lockedPrefixLength } from "./prelude";
-import { AVISO, EN_GB_RIGHTS_SUFFIX, PRELUDES, RAW_CHECKBOXES, RAW_COLOREAR_CHECKBOXES, COLOREAR_CHECKBOX_ORDER, COLOREAR_IMPLICIT_IDS, renderColorearAviso, renderColorearReminder, colorearTrioRefund, colorearDefectRefund, COLOREAR_LEGAL_RULES, COLOREAR_LEGAL_VERSION, COLOREAR_REMINDER, COLOREAR_DELIVERY_LEGAL, COLOREAR_TRIO_LINE, COLOREAR_TRIO_REFUND_LINE, COLOREAR_EMAIL_LINE, fill, hasUnfilledPlaceholders, renderAviso, renderPrelude, resolveAllCheckboxes } from "./index";
+import { AVISO, EN_GB_RIGHTS_SUFFIX, PRELUDES, RAW_CHECKBOXES, RAW_COLOREAR_CHECKBOXES, RAW_COLOREAR_K2_CODE, resolveAllColorearCheckboxes, resolveColorearCheckbox, COLOREAR_CHECKBOX_ORDER, COLOREAR_IMPLICIT_IDS, renderColorearAviso, renderColorearReminder, colorearTrioRefund, colorearDefectRefund, COLOREAR_LEGAL_RULES, COLOREAR_LEGAL_VERSION, COLOREAR_REMINDER, COLOREAR_DELIVERY_LEGAL, COLOREAR_TRIO_LINE, COLOREAR_TRIO_REFUND_LINE, COLOREAR_EMAIL_LINE, fill, hasUnfilledPlaceholders, renderAviso, renderPrelude, resolveAllCheckboxes } from "./index";
 
 const dir = resolve(__dirname, "../../../docs/legal/textos");
 const read = (f: string) => readFileSync(resolve(dir, f), "utf8").replace(/\s*`\[no verificado[^\]]*\]`/g, "");
@@ -161,7 +161,7 @@ describe("placeholders", () => {
         for (const id of COLOREAR_CHECKBOX_ORDER) {
           const t = RAW_COLOREAR_CHECKBOXES[id][lang].text;
           expect(t).not.toMatch(brands);
-          expect(RAW_COLOREAR_CHECKBOXES[id][lang].id).toMatch(/colorear-v4$/);
+          expect(RAW_COLOREAR_CHECKBOXES[id][lang].id).toMatch(/colorear-v5$/);
         }
         expect(RAW_COLOREAR_CHECKBOXES.K1[lang].text.length).toBeLessThanOrEqual(140);
         expect(RAW_COLOREAR_CHECKBOXES.K1[lang].text).toMatch(/IA|AI/);
@@ -185,6 +185,71 @@ describe("placeholders", () => {
         expect(hasUnfilledPlaceholders(text)).toBe(false);
       }
     });
+
+    // v5, condition 7 of docs/proveedores/openai.md: the notice must say how long the processing providers may keep copies.
+    const recipients = (lang: (typeof langs)[number], opts: { test?: boolean } = {}) => renderColorearAviso(lang, vars, opts).sections.find((s) => /Quién los recibe|Who receives/.test(s.heading))!.body;
+
+    it("v5: the section on recipients says the providers may keep copies up to 30 days, or longer if the law requires it or to review a serious abuse", () => {
+      expect(COLOREAR_LEGAL_RULES.providerCopiesDays).toBe(30);
+      for (const lang of langs) {
+        const body = recipients(lang);
+        expect(body, lang).toMatch(lang === "en" ? /keep copies for up to 30 days, or longer if the law requires it or to review a possible serious abuse, under their own terms/ : /conservar copias hasta 30 días, o más si la ley lo exige o para revisar un posible abuso grave, según sus propias condiciones/);
+        expect(body).not.toMatch(/de forma temporal|temporarily/);
+        expect(body).not.toMatch(brands);
+      }
+    });
+
+    it("v5: the ids of K1, K2 and the notice end in -v5, and the text of K1 and K2 did not change", () => {
+      for (const lang of langs) {
+        expect(RAW_COLOREAR_CHECKBOXES.K1[lang].id).toMatch(/^08-K1-.*-colorear-v5$/);
+        expect(RAW_COLOREAR_CHECKBOXES.K2[lang].id).toMatch(/^08-K2-.*-colorear-v5$/);
+        expect(renderColorearAviso(lang, vars).id).toMatch(/^08-AVISO-.*-colorear-v5$/);
+      }
+      expect(RAW_COLOREAR_CHECKBOXES.K2["es-419"].text).toBe("Al pagar, acepto los términos de servicio y la política de privacidad.");
+      expect(RAW_COLOREAR_CHECKBOXES.K2.en.text).toBe("By paying, I accept the terms of service and the privacy policy.");
+      expect(RAW_COLOREAR_CHECKBOXES.K1["es-419"].text).toBe("Soy el adulto responsable de quienes salen. Borramos fotos en 24 h y dibujos en 48 h (30 días en el Trío). Lo crea IA, con imperfecciones.");
+    });
+
+    // P4 of docs/legal/aprobaciones/colorear-codigo-prueba-3-fotos.md: an order made with a test code has no card charge.
+    it("v5-code: the K2 of a test-code order says \"Al usar el código\" / \"By using the code\", with ids ending in -v5-code; K1 is unchanged", () => {
+      const expected = { "es-419": "Al usar el código, acepto los términos de servicio y la política de privacidad.", "es-ES": "Al usar el código, acepto los términos de servicio y la política de privacidad.", en: "By using the code, I accept the terms of service and the privacy policy." } as const;
+      for (const lang of langs) {
+        expect(RAW_COLOREAR_K2_CODE[lang].text).toBe(expected[lang]);
+        expect(RAW_COLOREAR_K2_CODE[lang].id).toBe(`08-K2-${lang}-colorear-v5-code`);
+        const test = resolveAllColorearCheckboxes(lang, vars, { test: true });
+        const normal = resolveAllColorearCheckboxes(lang, vars);
+        expect(test.map((c) => c.checkboxId)).toEqual(["K1", "K2"]);
+        expect(test[0]).toEqual(normal[0]); // K1 identical, same id
+        expect(test[1]!.textVersionId).toBe(`08-K2-${lang}-colorear-v5-code`);
+        expect(test[1]!.text).toBe(expected[lang]);
+        expect(test[1]!.sha256).not.toBe(normal[1]!.sha256);
+        expect(test[1]!.text).not.toMatch(/Al pagar|By paying/);
+        expect(normal[1]!.textVersionId).toBe(`08-K2-${lang}-colorear-v5`);
+        expect(resolveColorearCheckbox("K2", lang, vars, { test: true }).text).toBe(expected[lang]);
+      }
+    });
+
+    it("v5-code: the notice of a test-code order says the adult is known personally, not verified with a card charge; the ordinary notice is unchanged", () => {
+      for (const lang of langs) {
+        const test = renderColorearAviso(lang, vars, { test: true });
+        const normal = renderColorearAviso(lang, vars);
+        const t = JSON.stringify(test);
+        const n = JSON.stringify(normal);
+        expect(test.id).toBe(`${normal.id}-code`);
+        expect(test.id).toMatch(/colorear-v5-code$/);
+        expect(t).not.toMatch(/cobro de su tarjeta|charge to your card/);
+        expect(n).toMatch(/cobro de su tarjeta|charge to your card/);
+        expect(t).toMatch(lang === "en" ? /whom we know personally because we gave you the test code/ : /a quien conocemos personalmente porque le entregamos el código de prueba/);
+        expect(t).toMatch(lang === "en" ? /a test order has no charge: we handed you the code personally, because we know who is using it\. We will email you a receipt with this same information\./ : /en un pedido de prueba no hay cobro: le entregamos el código personalmente, porque conocemos a quien lo usa\. Le enviaremos un recibo con estos mismos datos\./);
+        // only those two sections change
+        const changed = normal.sections.filter((s, i) => s.body !== test.sections[i]!.body).map((s) => s.heading);
+        expect(changed).toHaveLength(2);
+        expect(t).not.toMatch(brands);
+        expect(hasUnfilledPlaceholders(t)).toBe(false);
+        // the 30-day sentence stays in the variant
+        expect(recipients(lang, { test: true })).toBe(recipients(lang));
+      }
+    });
   });
 });
 
@@ -194,8 +259,8 @@ describe("colorear D26: characters retention, Trio credits, reminder", () => {
   const brands = /openai|anthropic|claude|resend|supabase|vercel|polar|recurrente|gpt|google|gemini|nano ?banana/i;
 
   it("version and numbers are in step with the texts", () => {
-    expect(COLOREAR_LEGAL_VERSION).toBe("colorear-legal-v4");
-    expect(COLOREAR_LEGAL_RULES).toMatchObject({ photosMaxHours: 24, charactersOfferHours: 48, charactersTrioDays: 30, trioAdventures: 3, creditsValidDays: 30, bookAndOrderDays: 30, reminderDay: 25, refundDays: 7, maxCommercialEmails: 3 });
+    expect(COLOREAR_LEGAL_VERSION).toBe("colorear-legal-v5");
+    expect(COLOREAR_LEGAL_RULES).toMatchObject({ photosMaxHours: 24, charactersOfferHours: 48, charactersTrioDays: 30, trioAdventures: 3, creditsValidDays: 30, bookAndOrderDays: 30, reminderDay: 25, refundDays: 7, maxCommercialEmails: 3, providerCopiesDays: 30 });
     for (const lang of langs) {
       const aviso = JSON.stringify(renderColorearAviso(lang, vars));
       expect(aviso).toMatch(/48 (horas|hours)/);

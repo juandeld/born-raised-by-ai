@@ -6,7 +6,7 @@ import { MemoryStorage, MockDeliveryProvider } from "@lumen/calls";
 import { createMemoryDb } from "@lumen/db";
 import { MockPaymentProvider } from "@lumen/payments";
 import {
-  ColorearEngine, ColorearValidationError, ImageProviderError, MockImageProvider, TemplateStoryProvider, buildCharacterPrompt,
+  ColorearEngine, ColorearValidationError, ImageProviderError, MockImageProvider, TemplateStoryProvider, buildCharacterFromTextPrompt, buildCharacterPrompt,
   type ColorearCheckoutInput, type ImageProvider, type ImageRequest,
 } from "@lumen/generate";
 
@@ -155,6 +155,8 @@ describe("generation with several photos", () => {
     expect(chars.map((c) => c.refs)).toEqual([3, 3]);
     for (const c of chars) {
       expect(c.prompt).toMatch(/3 reference photos all show the SAME person or pet/);
+      // legal condition 2 (docs/proveedores/openai.md): line-art cartoon, never a photorealistic or identical copy of the people in the photos
+      expect(c.prompt).toContain("never a photorealistic or identical copy");
       expect(c.prompt).not.toMatch(/Manuela|Toby/); // names still never reach the image model
     }
     // scenes and the cover use the cartoon characters (one per person), never the photos
@@ -163,6 +165,27 @@ describe("generation with several photos", () => {
     expect(h.uploads.files.size).toBe(0);
     const gone = h.sink.events.filter((e) => e.name === "photos_deleted");
     expect(gone.map((e) => prop(e, "count"))).toContain(6);
+  });
+
+  it("the character prompt never asks for a photorealistic or identical copy, whatever the number of photos (legal condition 2)", () => {
+    for (const photos of [1, 2, 3]) {
+      for (const band of ["3-4", "5-6", "7-8"] as const) {
+        const prompt = buildCharacterPrompt("girl, 6", band, photos);
+        expect(prompt, `${photos} photos, ${band}`).toMatch(/not photorealistic/); // the style rules, for one photo too
+        expect(prompt).toMatch(/kind, flattering caricature/);
+        expect(prompt).toMatch(/Black and white line art only/);
+        if (photos > 1) {
+          // The exact sentence legal-compliance read: one cartoon character, never several, never a photorealistic or identical copy.
+          expect(prompt).toContain("Draw ONE cartoon character, never several, and never a photorealistic or identical copy.");
+        }
+        // No wording that asks for a likeness: not "identical", "exact", "faithful", "portrait" or "lifelike" except in that negative sentence.
+        const rest = prompt.replace("never a photorealistic or identical copy", "");
+        expect(rest).not.toMatch(/\b(identical|exact(ly)?|faithful(ly)?|portrait|lifelike|true to life|realistic likeness)\b/i);
+      }
+    }
+    // the fallback drawn from the description alone has no reference photo and also asks for a non-photorealistic cartoon
+    expect(buildCharacterFromTextPrompt("girl, 6", "5-6")).not.toMatch(/reference photo/i);
+    expect(buildCharacterFromTextPrompt("girl, 6", "5-6")).toMatch(/not photorealistic/);
   });
 
   it("keeps the single-photo prompt unchanged for one photo", () => {

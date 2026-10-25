@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { COLOREAR_DEFAULT_COUNTRY, COLOREAR_THEMES, colorearCountriesFor, colorearPhotoLimits, colorearTestCodesEnabled, colorearLegalLocale, colorearPrice, colorearPublicUrl, COUNTRIES, formatPrice, isColorearLang, type CountryCode } from "@lumen/config";
-import { COLOREAR_EMAIL_LINE, COLOREAR_REFUND_LINE, COLOREAR_TRIO_LINE, COLOREAR_TRIO_REFUND_LINE, renderColorearAviso, resolveAllColorearCheckboxes } from "@lumen/legal";
+import { COLOREAR_EMAIL_LINE, COLOREAR_REFUND_LINE, COLOREAR_TRIO_LINE, COLOREAR_TRIO_REFUND_LINE, renderColorearAviso, resolveAllColorearCheckboxes, resolveColorearCheckbox } from "@lumen/legal";
 import { CFooter, CHeader } from "@/components/colorear/Chrome";
 import { ColorearForm, type CountryLegal } from "@/components/colorear/ColorearForm";
 import { COLOREAR_COPY } from "@/lib/colorear-copy";
@@ -30,6 +30,7 @@ export default async function Landing({ params, searchParams }: { params: Promis
   const sp = await searchParams;
   const c = COLOREAR_COPY[lang];
   const vars = colorearLegalVars();
+  const codesOn = colorearTestCodesEnabled();
   const countries = colorearCountriesFor(lang);
   const perCountry: Record<string, CountryLegal> = {};
   for (const code of countries) {
@@ -46,6 +47,8 @@ export default async function Landing({ params, searchParams }: { params: Promis
       checkboxes: resolveAllColorearCheckboxes(legal, vars).map((k) => ({ id: k.checkboxId, text: k.text })),
       aviso: renderColorearAviso(legal, vars, { gb: code === "GB" }),
       refundLine: COLOREAR_REFUND_LINE[legal],
+      // The variant for an order made with a test code (K2 "Al usar el código" and the notice without the card verification), only when codes exist.
+      code: codesOn ? { payNotice: resolveColorearCheckbox("K2", legal, vars, { test: true }).text, aviso: renderColorearAviso(legal, vars, { gb: code === "GB", test: true }) } : undefined,
     };
   }
   const first = (countries.includes(COLOREAR_DEFAULT_COUNTRY[lang]) ? COLOREAR_DEFAULT_COUNTRY[lang] : countries[0]) as CountryCode;
@@ -123,7 +126,7 @@ export default async function Landing({ params, searchParams }: { params: Promis
         </section>
 
         <section id="crear" className="mx-auto max-w-3xl scroll-mt-4 px-4 py-10">
-          <ColorearForm lang={lang} countries={perCountry} defaultCountry={first} themes={themes} creative={(sp.c ?? "none").slice(0, 40)} codeEnabled={colorearTestCodesEnabled()} photoLimits={colorearPhotoLimits()} />
+          <ColorearForm lang={lang} countries={perCountry} defaultCountry={first} themes={themes} creative={(sp.c ?? "none").slice(0, 40)} codeEnabled={codesOn} photoLimits={colorearPhotoLimits()} />
         </section>
 
         <section className="mx-auto max-w-3xl px-4 py-10">

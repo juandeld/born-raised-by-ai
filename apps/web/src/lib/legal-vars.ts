@@ -1,4 +1,4 @@
-import { brandConfig } from "@lumen/config";
+import { brandConfig, colorearBrandName as configBrandName, colorearSupportEmail } from "@lumen/config";
 
 /** Variables for the legal texts. Same mapping as the engine uses when it stores the consent. */
 export function legalVars(): Record<string, string> {
@@ -23,17 +23,18 @@ export function documentVars(price: string): Record<string, string> {
 
 /**
  * Colorear is sold as Pintoria, never under the Santa/Jinglo brand: {{MARCA}} in every colorear text (notice, privacy, terms, emails, PDF)
- * is COLOREAR_BRAND_NAME (default "Pintoria"). The generate engine builds its legal variables the same way, so the consent text the
- * buyer sees is byte-identical to the one stored as evidence.
+ * is COLOREAR_BRAND_NAME (default "Pintoria") and {{EMAIL_SOPORTE}} is COLOREAR_SUPPORT_EMAIL (default soporte@pintoria.app). The generate
+ * engine builds its legal variables the same way (colorearBrandConfig), so the consent text the buyer sees is byte-identical to the one stored
+ * as evidence.
  */
 export function colorearBrandName(env: Record<string, string | undefined> = process.env): string {
-  return env.COLOREAR_BRAND_NAME || "Pintoria";
+  return configBrandName(env);
 }
 
 export function colorearLegalVars(env: Record<string, string | undefined> = process.env): Record<string, string> {
-  return { ...legalVars(), MARCA: colorearBrandName(env) };
+  return { ...legalVars(), MARCA: colorearBrandName(env), EMAIL_SOPORTE: colorearSupportEmail(env) };
 }
 
 export function colorearDocumentVars(price: string): Record<string, string> {
-  return { ...documentVars(price), MARCA: colorearBrandName() };
+  return { ...documentVars(price), MARCA: colorearBrandName(), EMAIL_SOPORTE: colorearSupportEmail() };
 }

@@ -1,3 +1,4 @@
+import { brandConfig, type BrandConfig } from "./env";
 import { isCountry, type CountryCode, type Currency } from "./pricing";
 import { RETENTION_DAYS } from "./retention";
 
@@ -145,6 +146,23 @@ export function colorearPhotoBudget(count: number): number {
 /** Brand shown to colorear buyers: COLOREAR_BRAND_NAME, default "Pintoria". Never the Santa brand (BRAND_NAME). */
 export function colorearBrandName(env: Record<string, string | undefined> = process.env): string {
   return env.COLOREAR_BRAND_NAME?.trim() || "Pintoria";
+}
+
+/** Support mailbox of Pintoria. The domain pintoria.app forwards its mail (ImprovMX); lumen-labs.co has no MX records, so replies sent there bounce. */
+export const COLOREAR_SUPPORT_EMAIL_DEFAULT = "soporte@pintoria.app";
+
+/**
+ * Support address shown in every Pintoria text (legal notice, terms, emails, footer) and used as `reply_to`: `COLOREAR_SUPPORT_EMAIL`, default
+ * `soporte@pintoria.app`. It does not follow `SUPPORT_EMAIL`, which belongs to Santa. A value that is not a plain address is ignored.
+ */
+export function colorearSupportEmail(env: Record<string, string | undefined> = process.env): string {
+  const v = env.COLOREAR_SUPPORT_EMAIL?.trim();
+  return v && /^[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+$/.test(v) ? v : COLOREAR_SUPPORT_EMAIL_DEFAULT;
+}
+
+/** Brand block of colorear: the shared one with Pintoria's name and support address (never Santa's). */
+export function colorearBrandConfig(env: Record<string, string | undefined> = process.env): BrandConfig {
+  return { ...brandConfig(env), brand: colorearBrandName(env), supportEmail: colorearSupportEmail(env) };
 }
 
 /** Plain address inside "Name <addr>" (or a bare address); null when there is none. */

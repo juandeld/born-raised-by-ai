@@ -4,6 +4,7 @@ import { MemorySink, MultiSink, TableSink, Tracker } from "@lumen/analytics";
 import { brandConfig, colorearTestCodeLimits, colorearTestCodes, colorearTestCodesEnabled, normalizeTestCode } from "@lumen/config";
 import { MemoryStorage, MockDeliveryProvider, type DeliveryProvider, type OutboundMessage, type SendResult } from "@lumen/calls";
 import { createMemoryDb } from "@lumen/db";
+import { sha256 } from "@lumen/legal";
 import { MockPaymentProvider } from "@lumen/payments";
 import {
   ColorearEngine, ColorearValidationError, MockImageProvider, TEST_CODE_PROVIDER, TemplateStoryProvider, composeColorearMessage, matchTestCode, testCodeHash,
@@ -235,6 +236,104 @@ describe("real generation", () => {
     expect(mail.text).toMatch(/Pedido de prueba sin costo/);
     expect(mail.text).not.toMatch(/MX\$|48 horas|reembolso completo/);
     expect(await h.engine.createUpsellCheckout(parent.access_token, h.engine.signUpsell(parent.access_token, new Date(h.clock.now.getTime() + 40 * HOUR).toISOString()), { theme: "", ip: null }, urls)).toMatchObject({ ok: false });
+  });
+});
+
+/** Evidence of consent (P4 of docs/legal/aprobaciones/colorear-codigo-prueba-3-fotos.md): nothing is charged, so the text recorded must not say "Al pagar". */
+describe("consent text of a test-code order (colorear-legal-v5-code)", () => {
+  const byBox = async (h: H, orderId: string) => Object.fromEntries((await h.db.consents.find({ order_id: orderId })).map((c) => [c.checkbox_id, c]));
+
+  it("records K1 as in any order and the code variant of K2, with the ids, texts and hashes of the variant, in every language", async () => {
+    const cases = [
+      { over: {}, k1: "08-K1-es-419-colorear-v5", k2: "08-K2-es-419-colorear-v5-code", text: "Al usar el código, acepto los términos de servicio y la política de privacidad." },
+      { over: { country: "ES" as const }, k1: "08-K1-es-ES-colorear-v5", k2: "08-K2-es-ES-colorear-v5-code", text: "Al usar el código, acepto los términos de servicio y la política de privacidad." },
+      { over: { lang: "en" as const, country: "US" as const }, k1: "08-K1-en-colorear-v5", k2: "08-K2-en-colorear-v5-code", text: "By using the code, I accept the terms of service and the privacy policy." },
+    ];
+    for (const c of cases) {
+      const h = harness();
+      const { paid } = await redeem(h, c.over);
+      const boxes = await byBox(h, paid.id);
+      expect(boxes.K1!.text_version_id).toBe(c.k1);
+      expect(boxes.K2!.text_version_id).toBe(c.k2);
+      expect(boxes.K2!.text_sha256).toBe(sha256(c.text));
+      expect(boxes.K2!.text_sha256).not.toBe(sha256("Al pagar, acepto los términos de servicio y la política de privacidad."));
+      // the analytics event carries the same ids as the evidence
+      expect(ev(h, "consent_given")[0]!.props).toMatchObject({ checkbox_ids: ["K1", "K2"], text_version_ids: [c.k1, c.k2] });
+    }
+  });
+
+  it("an ordinary order keeps the K2 of a payment (\"Al pagar\"), recorded with the -v5 id", async () => {
+    const h = harness();
+    const { order } = await h.engine.createCheckout(await input({ testCode: "" }), urls);
+    await h.engine.handlePaymentEvent({ type: "payment_succeeded", orderId: order.id, checkoutId: order.checkout_id, paymentId: "pay_ord" });
+    const boxes = await byBox(h, order.id);
+    expect(boxes.K1!.text_version_id).toBe("08-K1-es-419-colorear-v5");
+    expect(boxes.K2!.text_version_id).toBe("08-K2-es-419-colorear-v5");
+    expect(boxes.K2!.text_sha256).toBe(sha256("Al pagar, acepto los términos de servicio y la política de privacidad."));
+    expect(ev(h, "consent_given")[0]!.props).toMatchObject({ text_version_ids: ["08-K1-es-419-colorear-v5", "08-K2-es-419-colorear-v5"] });
+  });
+});
+
+/** P5: nobody bought anything with a test code, so no commercial email (PECR reg. 22, LSSI art. 21.2), and it would count against the three allowed. */
+describe("no commercial email for an order made with a test code", () => {
+  const OFFER = /Otra aventura con los mismos personajes|fotos nuevas aquí|ofertas|Para no recibir más/;
+  const priv = (h: H) => h.engine as unknown as { commercialAllowed(o: unknown): Promise<boolean> };
+  const commercialCount = async (h: H, id: string) => (JSON.parse((await h.db.orders.get(id))!.details ?? "{}") as { commercialEmails?: number }).commercialEmails ?? 0;
+  const pay = async (h: H, over: Partial<ColorearCheckoutInput>) => {
+    const { order } = await h.engine.createCheckout(await input({ testCode: "", ...over }), urls);
+    await h.engine.handlePaymentEvent({ type: "payment_succeeded", orderId: order.id, checkoutId: order.checkout_id, paymentId: `pay_${order.id}` });
+    return order;
+  };
+
+  it("commercialAllowed is false for a test-code order and true for an ordinary one", async () => {
+    const h = harness();
+    const { paid } = await redeem(h, { email: "prueba@example.com" });
+    const ordinary = await pay(h, { email: "compra@example.com" });
+    expect(await priv(h).commercialAllowed((await h.db.orders.get(paid.id))!)).toBe(false);
+    expect(await priv(h).commercialAllowed((await h.db.orders.get(ordinary.id))!)).toBe(true);
+  });
+
+  it("the delivery email and the day-25 reminder of a test-code order carry no offer and count no commercial email; an ordinary order still gets both", async () => {
+    const h = harness();
+    const { paid } = await redeem(h, { email: "prueba@example.com" });
+    await h.engine.runGeneration(paid.id);
+    const ordinary = await pay(h, { email: "compra@example.com" });
+    await h.engine.runGeneration(ordinary.id);
+    const sentMail = (h.delivery as MockDeliveryProvider).sent;
+    const deliveryOf = (to: string) => sentMail.find((m) => m.kind === "delivery" && m.to === to)!;
+    expect(deliveryOf("prueba@example.com").text).not.toMatch(OFFER);
+    expect(deliveryOf("compra@example.com").text).toMatch(/Otra aventura con los mismos personajes/);
+
+    advance(h, 26 * 24 * HOUR);
+    expect((await h.engine.sweep()).reminded).toBe(2);
+    const reminderOf = (to: string) => sentMail.find((m) => m.kind === "reminder" && m.to === to)!;
+    expect(reminderOf("prueba@example.com").text).not.toMatch(OFFER);
+    expect(reminderOf("prueba@example.com").text).toMatch(/Descárguelo aquí/); // the transactional part is still there
+    expect(reminderOf("compra@example.com").text).toMatch(/fotos nuevas aquí/);
+    expect(reminderOf("compra@example.com").text).toMatch(/ofertas/);
+    expect(await commercialCount(h, paid.id)).toBe(0);
+    expect(await commercialCount(h, ordinary.id)).toBe(2);
+  });
+
+  it("the Trio of a test code and its free adventures never get a commercial block either, even once every adventure is used", async () => {
+    const h = harness();
+    const { paid } = await redeem(h, { variant: "bundle3", email: "trio@example.com" });
+    await h.engine.runGeneration(paid.id);
+    const token = (await h.db.orders.get(paid.id))!.access_token;
+    const kids: string[] = [];
+    for (const theme of ["dinosaurios", "el espacio"]) {
+      const c = await h.engine.useCredit(token, { theme });
+      if (!c.ok) throw new Error(c.reason);
+      await h.engine.runGeneration(c.orderId);
+      kids.push(c.orderId);
+    }
+    for (const id of [paid.id, ...kids]) expect(await priv(h).commercialAllowed((await h.db.orders.get(id))!), id).toBe(false);
+    advance(h, 26 * 24 * HOUR);
+    await h.engine.sweep();
+    const reminders = (h.delivery as MockDeliveryProvider).sent.filter((m) => m.kind === "reminder");
+    expect(reminders.length).toBeGreaterThanOrEqual(1);
+    for (const m of reminders) expect(m.text).not.toMatch(OFFER);
+    for (const id of [paid.id, ...kids]) expect(await commercialCount(h, id)).toBe(0);
   });
 });
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ColorearLang } from "@lumen/config";
-import { brandConfig } from "@lumen/config";
+import { brandConfig, colorearSupportEmail } from "@lumen/config";
 import { COLOREAR_COPY } from "@/lib/colorear-copy";
 import { cpath, onPintoria } from "@/lib/colorear-paths";
 
@@ -32,7 +32,7 @@ export async function CFooter({ lang }: { lang: ColorearLang }) {
         <div className="flex flex-wrap gap-x-6 gap-y-1 font-semibold">
           <Link href={cpath(pin, lang, "privacidad")} className="inline-flex min-h-[44px] items-center underline underline-offset-4">{c.nav.privacy}</Link>
           <Link href={cpath(pin, lang, "terminos")} className="inline-flex min-h-[44px] items-center underline underline-offset-4">{c.nav.terms}</Link>
-          <a href={`mailto:${b.supportEmail}`} className="inline-flex min-h-[44px] items-center underline underline-offset-4">{c.nav.support}</a>
+          <a href={`mailto:${colorearSupportEmail()}`} className="inline-flex min-h-[44px] items-center underline underline-offset-4">{c.nav.support}</a>
         </div>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/pintoria/logo-a.svg" alt={process.env.COLOREAR_BRAND_NAME ?? "Pintoria"} height={28} width={131} className="mt-2 h-7 w-auto" />

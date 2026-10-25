@@ -15,6 +15,20 @@ describe("colorear brand", () => {
     expect(vars.MARCA).toBe("Pintoria");
     expect(colorearLegalVars({ COLOREAR_BRAND_NAME: "Otra" }).MARCA).toBe("Otra");
   });
+  it("prints soporte@pintoria.app (COLOREAR_SUPPORT_EMAIL) as the support address of every Pintoria text, never Santa's SUPPORT_EMAIL", () => {
+    expect(colorearLegalVars({}).EMAIL_SOPORTE).toBe("soporte@pintoria.app");
+    expect(colorearLegalVars({ SUPPORT_EMAIL: "soporte@lumen-labs.co" } as never).EMAIL_SOPORTE).toBe("soporte@pintoria.app");
+    expect(colorearLegalVars({ COLOREAR_SUPPORT_EMAIL: "ayuda@pintoria.app" }).EMAIL_SOPORTE).toBe("ayuda@pintoria.app");
+    expect(vars.EMAIL_SOPORTE).toBe("soporte@pintoria.app");
+    // the terms contact line and the reminder footer print it
+    for (const lang of COLOREAR_LANGS) {
+      const contact = COLOREAR_TERMS[lang].sections.at(-1)!.p.replace(/\{(\w+)\}/g, (m, key: string) => vars[key] ?? m);
+      expect(contact).toContain("soporte@pintoria.app");
+      expect(contact).not.toContain("lumen-labs.co");
+    }
+    const m = composeColorearMessage("reminder", "es", "a@b.co", { names: "Ana", price: "$1", statusLink: "s", deliveryLink: "d", refundLink: "r", deleteDate: "2026-11-30", holder: "T", privacyEmail: "p@x", supportEmail: vars.EMAIL_SOPORTE!, brand: "Pintoria" });
+    expect(m.text).toContain("soporte@pintoria.app");
+  });
   it("no rendered colorear text contains Jinglo", () => {
     const texts: string[] = [];
     for (const country of ["MX", "ES", "US", "GB"] as const) {

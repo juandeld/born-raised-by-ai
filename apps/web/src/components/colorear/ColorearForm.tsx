@@ -17,6 +17,12 @@ export interface CountryLegal {
   checkboxes: Array<{ id: string; text: string }>;
   aviso: { title: string; intro: string; sections: Array<{ heading: string; body: string }>; privacyLink: string };
   refundLine: string;
+  /**
+   * Variant for an order made with a test code (no charge): the acceptance sentence says "Al usar el código" and the notice says the adult is known
+   * personally instead of verified with the card. Present only when test codes are enabled; the form shows it as soon as a code is typed, and the
+   * server records the same variant for a valid code.
+   */
+  code?: { payNotice: string; aviso: CountryLegal["aviso"] };
 }
 
 /** One compressed photo of a person, with the object URL of its thumbnail. */
@@ -126,6 +132,10 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
   const legal = countries[country]!;
   const consentBox = legal.checkboxes.find((k) => k.id === "K1")!;
   const payNotice = legal.checkboxes.find((k) => k.id === "K2")!;
+  // With a test code typed, the buyer sees (and the server records) the variant without "Al pagar" and without the card-charge verification.
+  const codeLegal = usingCode ? legal.code : undefined;
+  const shownAviso = codeLegal?.aviso ?? legal.aviso;
+  const shownPayNotice = codeLegal?.payNotice ?? payNotice.text;
   const allChecked = !!checked[consentBox.id];
   const detailLabel = lang === "es" ? "Ver detalle" : "See details";
 
@@ -519,8 +529,8 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
         <details className="mt-1">
           <summary className="flex min-h-[44px] cursor-pointer items-center text-sm font-semibold underline">{detailLabel}</summary>
           <div className="mt-2 space-y-2 text-sm">
-            <p>{legal.aviso.intro}</p>
-            {legal.aviso.sections.map((s) => <p key={s.heading}><strong>{s.heading}</strong> {s.body}</p>)}
+            <p>{shownAviso.intro}</p>
+            {shownAviso.sections.map((s) => <p key={s.heading}><strong>{s.heading}</strong> {s.body}</p>)}
             <p>{legal.aviso.privacyLink.split(/:\s/)[0]}: <a className="font-semibold underline" href={`/colorear/${lang}/privacidad`} target="_blank" rel="noreferrer">/colorear/{lang}/privacidad</a></p>
           </div>
         </details>
@@ -548,9 +558,10 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
           {err("code")}
         </details>
       )}
-      <p className="text-sm font-semibold">{variant === "bundle3" ? legal.trioRefundLine : legal.refundLine}</p>
+      {/* No charge with a test code, so no refund promise (the variant of the notice says so too). */}
+      {!usingCode && <p className="text-sm font-semibold">{variant === "bundle3" ? legal.trioRefundLine : legal.refundLine}</p>}
       <p className="text-sm">
-        {payNotice.text}{" "}
+        {shownPayNotice}{" "}
         <a className="font-semibold underline" href={`/colorear/${lang}/terminos`} target="_blank" rel="noreferrer">{lang === "es" ? "Términos" : "Terms"}</a>
         {" · "}
         <a className="font-semibold underline" href={`/colorear/${lang}/privacidad`} target="_blank" rel="noreferrer">{lang === "es" ? "Privacidad" : "Privacy"}</a>

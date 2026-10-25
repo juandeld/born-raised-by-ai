@@ -348,7 +348,8 @@ export class ColorearEngine {
     }
     const updated = codeHash ? order : await this.d.db.orders.update(order.id, { checkout_id: session.checkoutId, payment_provider: session.provider });
     const base = this.props(updated);
-    const resolved = resolveAllColorearCheckboxes(lang === "en" ? "en" : input.country === "ES" ? "es-ES" : "es-419", this.legalVars());
+    // An order made with a test code records the code variant of K2 (`...-colorear-v5-code`): nothing is charged, so it must not say "Al pagar".
+    const resolved = resolveAllColorearCheckboxes(lang === "en" ? "en" : input.country === "ES" ? "es-ES" : "es-419", this.legalVars(), { test: !!codeHash });
     await this.d.tracker.track("consent_given", { ...base, checkbox_ids: [...COLOREAR_CHECKBOX_ORDER], text_version_ids: resolved.map((c) => c.textVersionId) });
     await this.d.tracker.track("checkout_started", { ...base, variant, amount_usd_cents: updated.amount_usd_cents, currency: updated.currency, payment_provider: session.provider, photos_per_person: photoCounts });
     if (codeHash) {
@@ -433,7 +434,8 @@ export class ColorearEngine {
     const draft = order.consent_draft;
     if (!draft) throw new Error(`Order ${order.id} has no consent draft`);
     const lang = (this.details(order)?.lang ?? "es") === "en" ? "en" : order.country === "ES" ? "es-ES" : "es-419";
-    for (const c of resolveAllColorearCheckboxes(lang, this.legalVars())) {
+    // Same variant the buyer saw: the text of an order made with a test code says "Al usar el código", not "Al pagar".
+    for (const c of resolveAllColorearCheckboxes(lang, this.legalVars(), { test: this.isTestCodeOrder(order) })) {
       if (!draft.checkbox_ids.includes(c.checkboxId)) continue;
       await this.d.db.consents.insert({
         order_id: order.id,
@@ -531,9 +533,14 @@ export class ColorearEngine {
     return this.hashEmail(`offers:${email.trim().toLowerCase()}`);
   }
 
-  /** Commercial content (the offer) needs: not unsubscribed, and fewer than COLOREAR_LEGAL_RULES.maxCommercialEmails sent for this order. */
+  /**
+   * Commercial content (the offer) needs: not unsubscribed, and fewer than COLOREAR_LEGAL_RULES.maxCommercialEmails sent for this order.
+   * Never for an order made with a test code or for the free Trio adventures of one: nobody bought anything, so there is no prior sale that
+   * allows an offer without consent (PECR reg. 22, LSSI art. 21.2), and it would count against the limit of three.
+   */
   private async commercialAllowed(o: OrderRow): Promise<boolean> {
     if (!o.email) return false;
+    if (await this.isTestCodeFamily(o)) return false;
     if ((this.details(o)?.commercialEmails ?? 0) >= COLOREAR_LEGAL_RULES.maxCommercialEmails) return false;
     return !(await this.d.db.suppression.get(await this.offersKey(o.email)));
   }

@@ -63,6 +63,15 @@ describe("the code field on the form", () => {
     expect(await render("es", false)).not.toContain("¿Tienes un código?");
     expect(await render("en", false)).not.toContain("Have a code?");
   });
+  it("shows the ordinary acceptance sentence and the refund line until a code is typed; the code variant is only in the page data", async () => {
+    const withVariant = { ...legal, checkboxes: [{ id: "K1", text: "k1" }, { id: "K2", text: "Al pagar, acepto" }], code: { payNotice: "Al usar el código, acepto", aviso: { title: "a", intro: "intro de prueba", sections: [{ heading: "H:", body: "a quien conocemos personalmente" }], privacyLink: "p: x" } } };
+    const { ColorearForm } = await import("../apps/web/src/components/colorear/ColorearForm");
+    const html = renderToStaticMarkup(createElement(ColorearForm, { lang: "es", countries: { MX: withVariant }, defaultCountry: "MX", themes: [], creative: "x", codeEnabled: true }));
+    expect(html).toContain("Al pagar, acepto");
+    expect(html).toContain("rf"); // the refund line
+    expect(html).not.toContain("Al usar el código, acepto");
+    expect(html).not.toContain("a quien conocemos personalmente");
+  });
   it("the form never receives the codes themselves, only the on/off flag", async () => {
     const { colorearTestCodesEnabled } = await import("@lumen/config");
     expect(colorearTestCodesEnabled(env)).toBe(true);

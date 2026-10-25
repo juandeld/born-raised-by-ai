@@ -3,14 +3,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import sharp from "sharp";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { COLOREAR_LANGS, colorearResendFrom } from "@lumen/config";
+import { COLOREAR_LANGS, colorearBrandConfig, colorearResendFrom, colorearSupportEmail } from "@lumen/config";
 import { createDelivery } from "@lumen/calls";
 import { composeColorearMessage, createColorearEngine, type ColorearCheckoutInput } from "@lumen/generate";
 
 /**
  * Pintoria emails never come from "Jinglo" (Santa's display name in the shared RESEND_FROM): the sender is the brand name with the same
- * address as RESEND_FROM (no new DNS), or COLOREAR_RESEND_FROM once pintoria.app is verified; replies go to the support address of the
- * legal texts. Santa keeps RESEND_FROM and sends no reply-to.
+ * address as RESEND_FROM (no new DNS), or COLOREAR_RESEND_FROM once pintoria.app is verified; replies go to COLOREAR_SUPPORT_EMAIL (default
+ * soporte@pintoria.app: lumen-labs.co has no MX records, so a reply sent there bounces), the same address the legal texts and the emails
+ * print. Santa keeps RESEND_FROM, SUPPORT_EMAIL and sends no reply-to.
  */
 interface Sent { url: string; body: Record<string, unknown> }
 const sent: Sent[] = [];
@@ -41,6 +42,21 @@ describe("colorearResendFrom", () => {
     expect(colorearResendFrom({ COLOREAR_RESEND_FROM: "Pintoria <hola@pintoria.app>", RESEND_FROM: "Jinglo <hola@lumen-labs.co>" })).toBe("Pintoria <hola@pintoria.app>");
     expect(colorearResendFrom({ COLOREAR_RESEND_FROM: "   ", RESEND_FROM: "Jinglo <hola@lumen-labs.co>" })).toBe("Pintoria <hola@lumen-labs.co>");
     expect(colorearResendFrom({ COLOREAR_RESEND_FROM: "Pintoria", RESEND_FROM: "Jinglo <hola@lumen-labs.co>" })).toBe("Pintoria <hola@lumen-labs.co>");
+  });
+});
+
+describe("colorearSupportEmail", () => {
+  it("defaults to soporte@pintoria.app, follows COLOREAR_SUPPORT_EMAIL and never SUPPORT_EMAIL (Santa's)", () => {
+    expect(colorearSupportEmail({})).toBe("soporte@pintoria.app");
+    expect(colorearSupportEmail({ SUPPORT_EMAIL: "soporte@lumen-labs.co" })).toBe("soporte@pintoria.app");
+    expect(colorearSupportEmail({ COLOREAR_SUPPORT_EMAIL: " ayuda@pintoria.app " })).toBe("ayuda@pintoria.app");
+    expect(colorearSupportEmail({ COLOREAR_SUPPORT_EMAIL: "" })).toBe("soporte@pintoria.app");
+    expect(colorearSupportEmail({ COLOREAR_SUPPORT_EMAIL: "no es una dirección" })).toBe("soporte@pintoria.app");
+    expect(colorearSupportEmail({ COLOREAR_SUPPORT_EMAIL: "Soporte <a@b.co>" })).toBe("soporte@pintoria.app");
+  });
+  it("the colorear brand block carries Pintoria and its support address, and leaves Santa's alone", () => {
+    expect(colorearBrandConfig({ SUPPORT_EMAIL: "soporte@lumen-labs.co" })).toMatchObject({ brand: "Pintoria", supportEmail: "soporte@pintoria.app" });
+    expect(colorearBrandConfig({ COLOREAR_SUPPORT_EMAIL: "ayuda@pintoria.app" }).supportEmail).toBe("ayuda@pintoria.app");
   });
 });
 
@@ -82,21 +98,26 @@ describe("every colorear email", () => {
     expect((await engine.refundByLink(done.access_token)).refunded).toBe(true);
   }
 
-  it("comes from Pintoria on the address of RESEND_FROM, replies to support, and never says Jinglo (receipt, delivery, refund)", async () => {
+  it("comes from Pintoria on the address of RESEND_FROM, replies to soporte@pintoria.app, and never says Jinglo (receipt, delivery, refund)", async () => {
     stubResend();
-    await lifecycle(baseEnv());
+    // SUPPORT_EMAIL is Santa's (as in production): it must not leak into a Pintoria email, whose domain has no MX records for it.
+    await lifecycle({ ...baseEnv(), SUPPORT_EMAIL: "soporte@lumen-labs.co" });
     expect(sent.length).toBeGreaterThanOrEqual(3); // receipt, delivery and refund
     for (const s of sent) {
       expect(s.body.from).toBe("Pintoria <hola@lumen-labs.co>");
-      expect(s.body.reply_to).toBe("soporte@lumen-labs.co");
+      expect(s.body.reply_to).toBe("soporte@pintoria.app");
       expect(JSON.stringify(s.body)).not.toMatch(/jinglo/i); // from, reply_to, subject, text and html
+      expect(String(s.body.text ?? "")).not.toContain("soporte@lumen-labs.co");
     }
+    // the address printed at the foot of the delivery and refund emails is the one replies go to
+    const printed = sent.filter((s) => String(s.body.text ?? "").includes("soporte@pintoria.app"));
+    expect(printed.length).toBeGreaterThanOrEqual(2);
     expect(sent.map((s) => String(s.body.subject)).join(" | ")).toMatch(/Pintoria/);
   });
 
-  it("follows COLOREAR_RESEND_FROM and SUPPORT_EMAIL when they are set", async () => {
+  it("follows COLOREAR_RESEND_FROM and COLOREAR_SUPPORT_EMAIL when they are set", async () => {
     stubResend();
-    await lifecycle({ ...baseEnv(), COLOREAR_RESEND_FROM: "Pintoria <hola@pintoria.app>", SUPPORT_EMAIL: "ayuda@pintoria.app" });
+    await lifecycle({ ...baseEnv(), COLOREAR_RESEND_FROM: "Pintoria <hola@pintoria.app>", COLOREAR_SUPPORT_EMAIL: "ayuda@pintoria.app", SUPPORT_EMAIL: "soporte@lumen-labs.co" });
     expect(sent.length).toBeGreaterThanOrEqual(3);
     for (const s of sent) expect(s.body).toMatchObject({ from: "Pintoria <hola@pintoria.app>", reply_to: "ayuda@pintoria.app" });
   });
