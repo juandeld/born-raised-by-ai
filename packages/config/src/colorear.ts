@@ -148,8 +148,13 @@ export function colorearBrandName(env: Record<string, string | undefined> = proc
   return env.COLOREAR_BRAND_NAME?.trim() || "Pintoria";
 }
 
+/** Plain mailbox (no display name); the same check for every colorear address taken from the environment. */
+const MAILBOX_RE = /^[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+$/;
+
 /** Support mailbox of Pintoria. The domain pintoria.app forwards its mail (ImprovMX); lumen-labs.co has no MX records, so replies sent there bounce. */
 export const COLOREAR_SUPPORT_EMAIL_DEFAULT = "soporte@pintoria.app";
+/** Privacy mailbox of Pintoria (rights requests, list of sub-processors on request): same domain and same reason as the support one. */
+export const COLOREAR_PRIVACY_EMAIL_DEFAULT = "privacidad@pintoria.app";
 
 /**
  * Support address shown in every Pintoria text (legal notice, terms, emails, footer) and used as `reply_to`: `COLOREAR_SUPPORT_EMAIL`, default
@@ -157,12 +162,21 @@ export const COLOREAR_SUPPORT_EMAIL_DEFAULT = "soporte@pintoria.app";
  */
 export function colorearSupportEmail(env: Record<string, string | undefined> = process.env): string {
   const v = env.COLOREAR_SUPPORT_EMAIL?.trim();
-  return v && /^[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+$/.test(v) ? v : COLOREAR_SUPPORT_EMAIL_DEFAULT;
+  return v && MAILBOX_RE.test(v) ? v : COLOREAR_SUPPORT_EMAIL_DEFAULT;
 }
 
-/** Brand block of colorear: the shared one with Pintoria's name and support address (never Santa's). */
+/**
+ * Privacy contact printed in every Pintoria text (notice, privacy page, receipt): `COLOREAR_PRIVACY_EMAIL`, default `privacidad@pintoria.app`.
+ * It does not follow `PRIVACY_EMAIL`, which belongs to Santa. A value that is not a plain address is ignored.
+ */
+export function colorearPrivacyEmail(env: Record<string, string | undefined> = process.env): string {
+  const v = env.COLOREAR_PRIVACY_EMAIL?.trim();
+  return v && MAILBOX_RE.test(v) ? v : COLOREAR_PRIVACY_EMAIL_DEFAULT;
+}
+
+/** Brand block of colorear: the shared one with Pintoria's name and mailboxes (never Santa's). */
 export function colorearBrandConfig(env: Record<string, string | undefined> = process.env): BrandConfig {
-  return { ...brandConfig(env), brand: colorearBrandName(env), supportEmail: colorearSupportEmail(env) };
+  return { ...brandConfig(env), brand: colorearBrandName(env), supportEmail: colorearSupportEmail(env), privacyEmail: colorearPrivacyEmail(env) };
 }
 
 /** Plain address inside "Name <addr>" (or a bare address); null when there is none. */
