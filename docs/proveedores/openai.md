@@ -65,6 +65,8 @@ Cambio reciente: las Service Terms se actualizaron el 16-oct-2026, tres días an
 
 ## Pendiente para `legal-compliance` (25-oct-2026, arquitecto)
 
+**Resuelto el 25-oct-2026 por `legal-compliance`**: ver `docs/legal/aprobaciones/colorear-codigo-prueba-3-fotos.md` (aviso aprobado, sube a `colorear-legal-v5`; 3 fotos encajan con las 8 condiciones; el cambio de modelo sigue provisional como indica la sección "Actualización 25-oct-2026").
+
 Dos cambios técnicos de Pintoria que necesitan su revisión escrita antes de dar el visto bueno al lanzamiento. Ninguno cambió el modelo de producción: el valor por defecto del código sigue siendo `gpt-image-1-mini` y el arquitecto no tocó ninguna variable en Vercel (el valor que `OPENAI_IMAGE_MODEL` tenga allí no fue verificado desde el repositorio).
 
 1. **Cambio de modelo de imagen.** La página de deprecaciones de OpenAI anuncia el apagado de `gpt-image-1-mini` el 2026-12-01 (reemplazos `gpt-image-2.5-flare` y `gpt-image-2.5-sunburst`; `gpt-image-1` ya se apagó el 2026-10-23). El proveedor del repositorio ya lo soporta detrás de `OPENAI_IMAGE_MODEL` (no envía `input_fidelity` ni `response_format`, que los modelos nuevos rechazan o piden omitir). Antes de que Juan elija el modelo: leer la política y los términos vigentes de los modelos 2.5 (uso aceptable, fotos de menores, retención y entrenamiento) y dejar la cita en este archivo, como pide D27. Las condiciones 1 a 8 de arriba se asumen iguales hasta que se confirme.
@@ -109,7 +111,7 @@ Acción: Juan o `arquitecto` abren las tres páginas en un navegador, comparan c
 
 ### Cambio 2 del bloque "Pendiente" (hasta 3 fotos por persona)
 
-No se revisó en esta ronda: la revisión pedida a `legal-compliance` sigue abierta. Sobre la política del proveedor: la lectura no encontró límite de fotos por persona ni por pedido en la política de OpenAI; el punto que queda es del aviso de privacidad (si pasa a `colorear-legal-v5`).
+Revisado el mismo día en `docs/legal/aprobaciones/colorear-codigo-prueba-3-fotos.md`: la política de OpenAI no limita las fotos por persona ni por pedido; el aviso nuevo se aprueba y la versión sube a `colorear-legal-v5` (el cambio lo hace `arquitecto`).
 
 ## No verificado
 

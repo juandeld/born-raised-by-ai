@@ -111,6 +111,7 @@ Ninguna de estas funciones compensa el veredicto de la tabla anterior: Dodo es l
 - España: ¿una llamada pedida y pagada por el padre es "comercial" a efectos del prefijo +34400?
 - IVA de Reino Unido, España y México al cobrar sin comerciante de registro (con el contador).
 - Proveedores de imagen (25-oct-2026): ¿la cláusula de Google sobre servicios "dirigidos o probablemente accesibles" a menores de 18 alcanza a un libro para niños comprado por un adulto, con fotos de menores subidas por su padre? Y, si se eligiera un proveedor del grupo ByteDance o Alibaba: la regla del Departamento de Justicia de EE. UU. sobre transferencia de datos sensibles (28 CFR Parte 202) respecto a fotos de menores [no verificado si aplica].
+- Pedidos de prueba sin cargo y fotos de rostros desde varios ángulos (25-oct-2026): ¿aplica COPPA si el adulto sube las fotos y no hay cargo de tarjeta? ¿leyes biométricas de EE. UU. (Illinois, Texas, Washington) con un modelo de terceros? Ver `docs/legal/aprobaciones/colorear-codigo-prueba-3-fotos.md`, sección 8.
 - Fotos de menores como entrada: tratamiento bajo COPPA y GDPR del proveedor de imágenes elegido, y qué dice la política de privacidad sobre copias de seguridad de 30 días (OpenAI) o 55 a 90 días (Google).
 
 ## 7. Cambios de política próximos
