@@ -206,3 +206,10 @@ Cambio visible: el selector "Edad" (3 a 8) pasa a 5 niveles con tarjetas: 3-4, 5
 - El nivel "Adultos" no cambia el precio, ni el flujo de pago, ni los datos recogidos (sigue siendo un número de nivel; ya no es la edad exacta de nadie).
 - Las muestras del selector: tres usan los dibujos de ejemplo ya publicados en la portada; los dos niveles finos muestran un patrón de línea dibujado a mano (no es una página real), con texto alternativo que lo dice. Falta cambiarlos por páginas reales cuando se corra `npm run colorear:levels` con el motor real.
 - Prueba real pendiente para Juan: `npm run colorear:levels -- --out <carpeta fuera del repo>` con `IMAGE_PROVIDER` real (6 imágenes, unos USD 0.3), con un zorro de dibujos animados como personaje: sin personas reales.
+
+## Prueba de parecido del 25-oct (variables cargadas en Vercel, Production y Preview)
+
+- `COLOREAR_CHARACTER_MODEL=gpt-image-2.5-sunburst-2026-09-08`, `COLOREAR_CHARACTER_QUALITY=medium` (personajes).
+- `OPENAI_IMAGE_MODEL=gpt-image-2.5-flare-2026-09-08` (páginas; `gpt-image-1-mini` se apaga el 1-dic-2026).
+- Solo para el piloto cerrado con código (D28: fotos de menores de 13 bajo riesgo aceptado por Juan). Antes de cobrar: retención cero aprobada por OpenAI o proveedor alternativo con D27 permitido.
+- Resultado con `gpt-image-1-mini` y el prompt nuevo (pedido e926bf31): sin lentes inventados, pero el parecido sigue genérico y la portada añadió 3 niños que no existen. Se compara contra 2.5.
