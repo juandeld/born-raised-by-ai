@@ -41,31 +41,57 @@ export interface InspectOptions {
   emptyTop?: number;
 }
 
+/**
+ * Most ink a page may carry, per detail level. The finer levels (9-12, adults/mandala) are meant to be dense.
+ * (Incident of 25-oct: three real orders of levels 7-8, 9-12 and adults failed with too_many_fallback_pages because the
+ * review rejected their fine lines; see inspectLineArt.)
+ */
+export function maxInkFor(band: string): number {
+  return band === "adult" ? 0.42 : band === "9-12" ? 0.36 : 0.3;
+}
+
+/**
+ * Reviews a page at full resolution (1024 x 1536). Shading is a mid-gray pixel with NO ink within 2 px: the anti-aliased edge of a
+ * line is gray too, and on fine or dense line art (mandalas, hatching-free textures) those edges are most of the page, so a plain
+ * gray count at a reduced size rejected every detailed drawing. A real gray fill or gradient has gray pixels away from any line.
+ */
 export async function inspectLineArt(bytes: Uint8Array, opts: InspectOptions = {}): Promise<LineArtReport> {
   const sharp = await loadSharp();
   if (!sharp) return { ok: true, reasons: [], ink: 0, colored: 0, gray: 0, checked: false };
-  const W = 256;
-  const H = 384;
+  const W = 1024;
+  const H = 1536;
   const { data } = await sharp(Buffer.from(bytes)).flatten({ background: "#ffffff" }).resize(W, H, { fit: "fill" }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  const n = W * H;
+  const lumOf = new Uint8Array(n);
   let dark = 0;
   let colored = 0;
-  let gray = 0;
   let topInk = 0;
   const topRows = Math.floor(H * (opts.emptyTop ?? 0));
-  for (let i = 0; i < W * H; i++) {
+  for (let i = 0; i < n; i++) {
     const r = data[i * 3]!;
     const g = data[i * 3 + 1]!;
     const b = data[i * 3 + 2]!;
-    const mx = Math.max(r, g, b);
-    const mn = Math.min(r, g, b);
     const lum = (r + g + b) / 3;
-    if (mx - mn > 45) colored++;
+    lumOf[i] = lum;
+    if (Math.max(r, g, b) - Math.min(r, g, b) > 45) colored++;
     if (lum < 110) {
       dark++;
       if (i < topRows * W) topInk++;
-    } else if (lum < 215) gray++;
+    }
   }
-  const n = W * H;
+  const isDark = (i: number) => lumOf[i]! < 110;
+  let gray = 0;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const i = y * W + x;
+      const l = lumOf[i]!;
+      if (l < 110 || l >= 215) continue;
+      const near =
+        (x >= 2 && isDark(i - 2)) || (x + 2 < W && isDark(i + 2)) || (y >= 2 && isDark(i - 2 * W)) || (y + 2 < H && isDark(i + 2 * W)) ||
+        (x >= 1 && isDark(i - 1)) || (x + 1 < W && isDark(i + 1)) || (y >= 1 && isDark(i - W)) || (y + 1 < H && isDark(i + W));
+      if (!near) gray++;
+    }
+  }
   const ink = dark / n;
   const col = colored / n;
   const gr = gray / n;
@@ -73,7 +99,7 @@ export async function inspectLineArt(bytes: Uint8Array, opts: InspectOptions = {
   if (ink < (opts.minInk ?? 0.008)) reasons.push("too_little_ink");
   if (ink > (opts.maxInk ?? 0.3)) reasons.push("too_much_ink");
   if (col > 0.02) reasons.push("has_color");
-  if (gr > 0.2) reasons.push("has_gray_or_shading");
+  if (gr > 0.05) reasons.push("has_gray_or_shading");
   if (topRows && topInk / (topRows * W) > 0.01) reasons.push("cover_top_not_empty");
   return { ok: reasons.length === 0, reasons, ink, colored: col, gray: gr, checked: true };
 }

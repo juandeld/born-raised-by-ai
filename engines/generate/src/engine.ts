@@ -14,7 +14,7 @@ import { composeColorearMessage, type MailVars } from "./emails";
 import { signLink, verifyLink } from "./link";
 import { TEST_CODE_PROVIDER, isTestCodeRef, matchTestCode, testCodeHash, testCodeRef } from "./test-code";
 import { buildCharacterFromTextPrompt, buildCharacterPrompt, buildCoverPrompt, buildScenePrompt } from "./prompt";
-import { inspectLineArt, normalizeLineArt } from "./qa";
+import { inspectLineArt, maxInkFor, normalizeLineArt } from "./qa";
 import { composeCoverFromCharacters } from "./cover";
 import { assembleBook } from "./pdf";
 import { resolvePersonRole, sanitizePersonName, sanitizeShortText, storyLabelsOf } from "./sanitize";
@@ -746,6 +746,7 @@ export class ColorearEngine {
 
     const render = async (label: string, req: Parameters<ImageProvider["render"]>[0], inspect: { emptyTop?: number }, counter: { attempts: number }): Promise<{ img: GeneratedImage; bytes: Uint8Array; ext: "png" | "svg"; fallback: boolean }> => {
       let lastReason = "";
+      let rateLimited = 0;
       for (let attempt = 0; attempt < 3; attempt++) {
         if (remaining() < 5000) throw new BudgetError();
         if (state.costCents > cap) throw new FatalGenError("cost_cap");
@@ -756,7 +757,7 @@ export class ColorearEngine {
           state.costCents += img.costUsdCents;
           if (img.format === "svg") return { img, bytes: img.bytes, ext: "svg", fallback: false };
           const norm = await normalizeLineArt(img.bytes);
-          const rep = await inspectLineArt(norm, inspect);
+          const rep = await inspectLineArt(norm, { maxInk: maxInkFor(req.ageBand), ...inspect });
           if (rep.ok) return { img, bytes: norm, ext: "png", fallback: false };
           lastReason = `qa:${rep.reasons.join("+")}`;
         } catch (err) {
@@ -772,6 +773,8 @@ export class ColorearEngine {
               const wait = Math.min(err.retryAfterMs ?? 6000, 20_000);
               if (remaining() < wait + 8000) throw new BudgetError();
               await sleep(wait);
+              // a rate limit says nothing about the page: wait and ask again without using one of its 3 attempts (up to 8 times)
+              if (rateLimited++ < 8) attempt--;
             }
           } else lastReason = "unknown";
         }
