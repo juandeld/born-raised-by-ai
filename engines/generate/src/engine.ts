@@ -3,7 +3,7 @@ import type { Tracker } from "@lumen/analytics";
 import type { BaseProps } from "@lumen/analytics";
 import { piiHashKey } from "@lumen/config/secrets";
 import {
-  COLOREAR, COUNTRIES, IMAGE_COST_USD_CENTS, ageBandOf, booksIn, colorearCountries, colorearLegalLocale, colorearMockPayAllowed, colorearPhotoLimits, colorearPrice, colorearPublicUrl, colorearTestCodeLimits, formatPrice, isSelectableVariant, isThemeId, isValidAge, openaiImageFamily, paperFor, themeLabel, toUsdCents,
+  COLOREAR, COUNTRIES, IMAGE_COST_USD_CENTS, ageBandOf, booksIn, colorearAdultLevelEnabled, colorearCountries, colorearLegalLocale, colorearMockPayAllowed, colorearPhotoLimits, colorearPrice, colorearPublicUrl, colorearTestCodeLimits, formatPrice, isSelectableVariant, isThemeId, isValidAge, openaiImageFamily, paperFor, themeLabel, toUsdCents,
   addDays, DAY_MS, type AgeBand, type BrandConfig, type ColorearLang, type ColorearVariant, type CountryCode,
 } from "@lumen/config";
 import type { DeliveryProvider, Storage } from "@lumen/calls";
@@ -108,6 +108,25 @@ export interface RunResult {
 }
 
 class FatalGenError extends Error {}
+
+/** Detail level one step lighter, for the last-resort step-down (adults -> 9-12 -> 7-8). The younger levels have nothing lighter to try. */
+function lighterBand(b: AgeBand): AgeBand | null {
+  return b === "adult" ? "9-12" : b === "9-12" ? "7-8" : null;
+}
+
+/**
+ * Counts why pages were retried, from the per-attempt issues ("page5#2:qa:too_much_ink+has_gray_or_shading"), for the failure log line.
+ * Only reason codes, never names, photos or prompts. Example: "qa:too_much_ink=14, qa:has_gray=3, moderation=0, rate_limit=2".
+ */
+export function reasonCounts(issues: string[] = []): string {
+  const counts = new Map<string, number>([["moderation", 0], ["rate_limit", 0]]);
+  for (const it of issues) {
+    const reason = it.slice(it.indexOf(":") + 1);
+    const parts = reason.startsWith("qa:") ? reason.slice(3).split("+").map((r) => `qa:${r.replace("has_gray_or_shading", "has_gray")}`) : [reason];
+    for (const r of parts) counts.set(r, (counts.get(r) ?? 0) + 1);
+  }
+  return [...counts].map(([k, v]) => `${k}=${v}`).join(", ");
+}
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const token = () => randomBytes(16).toString("hex");
@@ -268,7 +287,7 @@ export class ColorearEngine {
       else theme = t.value;
     }
     const age = Number(input.age);
-    if (!isValidAge(age)) errors.age = "Choose one of the five levels";
+    if (!isValidAge(age) || (ageBandOf(age) === "adult" && !colorearAdultLevelEnabled(this.d.env))) errors.age = "Choose one of the detail levels";
     const checked = new Set(input.checkboxIds);
     if (!COLOREAR_CHECKBOX_ORDER.every((id) => checked.has(id))) errors.consent = "All consent boxes are required";
     if (input.variant !== undefined && !isSelectableVariant(input.variant)) errors.variant = "Unknown option";
@@ -323,7 +342,7 @@ export class ColorearEngine {
       variant,
       calls_included: 0,
       country: input.country,
-      locale: colorearLegalLocale(input.country),
+      locale: colorearLegalLocale(input.country, input.lang),
       language: languageCode,
       currency: price.currency,
       // A test-code order has no price: it is never charged and never refunded.
@@ -767,6 +786,7 @@ export class ColorearEngine {
             lastReason = err.kind;
             if (err.kind === "moderation") {
               await this.d.tracker.track("content_blocked", { ...this.props(order), stage: "output", reason: `${label}:moderation` });
+              (state.issues ??= []).push(`${label}#${attempt + 1}:moderation`.slice(0, 80));
               throw new ModerationError(err.message);
             }
             if (err.kind === "rate_limit") {
@@ -842,54 +862,81 @@ export class ColorearEngine {
       const story = state.story!;
 
       // ---------------- stage 3: cover + scenes
-      if (state.pages.some((p) => p.status === "pending")) {
-        state.stage = "scenes";
-        await save();
-        const charRefs = new Map<number, RefImage>();
+      type PageState = (typeof state.pages)[number];
+      const loadCharRefs = async () => {
+        const m = new Map<number, RefImage>();
         for (const c of state.characters) {
           if (c.ext !== "png") continue;
           const f = await this.d.storage.get(charPath(orderId, c.k, "png"));
-          if (f) charRefs.set(c.k, { bytes: f.bytes, mime: "image/png" });
+          if (f) m.set(c.k, { bytes: f.bytes, mime: "image/png" });
         }
+        return m;
+      };
+      /** Draws one page with the prompt of detail level `bnd` (the buyer's own level, or a lighter one in the last-resort step-down). */
+      const renderPage = async (p: PageState, bnd: AgeBand, charRefs: Map<number, RefImage>) => {
+      const isCover = p.n === 0;
+      const scene = isCover ? null : story.scenes[p.n - 1]!;
+      const present = isCover ? roles.map((_, i) => i + 1) : scene!.present;
+      const refs = present.map((k) => charRefs.get(k)).filter((r): r is RefImage => !!r);
+      const visual = isCover
+        ? `${fillVisual("{all}", present, roles)} smiling and waving together${det.theme ? `, with a backdrop inspired by: ${det.theme}` : ", ready for an adventure with backpacks and a treasure map"}`
+        : fillVisual(scene!.visual, present, roles);
+      const prompt = isCover ? buildCoverPrompt(visual, bnd, refs.length) : buildScenePrompt(visual, bnd, refs.length);
+      const req = { prompt, width: 1024, height: 1536, quality, refs, kind: isCover ? ("cover" as const) : ("scene" as const), ageBand: bnd, hints: { roles: present.map((k) => roles[k - 1] ?? "person"), setting: scene?.visual ?? "", seed: p.n + 7 } };
+      let result;
+      try {
+        result = await render(`page${p.n}`, req, { emptyTop: isCover ? 0.05 : 0 }, p);
+      } catch (err) {
+        if (!(err instanceof ModerationError)) throw err;
+        // refused: ask again with a plain, safe description of the same scene
+        result = await render(`page${p.n}s`, { ...req, prompt: isCover ? buildCoverPrompt("the cartoon characters smiling together outdoors", bnd, refs.length) : buildScenePrompt("the cartoon characters smiling and playing together outdoors", bnd, refs.length) }, { emptyTop: 0 }, p).catch(async (e2) => {
+          if (!(e2 instanceof ModerationError)) throw e2;
+          const fb = await this.d.mockImage.render(req);
+          return { img: fb, bytes: fb.bytes, ext: "svg" as const, fallback: true };
+        });
+      }
+      if (isCover && result.fallback) {
+        // never a stick-figure cover: compose it from the real characters of this book
+        const collage = await composeCoverFromCharacters([...charRefs.values()].map((r) => r.bytes));
+        if (collage) {
+          result = { ...result, bytes: collage, ext: "png" as const, fallback: false };
+          (state.issues ??= []).push("cover:collage");
+        }
+      }
+      await this.d.storage.put(pagePath(orderId, p.n, result.ext), result.bytes, result.ext === "svg" ? "image/svg+xml" : "image/png");
+      p.ext = result.ext;
+      p.status = result.fallback ? "fallback" : "done";
+      await save();
+      };
+      if (state.pages.some((p) => p.status === "pending")) {
+        state.stage = "scenes";
+        await save();
+        const charRefs = await loadCharRefs();
         await pool(state.pages.filter((p) => p.status === "pending"), concurrency, async (p) => {
           if (remaining() < 5000) throw new BudgetError();
-          const isCover = p.n === 0;
-          const scene = isCover ? null : story.scenes[p.n - 1]!;
-          const present = isCover ? roles.map((_, i) => i + 1) : scene!.present;
-          const refs = present.map((k) => charRefs.get(k)).filter((r): r is RefImage => !!r);
-          const visual = isCover
-            ? `${fillVisual("{all}", present, roles)} smiling and waving together${det.theme ? `, with a backdrop inspired by: ${det.theme}` : ", ready for an adventure with backpacks and a treasure map"}`
-            : fillVisual(scene!.visual, present, roles);
-          const prompt = isCover ? buildCoverPrompt(visual, band, refs.length) : buildScenePrompt(visual, band, refs.length);
-          const req = { prompt, width: 1024, height: 1536, quality, refs, kind: isCover ? ("cover" as const) : ("scene" as const), ageBand: band, hints: { roles: present.map((k) => roles[k - 1] ?? "person"), setting: scene?.visual ?? "", seed: p.n + 7 } };
-          let result;
-          try {
-            result = await render(`page${p.n}`, req, { emptyTop: isCover ? 0.05 : 0 }, p);
-          } catch (err) {
-            if (!(err instanceof ModerationError)) throw err;
-            // refused: ask again with a plain, safe description of the same scene
-            result = await render(`page${p.n}s`, { ...req, prompt: isCover ? buildCoverPrompt("the cartoon characters smiling together outdoors", band, refs.length) : buildScenePrompt("the cartoon characters smiling and playing together outdoors", band, refs.length) }, { emptyTop: 0 }, p).catch(async (e2) => {
-              if (!(e2 instanceof ModerationError)) throw e2;
-              const fb = await this.d.mockImage.render(req);
-              return { img: fb, bytes: fb.bytes, ext: "svg" as const, fallback: true };
-            });
-          }
-          if (isCover && result.fallback) {
-            // never a stick-figure cover: compose it from the real characters of this book
-            const collage = await composeCoverFromCharacters([...charRefs.values()].map((r) => r.bytes));
-            if (collage) {
-              result = { ...result, bytes: collage, ext: "png" as const, fallback: false };
-              (state.issues ??= []).push("cover:collage");
-            }
-          }
-          await this.d.storage.put(pagePath(orderId, p.n, result.ext), result.bytes, result.ext === "svg" ? "image/svg+xml" : "image/png");
-          p.ext = result.ext;
-          p.status = result.fallback ? "fallback" : "done";
-          await save();
+          await renderPage(p, band, charRefs);
         });
-        const fallbacks = state.pages.filter((p) => p.status === "fallback").length;
-        if (fallbacks > 5 && state.provider !== "mock") throw new FatalGenError("too_many_fallback_pages");
       }
+      // Last resort before cancelling the book: pages that fell back to the local drawing are drawn again with the prompt of a LIGHTER level
+      // (adults -> 9-12 -> 7-8). Noted in `notes`; the buyer still gets real drawings, only less dense ones.
+      let stepBand: AgeBand = band;
+      while (state.provider !== "mock" && state.pages.filter((p) => p.status === "fallback").length > 5) {
+        const lower = lighterBand(stepBand);
+        if (!lower) break;
+        const redo = state.pages.filter((p) => p.status === "fallback");
+        state.stage = "scenes";
+        await save();
+        const charRefs = await loadCharRefs();
+        await pool(redo, concurrency, async (p) => {
+          if (remaining() < 5000) throw new BudgetError();
+          await renderPage(p, lower, charRefs);
+        });
+        const left = state.pages.filter((p) => p.status === "fallback").length;
+        state.notes.push(`band_stepdown:${stepBand}>${lower}:pages=${redo.length}:left=${left}`);
+        await save();
+        stepBand = lower;
+      }
+      if (state.pages.filter((p) => p.status === "fallback").length > 5 && state.provider !== "mock") throw new FatalGenError("too_many_fallback_pages");
 
       // ---------------- stage 4: assemble + deliver
       state.stage = "assemble";
@@ -953,7 +1000,9 @@ export class ColorearEngine {
         state.lease = null;
         await saving.catch(() => undefined);
         await this.putState(orderId, state);
-        await this.d.tracker.track("generation_failed", { ...this.props(order), reason: err.message, pages_done: state.pages.filter((p) => p.status !== "pending").length });
+        const reasons = reasonCounts(state.issues);
+        console.error(`[colorear] run ${orderId.slice(0, 8)} failed ${err.message} level=${band} fallback_pages=${state.pages.filter((p) => p.status === "fallback").length} reasons: ${reasons}`);
+        await this.d.tracker.track("generation_failed", { ...this.props(order), reason: err.message, reasons, level: band, pages_done: state.pages.filter((p) => p.status !== "pending").length });
         const fresh = (await this.d.db.orders.get(orderId)) ?? order;
         await this.markRefunded(fresh, "technical_failure", true, true);
         return { status: "failed", stage: "failed", reason: err.message };

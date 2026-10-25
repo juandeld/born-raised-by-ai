@@ -1,12 +1,12 @@
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 import { MemorySink, MultiSink, TableSink, Tracker } from "@lumen/analytics";
-import { AGE_LEVELS, COLOREAR, ageBandOf, brandConfig, isValidAge, type AgeBand } from "@lumen/config";
+import { AGE_LEVELS, COLOREAR, ageBandOf, colorearAdultLevelEnabled, brandConfig, isValidAge, type AgeBand } from "@lumen/config";
 import { MemoryStorage, MockDeliveryProvider } from "@lumen/calls";
 import { createMemoryDb } from "@lumen/db";
 import { MockPaymentProvider } from "@lumen/payments";
 import {
-  ColorearEngine, MockImageProvider, TemplateStoryProvider, adaptTone, audienceOf, buildCharacterPrompt, buildCoverPrompt, buildScenePrompt,
+  ColorearEngine, MockImageProvider, TemplateStoryProvider, adaptTone, audienceOf, NO_EXTRA_PEOPLE, buildCharacterPrompt, buildCoverPrompt, buildScenePrompt,
   type ImageProvider, type ImageRequest,
 } from "@lumen/generate";
 
@@ -73,7 +73,7 @@ describe("end to end with the mock engine: each level sends its own prompt", () 
     const db = createMemoryDb();
     const sink = new MemorySink();
     const rec = new Recorder();
-    const env = { COLOREAR_COUNTRIES: "MX", COLOREAR_PUBLIC_URL: "https://www.pintoria.app", LEGAL_ADDRESS: "Calle 1, Guatemala", PHONE_HASH_SALT: "s", COLOREAR_TEST_CODES: "PROMO2026", COLOREAR_MOCK_REAL_DAILY_CAP: "0" };
+    const env = { COLOREAR_COUNTRIES: "MX", COLOREAR_PUBLIC_URL: "https://www.pintoria.app", LEGAL_ADDRESS: "Calle 1, Guatemala", PHONE_HASH_SALT: "s", COLOREAR_TEST_CODES: "PROMO2026", COLOREAR_MOCK_REAL_DAILY_CAP: "0", COLOREAR_ADULT_LEVEL: "1" };
     const now = new Date("2026-11-20T15:00:00Z");
     const engine = new ColorearEngine({
       db, storage: new MemoryStorage(), uploads: new MemoryStorage(), delivery: new MockDeliveryProvider(), image: rec, mockImage: new MockImageProvider(), story: new TemplateStoryProvider(),
@@ -93,6 +93,34 @@ describe("end to end with the mock engine: each level sends its own prompt", () 
     for (const r of rec.seen.filter((r) => r.kind !== "character")) expect(r.prompt, `${band} ${r.kind}`).toContain(rule);
     expect(sink.events.find((e) => e.name === "generation_started")!.props).toMatchObject({ age_band: band });
   }, 60_000);
+
+  it("the adult level is closed unless COLOREAR_ADULT_LEVEL is on, and the other levels stay open", async () => {
+    const mk = (extra: Record<string, string>) => {
+      const db = createMemoryDb();
+      const env = { COLOREAR_COUNTRIES: "MX", COLOREAR_PUBLIC_URL: "https://www.pintoria.app", LEGAL_ADDRESS: "Calle 1, Guatemala", PHONE_HASH_SALT: "s", ...extra };
+      return new ColorearEngine({ db, storage: new MemoryStorage(), uploads: new MemoryStorage(), delivery: new MockDeliveryProvider(), image: new MockImageProvider(), mockImage: new MockImageProvider(), story: new TemplateStoryProvider(),
+        tracker: new Tracker(new MultiSink([new TableSink(db.events as never)]), () => new Date()), payments: new MockPaymentProvider("http://localhost:3000"), env, now: () => new Date(), brand: { ...brandConfig(env), brand: "Pintoria" } });
+    };
+    const errs = (e: ColorearEngine, age: number) => e.validate({ lang: "es", country: "MX", email: "a@example.com", persons: [{ name: "A", role: "niña" }], photos: [], theme: "", age, checkboxIds: [], ip: null } as never).errors.age;
+    const off = mk({});
+    expect(errs(off, 18)).toBeTruthy();
+    expect(errs(off, 13)).toBeTruthy();
+    for (const a of [4, 6, 8, 11]) expect(errs(off, a), `age ${a}`).toBeUndefined();
+    expect(errs(mk({ COLOREAR_ADULT_LEVEL: "1" }), 18)).toBeUndefined();
+    expect(colorearAdultLevelEnabled({})).toBe(false);
+    expect(colorearAdultLevelEnabled({ COLOREAR_ADULT_LEVEL: "true" })).toBe(true);
+  });
+
+  it("scene and cover prompts of every level forbid people who are not in the references (extra children on a cover, seen in production)", () => {
+    for (const b of BANDS) for (const n of [0, 1, 3]) {
+      for (const p of [buildScenePrompt("x", b, n), buildCoverPrompt("x", b, n)]) {
+        expect(p, `${b} ${n}`).toContain(NO_EXTRA_PEOPLE);
+        expect(p).toMatch(/Do not add any other person, child or human figure/);
+        expect(p).toMatch(/no extra children, crowds, passers-by or bystanders/);
+        expect(p).toMatch(/Generic animals and pets are allowed/);
+      }
+    }
+  });
 
   it("the form value of an unknown level is rejected", async () => {
     const db = createMemoryDb();

@@ -47,7 +47,7 @@ export interface InspectOptions {
  * review rejected their fine lines; see inspectLineArt.)
  */
 export function maxInkFor(band: string): number {
-  return band === "adult" ? 0.42 : band === "9-12" ? 0.36 : 0.3;
+  return band === "adult" ? 0.6 : band === "9-12" ? 0.4 : 0.3;
 }
 
 /**
@@ -79,17 +79,22 @@ export async function inspectLineArt(bytes: Uint8Array, opts: InspectOptions = {
       if (i < topRows * W) topInk++;
     }
   }
-  const isDark = (i: number) => lumOf[i]! < 110;
+  // A gray pixel is shading only when it sits in a flat area. Next to a line the neighborhood (2 px around) has strong contrast: the
+  // anti-aliased edge of a thick line is gray beside a dark pixel, and a 1 px line is gray beside white without any dark pixel at all.
   let gray = 0;
-  for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
+  for (let y = 2; y < H - 2; y++) {
+    for (let x = 2; x < W - 2; x++) {
       const i = y * W + x;
       const l = lumOf[i]!;
       if (l < 110 || l >= 215) continue;
-      const near =
-        (x >= 2 && isDark(i - 2)) || (x + 2 < W && isDark(i + 2)) || (y >= 2 && isDark(i - 2 * W)) || (y + 2 < H && isDark(i + 2 * W)) ||
-        (x >= 1 && isDark(i - 1)) || (x + 1 < W && isDark(i + 1)) || (y >= 1 && isDark(i - W)) || (y + 1 < H && isDark(i + W));
-      if (!near) gray++;
+      let lo = l;
+      let hi = l;
+      for (const d of [1, 2, W, 2 * W, -1, -2, -W, -2 * W]) {
+        const v = lumOf[i + d]!;
+        if (v < lo) lo = v;
+        if (v > hi) hi = v;
+      }
+      if (hi - lo < 60) gray++;
     }
   }
   const ink = dark / n;

@@ -1,12 +1,12 @@
 import sharp from "sharp";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { MemorySink, MultiSink, TableSink, Tracker } from "@lumen/analytics";
 import { AGE_LEVELS, brandConfig } from "@lumen/config";
 import { MemoryStorage, MockDeliveryProvider } from "@lumen/calls";
 import { createMemoryDb } from "@lumen/db";
 import { MockPaymentProvider } from "@lumen/payments";
 import {
-  ColorearEngine, ImageProviderError, MockImageProvider, TemplateStoryProvider, inspectLineArt, maxInkFor, normalizeLineArt,
+  ColorearEngine, ImageProviderError, reasonCounts, MockImageProvider, TemplateStoryProvider, inspectLineArt, maxInkFor, normalizeLineArt,
   type GeneratedImage, type ImageProvider, type ImageRequest,
 } from "@lumen/generate";
 
@@ -40,9 +40,26 @@ describe("line-art review", () => {
     expect(color.reasons).toContain("has_color");
   });
 
+  it("accepts very dense zentangle art for adults: 1 px lines, ink above 50 %, small black blobs between patterns", async () => {
+    const dense = async (sw: number, step: number, blobs: boolean) => {
+      let g = "";
+      for (let y = 0; y < 1536; y += step) g += `<path d="M0 ${y} Q 128 ${y + step} 256 ${y} T 512 ${y} T 768 ${y} T 1024 ${y}"/>`;
+      for (let x = 0; x < 1024; x += step) g += `<line x1="${x}" y1="0" x2="${x}" y2="1536"/>`;
+      if (blobs) for (let y = 40; y < 1536; y += 90) for (let x = 40; x < 1024; x += 90) g += `<circle cx="${x}" cy="${y}" r="7" fill="black"/>`;
+      return new Uint8Array(await sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1536"><rect width="1024" height="1536" fill="white"/><g fill="none" stroke="black" stroke-width="${sw}">${g}</g></svg>`)).png().toBuffer());
+    };
+    for (const [sw, step, blobs] of [[1, 5, false], [1, 4, true], [2, 7, true], [3, 9, true]] as const) {
+      const img = await dense(sw, step, blobs);
+      const r = await inspectLineArt(await normalizeLineArt(img), { maxInk: maxInkFor("adult") });
+      expect(r.reasons, `stroke ${sw}, step ${step}, ink ${r.ink.toFixed(2)}, gray ${r.gray.toFixed(3)}`).toEqual([]);
+    }
+    const heavy = await inspectLineArt(await normalizeLineArt(await dense(3, 6, true)), { maxInk: maxInkFor("adult") });
+    expect(heavy.ink).toBeGreaterThan(0.45); // the case above 0.42 that the previous limit would have rejected
+  });
+
   it("allows more ink for the finer levels and keeps the limit of the young ones", async () => {
     expect(maxInkFor("3-4")).toBe(0.3); expect(maxInkFor("7-8")).toBe(0.3);
-    expect(maxInkFor("9-12")).toBeGreaterThan(0.3); expect(maxInkFor("adult")).toBeGreaterThan(maxInkFor("9-12"));
+    expect(maxInkFor("9-12")).toBeGreaterThan(0.3); expect(maxInkFor("adult")).toBeGreaterThanOrEqual(0.55);
     const black = new Uint8Array(await sharp({ create: { width: 1024, height: 1536, channels: 3, background: "#000" } }).png().toBuffer());
     expect((await check(black, "adult")).reasons).toContain("too_much_ink");
   });
@@ -65,10 +82,10 @@ class Limited implements ImageProvider {
   }
 }
 
-async function run(band: (typeof AGE_LEVELS)[number], provider: ImageProvider) {
+async function run(band: (typeof AGE_LEVELS)[number], provider: ImageProvider, withStatus = false) {
   const db = createMemoryDb();
   const sink = new MemorySink();
-  const env = { COLOREAR_COUNTRIES: "MX", COLOREAR_PUBLIC_URL: "https://www.pintoria.app", LEGAL_ADDRESS: "Calle 1, Guatemala", PHONE_HASH_SALT: "s", COLOREAR_TEST_CODES: "PROMO2026", COLOREAR_MOCK_REAL_DAILY_CAP: "0" };
+  const env = { COLOREAR_COUNTRIES: "MX", COLOREAR_PUBLIC_URL: "https://www.pintoria.app", LEGAL_ADDRESS: "Calle 1, Guatemala", PHONE_HASH_SALT: "s", COLOREAR_TEST_CODES: "PROMO2026", COLOREAR_MOCK_REAL_DAILY_CAP: "0", COLOREAR_ADULT_LEVEL: "1" };
   const now = new Date("2026-11-20T15:00:00Z");
   const engine = new ColorearEngine({
     db, storage: new MemoryStorage(), uploads: new MemoryStorage(), delivery: new MockDeliveryProvider(), image: provider, mockImage: new MockImageProvider(), story: new TemplateStoryProvider(),
@@ -84,7 +101,8 @@ async function run(band: (typeof AGE_LEVELS)[number], provider: ImageProvider) {
   const res = await engine.runGeneration(paid!.id);
   const done = sink.events.find((e) => e.name === "generation_completed");
   if (process.env.DBG) console.log(JSON.stringify(sink.events.filter((e) => e.name === "generation_page_retried").slice(0, 4).map((e) => e.props)));
-  return { res, done };
+  const status = withStatus ? await engine.getStatus(paid!.access_token) : null;
+  return { res, done, status };
 }
 
 describe("a real-provider book of every level completes", () => {
@@ -99,4 +117,47 @@ describe("a real-provider book of every level completes", () => {
     expect(res.status).toBe("done");
     expect((done?.props as { retries: number }).retries).toBeGreaterThan(0); // the refusals happened and were waited out
   }, 60_000);
+});
+
+describe("failure log and last-resort step-down", () => {
+  it("counts the reasons without personal data", () => {
+    const out = reasonCounts(["page1#1:qa:too_much_ink", "page1#2:qa:too_much_ink+has_gray_or_shading", "page2#1:rate_limit", "page3#1:moderation", "char1#1:server"]);
+    expect(out).toBe("moderation=1, rate_limit=1, qa:too_much_ink=2, qa:has_gray=1, server=1");
+    expect(reasonCounts([])).toBe("moderation=0, rate_limit=0");
+  });
+
+  /** Refuses the pages of the adult prompt (flat gray, as a heavy shading would) and draws the lighter levels well. */
+  class DenseOnlyRejected implements ImageProvider {
+    readonly name = "openai" as const;
+    readonly model = "dense-rejected";
+    bands: string[] = [];
+    constructor(private rejectAll = false) {}
+    async render(req: ImageRequest): Promise<GeneratedImage> {
+      if (req.kind === "character") return { format: "png", bytes: await lines(6, 10), costUsdCents: 0, costSource: "free" };
+      this.bands.push(req.prompt.includes("Relaxing mandala") ? "adult" : req.prompt.includes("Medium-fine") ? "9-12" : "other");
+      const bad = this.rejectAll || req.prompt.includes("Relaxing mandala");
+      const bytes = bad
+        ? new Uint8Array(await sharp({ create: { width: 1024, height: 1536, channels: 3, background: "#999" } }).png().toBuffer())
+        : await lines(6, 10, `<rect width="1024" height="130" fill="white"/>`);
+      return { format: "png", bytes, costUsdCents: 0, costSource: "free" };
+    }
+  }
+
+  it("adult pages that keep failing are redrawn with the 9-12 prompt instead of cancelling the book, and it is noted", async () => {
+    const p = new DenseOnlyRejected();
+    const { res, status } = await run(AGE_LEVELS[4]!, p, true);
+    expect(res.status).toBe("done");
+    expect(status!.notes.some((n) => n.startsWith("band_stepdown:adult>9-12"))).toBe(true);
+    expect(p.bands).toContain("9-12");
+  }, 90_000);
+
+  it("when even the lighter prompt fails the book is cancelled and the log line carries the reason counts", async () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const { res } = await run(AGE_LEVELS[4]!, new DenseOnlyRejected(true));
+    expect(res).toMatchObject({ status: "failed", reason: "too_many_fallback_pages" });
+    const line = err.mock.calls.map((c) => String(c[0])).find((l) => l.includes("failed too_many_fallback_pages"))!;
+    err.mockRestore();
+    expect(line).toMatch(/level=adult fallback_pages=\d+ reasons: moderation=0, rate_limit=0, .*qa:has_gray=\d+/);
+    expect(line).not.toMatch(/Manuela|@|http/);
+  }, 120_000);
 });

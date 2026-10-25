@@ -105,7 +105,7 @@ export interface EventPropsMap {
   generation_page_retried: BaseProps & { page_index: number; attempt: number; reason: string };
   /** image_cost_usd_cents is the estimated provider cost of the whole book (fractions of a cent allowed). */
   generation_completed: BaseProps & { provider: string; images_generated: number; retries: number; image_cost_usd_cents: number; duration_seconds: number; pdf_bytes: number };
-  generation_failed: BaseProps & { reason: string; pages_done: number };
+  generation_failed: BaseProps & { reason: string; pages_done: number; reasons?: string; level?: string };
   content_blocked: BaseProps & { stage: "input" | "output"; reason: string };
   book_downloaded: BaseProps & { kind: "pdf" };
   /** Photos of the order were erased (reason: characters_ready | unpaid | refund | retention). Counts only. */

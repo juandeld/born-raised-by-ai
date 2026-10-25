@@ -13,6 +13,10 @@ const AGE_RULES: Record<AgeBand, string> = {
   adult: "Relaxing mandala-style coloring page for adults. Very detailed, with fine, clean, even black lines. The characters stay clearly recognizable, while the background and the clothes are filled with mandala and zentangle patterns: flowers, leaves, ornaments, geometric and repeating motifs. Many small and medium areas for colored pencils or fine markers.",
 };
 
+/** Said in every scene and cover prompt: the model must not invent people (seen in production: two extra kids on a cover with one person). */
+export const NO_EXTRA_PEOPLE =
+  "Draw ONLY the characters of the reference images. Do not add any other person, child or human figure that is not one of the reference characters or explicitly named in the scene description: no extra children, crowds, passers-by or bystanders, not even small or in the background. Generic animals and pets are allowed.";
+
 /** Opening of every prompt: the line-art rules are the same for everybody, the audience and the friendliness are not. */
 function styleFor(band: AgeBand): string {
   const adult = band === "adult";
@@ -49,13 +53,13 @@ export function buildScenePrompt(visual: string, band: AgeBand, count: number): 
     count > 0
       ? `The reference images are the cartoon characters of this book (character 1${count > 1 ? ` to ${count}, in order` : ""}). Draw them in the scene keeping each face, hairstyle and clothing exactly the same as in its reference, in the same line style. `
       : "";
-  return `${styleFor(band)} ${consistency}${AGE_RULES[band]} Pets and animals stay animals: on four legs, with no clothes, never standing or dressed like a person. Composition: the characters and the action are the clear focus, filling most of the page, with white margins. Leave the bottom 15% of the page empty white (a caption is added there later). Scene: ${visual}`;
+  return `${styleFor(band)} ${consistency}${AGE_RULES[band]} Pets and animals stay animals: on four legs, with no clothes, never standing or dressed like a person. ${NO_EXTRA_PEOPLE} Composition: the characters and the action are the clear focus, filling most of the page, with white margins. Leave the bottom 15% of the page empty white (a caption is added there later). Scene: ${visual}`;
 }
 
 export function buildCoverPrompt(visual: string, band: AgeBand, count: number): string {
   return (
     `${styleFor(band)} The reference images are the cartoon characters of this book (character 1${count > 1 ? ` to ${count}, in order` : ""}). Draw all of them together happily, keeping each face, hairstyle and clothing exactly as in its reference. ` +
-    `Pets and animals stay animals: on four legs, with no clothes or backpacks, never standing or dressed like a person. ` +
+    `Pets and animals stay animals: on four legs, with no clothes or backpacks, never standing or dressed like a person. ${NO_EXTRA_PEOPLE} ` +
     `${AGE_RULES[band]} This is the book cover: leave the top 25% of the page completely empty white (the title is added there later) and draw the scene in the lower 70%, with the characters large and filling the width. Scene: ${visual}`
   );
 }
