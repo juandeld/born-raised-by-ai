@@ -1,14 +1,15 @@
 import { createHmac, randomBytes } from "node:crypto";
 import type { BaseProps, Device } from "@lumen/analytics";
+import { piiHashKey } from "@lumen/config/secrets";
 import type { OrderRow } from "@lumen/db";
 
 /**
  * Salted hash of the E.164 number (consents, suppression list). The salt is a secret (PHONE_HASH_SALT): without it the
- * hash cannot be reversed by brute force over phone numbers.
+ * hash cannot be reversed by brute force over phone numbers. In production a missing salt is derived from a server secret
+ * (see packages/config/src/secrets.ts); a public constant is never used there.
  */
 export function hashPhone(e164: string, env: Record<string, string | undefined> = process.env): string {
-  const salt = env.PHONE_HASH_SALT ?? "dev-only-salt-change-me";
-  return createHmac("sha256", salt).update(e164).digest("hex");
+  return createHmac("sha256", piiHashKey(env)).update(e164).digest("hex");
 }
 
 export const randomToken = (bytes = 16): string => randomBytes(bytes).toString("hex");

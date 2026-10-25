@@ -1,10 +1,15 @@
 import { getColorear } from "@/lib/colorear";
 import { getEngine } from "@/lib/engine";
-import { json } from "@/lib/request";
+import { hasCronSecret, json } from "@/lib/request";
 
 
-/** Which providers are active. No secrets, no data. Used by the deploy checklist. */
-export async function GET() {
+/**
+ * Public: `{ ok: true }` and nothing else (no provider or model names, no hint of which payment mode is active).
+ * With the CRON_SECRET (the deploy checklist sends it as `Authorization: Bearer ...`): which providers are active. No secrets, no data.
+ */
+export async function GET(req: Request) {
+  if (!hasCronSecret(req)) return json({ ok: true });
   const d = getEngine().deps;
-  return json({ ok: true, providers: { payments: d.payments.name, voice: d.voice.name, telephony: d.telephony.name, db: d.db.kind, concurrency: d.maxConcurrency }, colorear: { image: getColorear().d.image.name, model: getColorear().d.image.model, story: getColorear().d.story.name } });
+  const c = getColorear().d;
+  return json({ ok: true, providers: { payments: d.payments.name, voice: d.voice.name, telephony: d.telephony.name, db: d.db.kind, concurrency: d.maxConcurrency }, colorear: { image: c.image.name, model: c.image.model, story: c.story.name } });
 }

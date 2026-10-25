@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { colorearTestCodes, normalizeTestCode } from "@lumen/config";
+import { piiHashKey } from "@lumen/config/secrets";
 
 type Env = Record<string, string | undefined>;
 
@@ -9,7 +10,7 @@ export const TEST_CODE_PROVIDER = "test_code";
 /** Longest code the server looks at. Anything longer cannot be a configured code. */
 export const TEST_CODE_MAX_INPUT = 64;
 
-const keyed = (env: Env, value: string): Buffer => createHmac("sha256", env.PHONE_HASH_SALT ?? "dev-only-salt-change-me").update(`colorear-test-code:${value}`).digest();
+const keyed = (env: Env, value: string): Buffer => createHmac("sha256", piiHashKey(env)).update(`colorear-test-code:${value}`).digest();
 
 /**
  * The configured code that `raw` spells (case and spaces ignored), or null. Compares keyed digests in constant time, so response

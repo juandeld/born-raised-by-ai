@@ -32,7 +32,7 @@ export interface ColorearCopy {
     pay: (p: string) => string;
     paying: string;
     /** Optional test code (only shown when the server has codes configured). */
-    code: { summary: string; label: string; hint: string; button: string; busy: string };
+    code: { summary: string; label: string; hint: string; button: string; busy: string; closed: string };
     errors: Record<string, string>;
   };
   status: {
@@ -51,6 +51,13 @@ export interface ColorearCopy {
     test: string;
   };
   refundPage: { title: string; text: string; button: string; done: string; fail: string };
+  /** Wording for an order that was never charged (test code or test payment): there is no payment to give back, so nothing says "refund". */
+  noCharge: {
+    refundPage: { title: string; text: string; button: string; done: string; fail: string };
+    ready: { cancel: string; cancelDone: string; cancelFail: string };
+    refunded: { title: string; text: string };
+    failed: { title: string; text: string };
+  };
   legalNote: string;
 }
 
@@ -167,6 +174,7 @@ const ES: ColorearCopy = {
       hint: "Si te dieron un código de prueba, escríbelo aquí. Con un código válido no se cobra nada.",
       button: "Usar mi código y crear el libro",
       busy: "Creando tu pedido...",
+      closed: "Por ahora Pintoria solo está abierta con código de invitación. Escribe tu código para continuar.",
     },
     errors: {
       persons: "Completa las tarjetas marcadas: cada una necesita foto, nombre y quién es. Si no quieres agregar a alguien, usa Quitar.",
@@ -183,6 +191,9 @@ const ES: ColorearCopy = {
       unreadable: "No pudimos leer una de las fotos. Prueba con otra.",
       code_invalid: "Ese código no es válido. Revísalo e inténtalo de nuevo.",
       code_exhausted: "Ese código ya se agotó. Pide uno nuevo.",
+      code_required: "Por ahora Pintoria solo está abierta con código de invitación. Escribe tu código para continuar.",
+      code_left_1: "A ese código solo le queda 1 libro y el Trío son 3. Elige 1 aventura o pide un código nuevo.",
+      code_left_2: "A ese código solo le quedan 2 libros y el Trío son 3. Elige 1 aventura o pide un código nuevo.",
       code_rate: "Demasiados intentos con códigos. Espera unos minutos.",
     },
   },
@@ -231,6 +242,12 @@ const ES: ColorearCopy = {
     gone: { title: "Este libro ya no está disponible", text: "Borramos los libros a los 30 días para cuidar tu privacidad." },
     notFound: "No encontramos este pedido.",
     test: "Modo de prueba: no se cobró nada.",
+  },
+  noCharge: {
+    refundPage: { title: "Cancelar pedido", text: "Este pedido no tuvo cobro. Si lo cancelas, borramos el libro y las fotos.", button: "Cancelar y borrar mi pedido", done: "Listo, cancelamos tu pedido y borramos el libro y las fotos.", fail: "No fue posible cancelar desde aquí (pasaron más de 7 días o ya se canceló)." },
+    ready: { cancel: "Cancelar y borrar mi pedido", cancelDone: "Listo, cancelamos tu pedido. Te llegará un correo.", cancelFail: "No pudimos cancelar desde aquí. Escríbenos y lo resolvemos." },
+    refunded: { title: "Pedido cancelado", text: "Borramos tus fotos, los dibujos de los personajes y el libro. No se cobró nada." },
+    failed: { title: "No pudimos terminar el libro", text: "No se cobró nada. Te avisamos por correo." },
   },
   refundPage: { title: "Reembolso", text: "Devolvemos todo el pago, sin preguntas, y borramos el libro y las fotos.", button: "Reembolsar mi pedido", done: "Listo, te devolvimos el pago.", fail: "No fue posible reembolsar desde aquí (pasaron más de 7 días o ya se reembolsó)." },
   legalNote: "Pendiente de revisión legal final antes de cobrar de verdad.",
@@ -349,6 +366,7 @@ const EN: ColorearCopy = {
       hint: "If you were given a test code, enter it here. A valid code means no charge.",
       button: "Use my code and create the book",
       busy: "Creating your order...",
+      closed: "For now Pintoria is open by invitation code only. Enter your code to continue.",
     },
     errors: {
       persons: "Complete the marked cards: each needs a photo, a name and who they are. If you do not want to add someone, use Remove.",
@@ -365,6 +383,9 @@ const EN: ColorearCopy = {
       unreadable: "We could not read one of the photos. Try another one.",
       code_invalid: "That code is not valid. Check it and try again.",
       code_exhausted: "That code has run out. Ask for a new one.",
+      code_required: "For now Pintoria is open by invitation code only. Enter your code to continue.",
+      code_left_1: "That code has only 1 book left and the Trio is 3. Choose 1 adventure or ask for a new code.",
+      code_left_2: "That code has only 2 books left and the Trio is 3. Choose 1 adventure or ask for a new code.",
       code_rate: "Too many code attempts. Wait a few minutes.",
     },
   },
@@ -413,6 +434,12 @@ const EN: ColorearCopy = {
     gone: { title: "This book is no longer available", text: "We delete books after 30 days to protect your privacy." },
     notFound: "We could not find this order.",
     test: "Test mode: nothing was charged.",
+  },
+  noCharge: {
+    refundPage: { title: "Cancel order", text: "This order was not charged. If you cancel it, we delete the book and the photos.", button: "Cancel and delete my order", done: "Done, we cancelled your order and deleted the book and the photos.", fail: "We cannot cancel from here (more than 7 days passed or it was already cancelled)." },
+    ready: { cancel: "Cancel and delete my order", cancelDone: "Done, we cancelled your order. You will get an email.", cancelFail: "We could not cancel from here. Write to us and we will fix it." },
+    refunded: { title: "Order cancelled", text: "We deleted your photos, the character drawings and the book. You were not charged." },
+    failed: { title: "We could not finish the book", text: "You were not charged. We will email you." },
   },
   refundPage: { title: "Refund", text: "We return the whole payment, no questions asked, and delete the book and photos.", button: "Refund my order", done: "Done, we returned your payment.", fail: "A refund is not possible from here (more than 7 days passed or it was already refunded)." },
   legalNote: "Pending final legal review before real charges.",

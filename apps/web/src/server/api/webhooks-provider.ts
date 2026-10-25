@@ -1,3 +1,4 @@
+import { colorearMockPayAllowed } from "@lumen/config";
 import { PaymentConfigError, paymentProviderByName } from "@lumen/payments";
 import { handleColorearPayment, isColorearOrder } from "@/lib/colorear";
 import { getEngine, mockPaymentsAllowed } from "@/lib/engine";
@@ -10,7 +11,8 @@ import { json } from "@/lib/request";
  */
 export async function POST(req: Request, ctx: { params: Promise<{ provider: string }> }) {
   const { provider: name } = await ctx.params;
-  if (name === "mock" && !mockPaymentsAllowed()) return json({ ok: false }, 404);
+  // The mock webhook accepts any body, so it is closed unless some product still allows mock payments (Santa: ALLOW_MOCK_PAYMENTS; colorear: COLOREAR_ALLOW_MOCK_PAY).
+  if (name === "mock" && !mockPaymentsAllowed() && !colorearMockPayAllowed()) return json({ ok: false }, 404);
   const raw = await req.text();
   const headers: Record<string, string | undefined> = {};
   req.headers.forEach((v, k) => (headers[k.toLowerCase()] = v));
@@ -30,7 +32,10 @@ export async function POST(req: Request, ctx: { params: Promise<{ provider: stri
   if (event) {
     // colorear orders live in the same table; their payments go to the generate engine
     const ids = event as { orderId?: string | null; checkoutId?: string | null };
-    if (await isColorearOrder(ids.orderId, ids.checkoutId)) await handleColorearPayment(event);
+    const colorear = await isColorearOrder(ids.orderId, ids.checkoutId);
+    // Per product: a forged mock event must not mark a colorear order paid while colorear's own switch is closed, even if Santa's is open.
+    if (name === "mock" && (colorear ? !colorearMockPayAllowed() : !mockPaymentsAllowed())) return json({ ok: false }, 404);
+    if (colorear) await handleColorearPayment(event);
     else await getEngine().handlePaymentEvent(event);
   }
   return json({ ok: true });

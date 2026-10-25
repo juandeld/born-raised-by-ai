@@ -5,12 +5,21 @@ import { legalReady } from "@/lib/legal-vars";
 import { clientIp, deviceOf, json, rateLimited } from "@/lib/request";
 
 
+function isValidationShape(err: unknown): boolean {
+  if (!err || typeof err !== "object" || !("errors" in err)) return false;
+  const e = (err as { errors: unknown }).errors;
+  return !!e && typeof e === "object" && Object.values(e).every((v) => typeof v === "string");
+}
+
 /**
  * multipart/form-data: photo1..photoN (the required photo of each person; JPEG already compressed by the browser, <= 900 KB each, and the
  * browser shrinks them so that every allowed photo fits Vercel's 4.5 MB body) and photo<i>_2, photo<i>_3.. (optional extra photos of person i;
  * the limit per person is COLOREAR_MAX_PHOTOS_MAIN for person 1 and COLOREAR_MAX_PHOTOS_OTHER for the rest, enforced by the engine),
  * name1..nameN, roleId1..roleIdN (+ roleText<i> for "other"; legacy role1..roleN accepted), and lang, country, email, age, theme, themeId, creative, checkboxIds (JSON),
  * and an optional `code` (test code, COLOREAR_TEST_CODES). The server re-validates everything.
+ *
+ * Invitation-only (live deployment, mock provider, COLOREAR_ALLOW_MOCK_PAY unset): a request without a code is refused right after the text fields
+ * are read, before any photo is read, re-encoded or stored (403, `errors.code = "required"`).
  *
  * With a valid test code there is no payment: the order is created as `test_code` (amount 0, test mode) and marked paid right here with an
  * internal `payment_succeeded` event, through the same function the payment webhooks use (consents, receipt, `paid` event, start of the run).
@@ -31,6 +40,12 @@ export async function POST(req: Request) {
   const open = colorearCountries();
   const countryRaw = String(form.get("country") ?? "").toUpperCase() as CountryCode;
   const country = open.includes(countryRaw) ? countryRaw : open[0]!;
+  const engine = getColorear();
+  // Test codes: a brake on guessing (per IP, only when a code is sent). The code itself is never logged or tracked.
+  const testCode = String(form.get("code") ?? "").slice(0, 80);
+  // Closed to the public: no code, no work. Nothing of the photos has been touched yet.
+  if (engine.inviteOnly() && !testCode.trim()) return json({ ok: false, errors: { code: "required" } }, 403);
+  if (testCode.trim() && rateLimited(`colorear-code:${ip ?? "?"}`, 10, 10 * 60_000)) return json({ ok: false, errors: { code: "rate" } }, 429);
   const photos: Uint8Array[] = [];
   const extraPhotos: Uint8Array[][] = [];
   const persons: PersonSubmission[] = [];
@@ -51,9 +66,6 @@ export async function POST(req: Request) {
       ? { name: String(form.get(`name${i}`) ?? ""), roleId, roleText: String(form.get(`roleText${i}`) ?? "").slice(0, 100) }
       : { name: String(form.get(`name${i}`) ?? ""), role: String(form.get(`role${i}`) ?? "") });
   }
-  // Test codes: a brake on guessing (per IP, only when a code is sent). The code itself is never logged or tracked.
-  const testCode = String(form.get("code") ?? "").slice(0, 80);
-  if (testCode.trim() && rateLimited(`colorear-code:${ip ?? "?"}`, 10, 10 * 60_000)) return json({ ok: false, errors: { code: "rate" } }, 429);
   let checkboxIds: string[] = [];
   try {
     const parsed = JSON.parse(String(form.get("checkboxIds") ?? "[]"));
@@ -61,7 +73,6 @@ export async function POST(req: Request) {
   } catch {
     /* empty */
   }
-  const engine = getColorear();
   const base = colorearPublicUrl();
   try {
     const { order, checkoutUrl } = await engine.createCheckout(
@@ -90,7 +101,8 @@ export async function POST(req: Request) {
     }
     return json({ ok: true, url: checkoutUrl });
   } catch (err) {
-    if (err instanceof ColorearValidationError) return json({ ok: false, errors: err.errors }, 422);
+    // Also recognized by shape: in `next dev` a module can be loaded twice and `instanceof` fails (a wrong code would answer 500).
+    if (err instanceof ColorearValidationError || isValidationShape(err)) return json({ ok: false, errors: (err as ColorearValidationError).errors }, 422);
     console.error("[colorear] checkout failed", err instanceof Error ? err.message : err);
     return json({ ok: false, errors: { generic: "server" } }, 500);
   }

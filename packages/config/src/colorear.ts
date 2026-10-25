@@ -94,6 +94,24 @@ export function colorearCountries(env: Record<string, string | undefined> = proc
  */
 export const COLOREAR_TEST_CODE_DEFAULTS = { maxUses: 50, dailyCap: 10 } as const;
 
+/**
+ * Does the "mock" payment provider work for colorear orders? It lets anyone "pay" for free and get the real book (and a fake receipt),
+ * so on the live deployment it is closed unless `COLOREAR_ALLOW_MOCK_PAY=1`. Outside production it is open unless set to 0/false.
+ * Colorear has its own switch: `ALLOW_MOCK_PAYMENTS` (which Santa uses) never opens it. When it is closed and the provider is the mock,
+ * only a valid test code can start an order (see `colorearInviteOnly`).
+ */
+export function colorearMockPayAllowed(env: Record<string, string | undefined> = process.env): boolean {
+  const v = (env.COLOREAR_ALLOW_MOCK_PAY ?? "").trim().toLowerCase();
+  if (v === "1" || v === "true") return true;
+  if (v === "0" || v === "false") return false;
+  return env.VERCEL_ENV !== "production";
+}
+
+/** Invitation-only mode: the payment provider is the mock and mock payments are closed, so the only way in is a test code. */
+export function colorearInviteOnly(env: Record<string, string | undefined> = process.env): boolean {
+  return (env.PAYMENT_PROVIDER ?? "mock").trim().toLowerCase() === "mock" && !colorearMockPayAllowed(env);
+}
+
 /** Upper-cases and removes all whitespace, so "promo 2026 " and "PROMO2026" are the same code. */
 export function normalizeTestCode(raw: string): string {
   return raw.normalize("NFKC").replace(/\s+/g, "").toUpperCase();

@@ -12,7 +12,8 @@ export default async function Reembolso({ params }: { params: Promise<{ token: s
   if (!/^[a-f0-9]{32}$/.test(token)) notFound();
   const st = await getColorear().getStatus(token);
   if (!st) notFound();
-  const c = COLOREAR_COPY[st.lang].refundPage;
+  // An order that was never charged (test code, test payment) is cancelled, not refunded: no promise about a payment that does not exist.
+  const c = st.testMode ? COLOREAR_COPY[st.lang].noCharge.refundPage : COLOREAR_COPY[st.lang].refundPage;
   return (
     <>
       <CHeader lang={st.lang} />
@@ -20,7 +21,7 @@ export default async function Reembolso({ params }: { params: Promise<{ token: s
         <div className="rounded-2xl border border-lapiz-line bg-white p-6">
           <h1 className="text-2xl font-bold">{c.title}</h1>
           <p className="mt-2">{c.text}</p>
-          {st.phase === "refunded" ? <p className="mt-4 font-bold">{c.done}</p> : <RefundButton token={token} lang={st.lang} />}
+          {st.phase === "refunded" ? <p className="mt-4 font-bold">{c.done}</p> : <RefundButton token={token} lang={st.lang} testMode={st.testMode} />}
         </div>
       </main>
       <CFooter lang={st.lang} />

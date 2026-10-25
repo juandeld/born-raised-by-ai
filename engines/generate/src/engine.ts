@@ -1,8 +1,9 @@
-import { randomBytes, randomUUID } from "node:crypto";
+import { createHmac, randomBytes, randomUUID } from "node:crypto";
 import type { Tracker } from "@lumen/analytics";
 import type { BaseProps } from "@lumen/analytics";
+import { piiHashKey } from "@lumen/config/secrets";
 import {
-  COLOREAR, COUNTRIES, IMAGE_COST_USD_CENTS, ageBandOf, colorearCountries, colorearLegalLocale, colorearPhotoLimits, colorearPrice, colorearPublicUrl, colorearTestCodeLimits, formatPrice, isSelectableVariant, isThemeId, isValidAge, openaiImageFamily, paperFor, themeLabel, toUsdCents,
+  COLOREAR, COUNTRIES, IMAGE_COST_USD_CENTS, ageBandOf, booksIn, colorearCountries, colorearLegalLocale, colorearMockPayAllowed, colorearPhotoLimits, colorearPrice, colorearPublicUrl, colorearTestCodeLimits, formatPrice, isSelectableVariant, isThemeId, isValidAge, openaiImageFamily, paperFor, themeLabel, toUsdCents,
   addDays, DAY_MS, type AgeBand, type BrandConfig, type ColorearLang, type ColorearVariant, type CountryCode,
 } from "@lumen/config";
 import type { DeliveryProvider, Storage } from "@lumen/calls";
@@ -119,22 +120,35 @@ function sniff(b: Uint8Array): "jpeg" | "png" | "webp" | null {
   return null;
 }
 
-async function loadSharp(): Promise<(typeof import("sharp"))["default"] | null> {
-  try {
-    const mod = (await import("sharp")) as unknown as { default?: (typeof import("sharp"))["default"] };
-    return (mod.default ?? (mod as unknown as (typeof import("sharp"))["default"]));
-  } catch {
-    return null;
-  }
+type Sharp = (typeof import("sharp"))["default"];
+let sharpLoad: Promise<Sharp | null> | undefined;
+/** sharp is loaded once per process (and not at all when it is missing: then photos are stored as sent). */
+function loadSharp(): Promise<Sharp | null> {
+  sharpLoad ??= import("sharp").then(
+    (m) => {
+      const mod = m as unknown as { default?: Sharp };
+      return mod.default ?? (mod as unknown as Sharp);
+    },
+    () => null,
+  );
+  return sharpLoad;
 }
 
-/** Re-encodes an uploaded photo: fixes orientation, strips metadata (EXIF/GPS), limits size. Returns null when it is not a valid image. */
+/**
+ * Most pixels a photo may have BEFORE it is decoded. The browser sends at most 2048 px on the long side (about 4 MP), so 40 MP leaves ten times
+ * the room; a "pixel bomb" (a 30 KB PNG that is 16000 x 16000) is refused from its header, without decoding it. sharp's default is 268 MP.
+ */
+export const MAX_INPUT_PIXELS = 40_000_000;
+/** Photos re-encoded at the same time for one order (5 people x 3 photos = 15 would otherwise be decoded together). */
+export const PREPARE_CONCURRENCY = 3;
+
+/** Re-encodes an uploaded photo: fixes orientation, strips metadata (EXIF/GPS), limits size. Returns null when it is not a valid image or has too many pixels. */
 export async function prepareUpload(bytes: Uint8Array): Promise<Uint8Array | null> {
   if (!sniff(bytes)) return null;
   const sharp = await loadSharp();
   if (!sharp) return bytes;
   try {
-    const out = await sharp(Buffer.from(bytes)).rotate().resize({ width: 1536, height: 1536, fit: "inside", withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer();
+    const out = await sharp(Buffer.from(bytes), { limitInputPixels: MAX_INPUT_PIXELS }).rotate().resize({ width: 1536, height: 1536, fit: "inside", withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer();
     return new Uint8Array(out);
   } catch {
     return null;
@@ -142,6 +156,26 @@ export async function prepareUpload(bytes: Uint8Array): Promise<Uint8Array | nul
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Maps `items` with at most `limit` calls in flight, in order. Once one call throws, no new call starts (the ones in flight finish) and that error is rethrown. */
+async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T, index: number) => Promise<R>): Promise<R[]> {
+  const out = new Array<R>(items.length);
+  let next = 0;
+  let failure: { error: unknown } | null = null;
+  const worker = async () => {
+    while (!failure && next < items.length) {
+      const i = next++;
+      try {
+        out[i] = await fn(items[i]!, i);
+      } catch (error) {
+        failure ??= { error };
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  if (failure) throw (failure as { error: unknown }).error;
+  return out;
+}
 
 export class ColorearEngine {
   constructor(readonly d: ColorearDeps) {}
@@ -243,7 +277,16 @@ export class ColorearEngine {
     return { errors, persons, theme, age };
   }
 
+  /**
+   * Invitation-only: the payment provider is the mock and mock payments are closed (live deployment without COLOREAR_ALLOW_MOCK_PAY).
+   * Nobody can pay, so an order needs a valid test code. Checked first, before any photo is read, re-encoded or stored.
+   */
+  inviteOnly(): boolean {
+    return this.d.payments.name === "mock" && !colorearMockPayAllowed(this.d.env);
+  }
+
   async createCheckout(input: ColorearCheckoutInput, urls: { successUrl: (o: OrderRow) => string; cancelUrl: string }): Promise<{ order: OrderRow; checkoutUrl: string }> {
+    if (this.inviteOnly() && !(input.testCode ?? "").trim()) throw new ColorearValidationError({ code: "required" });
     const v = this.validate(input);
     if (Object.keys(v.errors).length) {
       if (v.errors.theme || v.errors.persons) await this.d.tracker.track("content_blocked", { product: COLOREAR.slug, country: input.country, language: input.lang, creative: input.creative ?? "none", device: (input.device as BaseProps["device"]) ?? "unknown", stage: "input", reason: v.errors.theme ? "theme" : "person" });
@@ -252,15 +295,17 @@ export class ColorearEngine {
     // Test code: checked against the caps before anything is stored (and once more after the insert, see below).
     const code = (input.testCode ?? "").trim() ? matchTestCode(this.d.env, input.testCode!) : null;
     const codeHash = code ? testCodeHash(this.d.env, code) : null;
-    if (codeHash && (await this.testCodeOver(codeHash, null))) throw new ColorearValidationError({ code: "exhausted" });
-    // All photos of every person, re-encoded in parallel (EXIF/GPS stripped, orientation fixed): photo 1 first, then the extras of that person.
-    const prepared: Uint8Array[][] = await Promise.all(
-      input.photos.map(async (first, i) => {
-        const group = await Promise.all([first, ...(input.extraPhotos?.[i] ?? [])].map((p) => prepareUpload(p)));
-        if (group.some((g) => !g)) throw new ColorearValidationError({ photos: "Unreadable photo" });
-        return group as Uint8Array[];
-      }),
-    );
+    const books = booksIn(input.variant === "bundle3" ? "bundle3" : "single");
+    if (codeHash) await this.assertTestCodeFits(codeHash, books, null);
+    // All photos of every person, re-encoded (EXIF/GPS stripped, orientation fixed), at most PREPARE_CONCURRENCY at a time: photo 1 first, then the extras of that person.
+    const flat = input.photos.flatMap((first, i) => [first, ...(input.extraPhotos?.[i] ?? [])].map((bytes, j) => ({ i, j, bytes })));
+    const done = await mapLimit(flat, PREPARE_CONCURRENCY, async (p) => {
+      const out = await prepareUpload(p.bytes);
+      if (!out) throw new ColorearValidationError({ photos: "Unreadable photo" });
+      return out;
+    });
+    const prepared: Uint8Array[][] = input.photos.map(() => []);
+    flat.forEach((p, k) => (prepared[p.i]![p.j] = done[k]!));
     const photoCounts = prepared.map((g) => g.length);
     const now = this.d.now();
     const id = randomUUID();
@@ -312,7 +357,10 @@ export class ColorearEngine {
     };
     let order: OrderRow;
     try {
-      await Promise.all(prepared.flatMap((group, i) => group.map((bytes, j) => this.d.uploads.put(photoPath(id, i + 1, j + 1), bytes, "image/jpeg"))));
+      // allSettled, not all: when one put fails the others keep running, and deleting before they finish would leave their photos behind with no order to find them.
+      const puts = await Promise.allSettled(prepared.flatMap((group, i) => group.map((bytes, j) => this.d.uploads.put(photoPath(id, i + 1, j + 1), bytes, "image/jpeg"))));
+      const failed = puts.find((r): r is PromiseRejectedResult => r.status === "rejected");
+      if (failed) throw failed.reason;
       order = await this.d.db.orders.insert(orderInput);
     } catch (err) {
       await this.deletePhotos(id, photoCounts);
@@ -320,11 +368,12 @@ export class ColorearEngine {
     }
     if (codeHash) {
       // Two requests can pass the first check together: re-check now that this order is stored; if a cap is reached it is cancelled, photos included.
-      const over = await this.testCodeOver(codeHash, order.id);
-      if (over) {
+      try {
+        await this.assertTestCodeFits(codeHash, books, order.id);
+      } catch (err) {
         await this.deletePhotos(id, photoCounts);
         await this.d.db.orders.update(order.id, { status: "cancelled", purge_at: iso(now) });
-        throw new ColorearValidationError({ code: "exhausted" });
+        throw err;
       }
     }
     // No payment provider is involved for a test code: the web layer marks the order paid with an internal event (same path as a real payment).
@@ -354,9 +403,8 @@ export class ColorearEngine {
     await this.d.tracker.track("checkout_started", { ...base, variant, amount_usd_cents: updated.amount_usd_cents, currency: updated.currency, payment_provider: session.provider, photos_per_person: photoCounts });
     if (codeHash) {
       const limits = colorearTestCodeLimits(this.d.env);
-      const used = await this.testCodeOrders(codeHash);
-      const since = this.d.now().getTime() - DAY_MS;
-      await this.d.tracker.track("test_code_redeemed", { ...base, variant, code_hash: codeHash, uses_total: used.length, uses_24h: used.filter((o) => new Date(o.window_start).getTime() > since).length, max_uses: limits.maxUses, daily_cap: limits.dailyCap });
+      const used = await this.testCodeBooks(codeHash, null);
+      await this.d.tracker.track("test_code_redeemed", { ...base, variant, code_hash: codeHash, uses_total: used.total, uses_24h: used.day, max_uses: limits.maxUses, daily_cap: limits.dailyCap });
     }
     return { order: updated, checkoutUrl: session.url };
   }
@@ -386,15 +434,28 @@ export class ColorearEngine {
   }
 
   /**
-   * Has this code reached `COLOREAR_TEST_CODE_MAX_USES` (all time) or `COLOREAR_TEST_CODE_DAILY_CAP` (rolling 24 h)? Counts the OTHER orders
-   * of the code (`exceptId` is the one just inserted, when re-checking). Under a burst of simultaneous requests this fails closed: each
-   * request sees the others' rows, so at most `cap` orders ever get through, and a request refused by a tie can simply be sent again.
+   * Books the code has used, in total and in the last 24 h. The caps count BOOKS, not orders: a Trio is 3 (it makes 3 real books; its 2 free
+   * adventures are separate rows and are not counted again), a single adventure is 1. `exceptId` leaves out the order just inserted.
    */
-  private async testCodeOver(hash: string, exceptId: string | null): Promise<boolean> {
-    const { maxUses, dailyCap } = colorearTestCodeLimits(this.d.env);
+  private async testCodeBooks(hash: string, exceptId: string | null): Promise<{ total: number; day: number }> {
     const others = (await this.testCodeOrders(hash)).filter((o) => o.id !== exceptId);
     const since = this.d.now().getTime() - DAY_MS;
-    return others.length >= maxUses || others.filter((o) => new Date(o.window_start).getTime() > since).length >= dailyCap;
+    const sum = (rows: OrderRow[]) => rows.reduce((n, o) => n + booksIn(o.variant === "bundle3" ? "bundle3" : "single"), 0);
+    return { total: sum(others), day: sum(others.filter((o) => new Date(o.window_start).getTime() > since)) };
+  }
+
+  /**
+   * Does an order of `books` books still fit `COLOREAR_TEST_CODE_MAX_USES` (all time) and `COLOREAR_TEST_CODE_DAILY_CAP` (rolling 24 h), both in
+   * books? Throws `code: "exhausted"` when nothing is left, and `code: "left_<n>"` when some books are left but not enough (a Trio with 1 or 2 left).
+   * Under a burst of simultaneous requests this fails closed: each request sees the others' rows, so at most the cap ever gets through, and a
+   * request refused by a tie can simply be sent again.
+   */
+  private async assertTestCodeFits(hash: string, books: number, exceptId: string | null): Promise<void> {
+    const { maxUses, dailyCap } = colorearTestCodeLimits(this.d.env);
+    const used = await this.testCodeBooks(hash, exceptId);
+    const left = Math.max(0, Math.min(maxUses - used.total, dailyCap - used.day));
+    if (left >= books) return;
+    throw new ColorearValidationError({ code: left > 0 ? `left_${left}` : "exhausted" });
   }
 
   private isTestCodeOrder(o: OrderRow): boolean {
@@ -430,6 +491,11 @@ export class ColorearEngine {
     const order = await this.findOrder(event.orderId, event.checkoutId);
     if (!order) return null;
     if (order.status !== "created") return order; // duplicate webhook
+    // An order opened through the mock provider is never marked paid while mock payments are closed (defense in depth: the routes already refuse).
+    if (order.payment_provider === "mock" && !colorearMockPayAllowed(this.d.env)) {
+      console.warn("[colorear] ignored a mock payment event for an order: mock payments are closed");
+      return order;
+    }
     const now = this.d.now();
     const draft = order.consent_draft;
     if (!draft) throw new Error(`Order ${order.id} has no consent draft`);
@@ -469,8 +535,7 @@ export class ColorearEngine {
   }
 
   private async hashEmail(email: string): Promise<string> {
-    const { createHmac } = await import("node:crypto");
-    return createHmac("sha256", this.d.env.PHONE_HASH_SALT ?? "dev-only-salt-change-me").update(email).digest("hex");
+    return createHmac("sha256", piiHashKey(this.d.env)).update(email).digest("hex");
   }
 
   // ------------------------------------------------------------------ mail

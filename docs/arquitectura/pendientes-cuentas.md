@@ -67,13 +67,13 @@ POLAR_PRODUCT_MAP={"colorear:US:single":"3ccd6b75-f151-4c78-8910-9745523f410e","
 
 ## Código de prueba de colorear (pruebas de punta a punta sin pasarela)
 
-Polar rechazó la cuenta (D27) y producción corre con `PAYMENT_PROVIDER=mock` + `ALLOW_MOCK_PAYMENTS=1`. Para que Juan, su familia y amigos prueben el flujo completo sin pagar y con el libro REAL (no los dibujos de prueba), el formulario acepta un código. **Las tres variables siguientes las carga Juan en Vercel (Production y Preview) y requieren un despliegue nuevo; el arquitecto no las cargó.**
+Polar rechazó la cuenta (D27) y producción corre con `PAYMENT_PROVIDER=mock`. Desde la ronda de QA del 25-oct el pago simulado de Pintoria está **cerrado en producción** (`COLOREAR_ALLOW_MOCK_PAY`, ver la sección "Ronda de QA del 25-oct" al final): con el pago simulado y sin cobro real, **el código es la única puerta de entrada**. Para que Juan, su familia y amigos prueben el flujo completo sin pagar y con el libro REAL (no los dibujos de prueba), el formulario acepta un código. **Las tres variables siguientes las carga Juan en Vercel (Production y Preview) y requieren un despliegue nuevo; el arquitecto no las cargó.**
 
 | Variable | Valor sugerido | Qué hace |
 |---|---|---|
-| `COLOREAR_TEST_CODES` | `PROMO2026` | Lista de códigos separados por comas, sin distinguir mayúsculas ni espacios. **Vacía o ausente = función apagada**: el formulario ni siquiera muestra el campo y cualquier código responde "no válido". |
-| `COLOREAR_TEST_CODE_MAX_USES` | `50` | Pedidos en total por código (se cuentan en la base: `orders.payment_provider='test_code'` con el hash del código en `checkout_id`). Al llegar, el código responde "agotado". Por defecto 50; `0` cierra el código. |
-| `COLOREAR_TEST_CODE_DAILY_CAP` | `10` | Pedidos por código en cualquier ventana móvil de 24 h (no por día de calendario, para no depender de la zona horaria). Por defecto 10. |
+| `COLOREAR_TEST_CODES` | un valor aleatorio de 12 o más caracteres (por ejemplo `openssl rand -base64 9`); **nunca** `PROMO2026` ni una palabra adivinable (QA acertó `PROMO2026` al quinto intento) | Lista de códigos separados por comas, sin distinguir mayúsculas ni espacios. **Vacía o ausente = función apagada**: el formulario ni siquiera muestra el campo y cualquier código responde "no válido". |
+| `COLOREAR_TEST_CODE_MAX_USES` | `50` | **Libros** en total por código (un Trío cuenta 3; sus 2 aventuras gratis no cuentan otra vez). Se cuentan en la base: `orders.payment_provider='test_code'` con el hash del código en `checkout_id`. Al llegar, el código responde "agotado". Por defecto 50; `0` cierra el código. |
+| `COLOREAR_TEST_CODE_DAILY_CAP` | `10` | **Libros** por código en cualquier ventana móvil de 24 h (un Trío cuenta 3) (no por día de calendario, para no depender de la zona horaria). Por defecto 10. |
 
 Cómo funciona (aprobado por el arquitecto, flujo de pago):
 
@@ -85,7 +85,7 @@ Cómo funciona (aprobado por el arquitecto, flujo de pago):
 - La oferta de pago "otra aventura" **queda oculta** en pedidos de prueba (lo más simple: no hay nada con qué cobrarla) y, como no hay oferta, los dibujos de una sola aventura de prueba se borran al terminar en lugar de guardarse 48 h.
 - "Reembolso" en un pedido de prueba solo cancela y borra (no llama a la pasarela); el correo dice que no hubo cobro.
 - Analytics: evento `test_code_redeemed` con `code_hash` (HMAC corto de 10 caracteres, nunca el código), variante, usos totales y de las últimas 24 h. Los pedidos son `test_mode`, así que no entran en las tablas de `npm run costs`; su gasto de imagen se imprime aparte ("Test-code orders").
-- Tope de costo en el peor caso: `COLOREAR_TEST_CODE_MAX_USES` pedidos, cada Trío puede generar 3 libros (el tope por libro sigue siendo `COLOREAR_MAX_COST_USD`, 4 USD por defecto).
+- Tope de costo en el peor caso: `COLOREAR_TEST_CODE_MAX_USES` **libros** por código (desde la ronda de QA los topes cuentan libros, no pedidos); el tope por libro sigue siendo `COLOREAR_MAX_COST_USD` (4 USD por defecto). Con varios códigos todo se multiplica: no hay tope global entre códigos (ver pendientes de la ronda de QA).
 - Requisito para probar el Trío: la migración `0004_colorear_variants.sql` debe estar aplicada en Supabase (ver sección de Polar). Sin ella, el pedido de un Trío falla al guardarse.
 - Para revocar: borrar `COLOREAR_TEST_CODES` en Vercel y desplegar. No hace falta tocar la base.
 
@@ -156,3 +156,43 @@ Condiciones de `docs/legal/aprobaciones/colorear-codigo-prueba-3-fotos.md` (25-o
 - **Sin correos comerciales a pedidos con código** (P5): `commercialAllowed` devuelve falso para un pedido con código y para las aventuras gratuitas de su Trío. El correo de entrega y el recordatorio del día 25 salen solo con la parte transaccional y no cuentan contra el límite de tres.
 - **Prueba del prompt**: `tests/colorear-photos.test.ts` falla si el prompt del personaje deja de decir "never a photorealistic or identical copy" (con varias fotos) o si aparece "identical", "exact", "faithful", "portrait" o "lifelike" fuera de esa frase. Se comprobó quitando la frase: la prueba falla.
 - **`COLOREAR_PRIVACY_EMAIL`** (por defecto `privacidad@pintoria.app`, no hace falta cargarla). Mismo motivo que el de soporte: `privacidad@lumen-labs.co` no recibe correo (sin MX). Es el contacto del aviso, de la página de privacidad (derechos y lista de subencargados a solicitud) y del pie de los recibos; no sigue a `PRIVACY_EMAIL`, de Santa (`colorearPrivacyEmail`). Pendiente de Juan: confirmar en ImprovMX que existe el alias `privacidad@pintoria.app` (o un catch-all) y que reenvía a su buzón. `tests/colorear-mailboxes.test.ts` falla si alguna página (inicio con formulario y aviso, privacidad, términos; es y en) o correo de colorear imprime `lumen-labs.co`; única mención legítima: la cabecera `From` de los correos (`Pintoria <hola@lumen-labs.co>`, dominio ya verificado en Resend) hasta que se cargue `COLOREAR_RESEND_FROM`.
+
+## Ronda de QA del 25-oct (informe `docs/qa/colorear-codigo-prueba-3-fotos.md`)
+
+Arreglos de F1, B1, F4 a F7, F9, F10 y F13 (el arquitecto aprueba el flujo de pago y `engines/`). Las pruebas están en `tests/colorear-invite-only.test.ts`, `tests/colorear-secrets.test.ts`, `tests/colorear-upload-safety.test.ts` y `tests/colorear-test-code*.test.ts`; todas se comprobaron rompiendo el código a propósito.
+
+### F1: pago simulado cerrado en producción, solo con código (`COLOREAR_ALLOW_MOCK_PAY`)
+
+- **`COLOREAR_ALLOW_MOCK_PAY`** (nueva; **déjala sin definir en Production**). Vacía: abierto fuera de producción (`VERCEL_ENV` distinto de `production`) y **cerrado en producción**. `1` o `true` lo abre; `0` o `false` lo cierra siempre. Es un interruptor propio de Pintoria: `ALLOW_MOCK_PAYMENTS` (el de Santa) ya no abre nada de colorear. Santa no cambia.
+- Cerrado y con `PAYMENT_PROVIDER=mock` (el caso de producción hoy), `POST /api/colorear/checkout` responde **403 `{"errors":{"code":"required"}}`** a cualquier pedido sin código, justo después de leer los campos de texto y antes de leer, recodificar o guardar ninguna foto (el motor también lo exige: `createCheckout`). Con código válido todo sigue igual. La página de colorear abre el campo del código de entrada, dice "Por ahora Pintoria solo está abierta con código de invitación" y el botón es "Usar mi código y crear el libro" (sin precio ni línea de reembolso, con la variante de texto legal del código).
+- Con el interruptor cerrado, `/api/mock-pay` (GET y POST), `/colorear/pago-prueba` y `/api/webhooks/mock` responden 404 para pedidos de colorear, aunque `ALLOW_MOCK_PAYMENTS=1` esté puesto para Santa. Además el motor no marca pagado un pedido abierto con el proveedor simulado mientras esté cerrado (defensa extra).
+- Si Polar o Recurrente se activan (`PAYMENT_PROVIDER=polar`), la página vuelve a ser pública sin tocar nada.
+- Para que Juan pruebe el pago simulado en producción: `COLOREAR_ALLOW_MOCK_PAY=1` y desplegar; **quitarla al terminar**.
+
+### B1: secretos sin valores públicos en producción
+
+- `PHONE_HASH_SALT` y `COLOREAR_LINK_SECRET` tenían constantes públicas de respaldo en el repositorio (`dev-only-salt-change-me`, `dev-only-colorear-secret`). Ya no: en producción (`VERCEL_ENV=production`) un valor ausente, vacío o de relleno (`change-me`, las constantes viejas) se **deriva** con HMAC-SHA256, un valor distinto por uso, de un secreto que el servidor ya tiene (primero encontrado de `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, `INNGEST_SIGNING_KEY`, `POLAR_WEBHOOK_SECRET`) y se escribe un aviso en el log **sin ningún valor**. Si no hay ninguno, el código **se niega a funcionar** (lanza un error) en vez de usar una constante. Fuera de producción siguen las constantes de desarrollo (los tests y `npm run dev` funcionan con el entorno vacío). El código está en `packages/config/src/secrets.ts` (se importa como `@lumen/config/secrets`, solo servidor).
+- **Aun así Juan debe definirlos, una sola vez, antes del primer pedido real**: `PHONE_HASH_SALT` y `COLOREAR_LINK_SECRET`, cada uno un valor aleatorio largo y distinto (`openssl rand -hex 32`). **Cambiar o definir después cualquiera de los dos cambia las claves**: (1) el hash de los códigos de prueba en `checkout_id` ya no coincide y **los contadores de usos del código vuelven a cero**; (2) cambia el hash de correo de las pruebas de consentimiento nuevas (las ya guardadas siguen con el valor viejo); (3) los enlaces firmados ya enviados dejan de valer (los de descarga duran minutos; los de baja de correos comerciales, 60 días). Lo mismo pasa si se rota la clave de servicio de Supabase mientras no estén definidos. `.env.example` ya no trae `change-me`.
+- Mejora de código opcional que no se hizo: ignorar (o avisar de) códigos de prueba de menos de 12 caracteres en producción.
+
+### F4, F5, F6 (subida de fotos y topes)
+
+- **F4**: la subida de las fotos usa `Promise.allSettled`: si una falla, se espera a que terminen todas y solo entonces se borran todas y se relanza el error. Antes una subida lenta podía terminar después del borrado y la foto de un niño quedaba sin pedido que la encontrara. Sigue pendiente la defensa adicional del informe (un barrido que borre del cubo `uploads` objetos de más de 24 h sin pedido); mientras tanto, revisión semanal del cubo de fotos.
+- **F5**: `prepareUpload` rechaza antes de decodificar toda imagen de más de 40 000 000 píxeles (`limitInputPixels`; el navegador envía como máximo 2048 px de lado, unos 4 MP, así que hay 10 veces de margen) y recodifica como máximo 3 fotos a la vez (antes las 15). Un PNG de 16000 x 16000 de 30 KB responde 422 "No pudimos leer una de las fotos. Prueba con otra." en milisegundos. `sharp` se carga una sola vez por proceso.
+- **F6**: `COLOREAR_TEST_CODE_MAX_USES` y `COLOREAR_TEST_CODE_DAILY_CAP` cuentan **libros**: un Trío consume 3 (defecto 50 y 10 = 50 y 10 libros). Si un Trío no cabe en lo que queda, el formulario responde "A ese código solo le queda 1 libro y el Trío son 3. Elige 1 aventura o pide un código nuevo." (o "le quedan 2"); sin saldo, "Ese código ya se agotó". En una ráfaga de peticiones simultáneas sigue fallando cerrado. El evento `test_code_redeemed` mantiene los nombres `uses_total` y `uses_24h`, ahora en libros.
+
+### F7, F8, F9, F10, F13
+
+- **F7**: `GET /api/health` es público y responde solo `{"ok":true}`. Con `Authorization: Bearer <CRON_SECRET>` (o la cabecera `x-cron-secret`) devuelve los proveedores activos, para la lista de verificación del despliegue; `CRON_SECRET` ya existe en Vercel, no hay variable nueva.
+- **F8**: colorear tiene su propia página de pago de prueba, `/colorear/pago-prueba` (marca Pintoria, sin "Jinglo"); `GET /api/mock-pay` redirige ahí con la base `COLOREAR_PUBLIC_URL` para pedidos de colorear. `/pago-prueba` (Santa) ya no sirve pedidos de colorear ni existe en los dominios de Pintoria.
+- **F9**: en un pedido que no tuvo cobro (código de prueba o pago simulado: `testMode`) la página de reembolso dice "Cancelar pedido / Cancelar y borrar mi pedido", la pantalla de entrega ofrece "Cancelar y borrar mi pedido" y el estado cancelado dice "Pedido cancelado... No se cobró nada". Un pedido pagado de verdad conserva el texto de reembolso.
+- **F10**: la ruta del formulario reconoce el error de validación también por su forma (en `next dev` un módulo cargado dos veces rompía el `instanceof` y daba 500).
+- **F13**: el botón "Quitar" de la tarjeta de persona mide 44 x 44 px a 390 px (antes 41 x 44).
+
+### Pendientes que no se tocaron (decisión o coste)
+
+- **Tope global entre códigos** (QA, F6 y B3): varios códigos suman más que los topes de uno solo y legal (P4) pidió un máximo de pedidos con código en total; falta una variable (`COLOREAR_TEST_TOTAL_MAX`) que cuente todos los pedidos `test_code`. Mientras: un solo código activo.
+- **F11**: el freno por IP (`rateLimited`) vive en la memoria de cada instancia; en Vercel el tope efectivo es mayor. Con un código aleatorio largo no importa para adivinar; para frenar el abuso de la subida (F5) lo correcto es una regla de límite de peticiones en el cortafuegos de Vercel (`[no verificado]` qué reglas incluye el plan actual de Juan; es una decisión de coste suya).
+- **F12**: tras la purga a los 31 días queda `colorear/<id>/state.json` (historia sin nombres ni fotos, nacida del tema, que puede ser texto libre). Pregunta abierta para `legal-compliance`: ¿debe borrarse con el pedido? Si sí, es un cambio de una línea en el barrido.
+- **F14**: la portada `/colorear/es` y `/colorear/en` es indexable durante el piloto. Si se quiere evitar: `robots: { index: false, follow: false }` en `metadata` de `apps/web/src/app/(colorear)/layout.tsx` y quitarlo al lanzar; no se cambió para no olvidarlo puesto en el lanzamiento (decisión de marketing).
+- **Revisión de variables de Vercel** tras esta ronda: ver la lista en el informe del arquitecto (resumen: `COLOREAR_ALLOW_MOCK_PAY` sin definir, `COLOREAR_TEST_CODES` aleatorio, `PHONE_HASH_SALT` y `COLOREAR_LINK_SECRET` definidos una vez, `ALLOW_MOCK_PAYMENTS` solo si Santa se prueba en producción).

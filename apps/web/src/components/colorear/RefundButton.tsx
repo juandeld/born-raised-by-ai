@@ -3,8 +3,8 @@ import { useState } from "react";
 import type { ColorearLang } from "@lumen/config";
 import { COLOREAR_COPY } from "@/lib/colorear-copy";
 
-export function RefundButton({ token, lang }: { token: string; lang: ColorearLang }) {
-  const c = COLOREAR_COPY[lang].refundPage;
+export function RefundButton({ token, lang, testMode = false }: { token: string; lang: ColorearLang; testMode?: boolean }) {
+  const c = testMode ? COLOREAR_COPY[lang].noCharge.refundPage : COLOREAR_COPY[lang].refundPage;
   const [s, setS] = useState<"" | "busy" | "done" | "fail">("");
   async function go() {
     setS("busy");

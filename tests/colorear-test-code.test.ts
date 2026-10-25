@@ -371,6 +371,55 @@ describe("caps", () => {
     await expect(redeem(h)).resolves.toBeTruthy(); // the cancelled one freed its place
   });
 
+  it("counts BOOKS: a Trio uses 3 of the total, its 2 free adventures use nothing more; defaults 50 / 10 are 50 / 10 books", async () => {
+    expect(colorearTestCodeLimits({})).toEqual({ maxUses: 50, dailyCap: 10 });
+    const h = harness({ COLOREAR_TEST_CODE_MAX_USES: "7", COLOREAR_TEST_CODE_DAILY_CAP: "99" });
+    const { paid } = await redeem(h, { variant: "bundle3" }); // 3 of 7
+    await h.engine.runGeneration(paid.id);
+    const token = (await h.db.orders.get(paid.id))!.access_token;
+    for (let i = 0; i < 2; i++) {
+      const c = await h.engine.useCredit(token, { theme: "" });
+      if (!c.ok) throw new Error(c.reason);
+      await h.engine.runGeneration(c.orderId);
+    }
+    expect((await h.db.orders.find({ product: "colorear" })).length).toBe(3); // the Trio and its two free books are 3 rows, but only 3 books in all
+    await redeem(h, { variant: "bundle3" }); // 3 + 3 = 6 of 7: the free adventures did not count
+    const filesBefore = h.uploads.files.size;
+    const tooBig = await h.engine.createCheckout(await input({ testCode: "PROMO2026", variant: "bundle3" }), urls).catch((e) => e);
+    expect((tooBig as ColorearValidationError).errors).toEqual({ code: "left_1" });
+    expect(await h.db.orders.find({ payment_provider: TEST_CODE_PROVIDER })).toHaveLength(2); // refused before anything was stored
+    expect(h.uploads.files.size).toBe(filesBefore);
+    await expect(redeem(h, { variant: "single" })).resolves.toBeTruthy(); // 1 book still fits: 7 of 7
+    const closedTrio = await h.engine.createCheckout(await input({ testCode: "PROMO2026", variant: "bundle3" }), urls).catch((e) => e);
+    const closedOne = await h.engine.createCheckout(await input({ testCode: "PROMO2026" }), urls).catch((e) => e);
+    expect((closedTrio as ColorearValidationError).errors).toEqual({ code: "exhausted" });
+    expect((closedOne as ColorearValidationError).errors).toEqual({ code: "exhausted" });
+    // the analytics event reports books too
+    expect(ev(h, "test_code_redeemed").map((e) => (e.props as { uses_total: number }).uses_total)).toEqual([3, 6, 7]);
+  });
+
+  it("the daily cap counts books as well, and a Trio fits again 24 hours later", async () => {
+    const h = harness({ COLOREAR_TEST_CODE_MAX_USES: "50", COLOREAR_TEST_CODE_DAILY_CAP: "4" });
+    await redeem(h, { variant: "bundle3" });
+    advance(h, 10 * HOUR);
+    expect(((await h.engine.createCheckout(await input({ testCode: "PROMO2026", variant: "bundle3" }), urls).catch((e) => e)) as ColorearValidationError).errors).toEqual({ code: "left_1" });
+    await expect(redeem(h, { variant: "single" })).resolves.toBeTruthy(); // 3 + 1 = 4 of 4
+    expect(((await h.engine.createCheckout(await input({ testCode: "PROMO2026" }), urls).catch((e) => e)) as ColorearValidationError).errors).toEqual({ code: "exhausted" });
+    advance(h, 15 * HOUR); // the Trio is 25 h old, the single 15 h: 1 of 4 used
+    await expect(redeem(h, { variant: "bundle3" })).resolves.toBeTruthy();
+    expect(ev(h, "test_code_redeemed").map((e) => (e.props as { uses_24h: number }).uses_24h)).toEqual([3, 4, 4]);
+  });
+
+  it("simultaneous Trios never pass the cap: with 4 books a day at most one Trio gets through, the others are cancelled with their photos erased", async () => {
+    const h = harness({ COLOREAR_TEST_CODE_DAILY_CAP: "4", COLOREAR_TEST_CODE_MAX_USES: "50" });
+    const inputs = await Promise.all([1, 2, 3].map(() => input({ testCode: "PROMO2026", variant: "bundle3" })));
+    const res = await Promise.allSettled(inputs.map((i) => h.engine.createCheckout(i, urls)));
+    const ok = res.filter((r) => r.status === "fulfilled").length;
+    expect(ok).toBeLessThanOrEqual(1);
+    for (const r of res) if (r.status === "rejected") expect(["exhausted", "left_1"]).toContain((r.reason as ColorearValidationError).errors.code);
+    expect(h.uploads.files.size).toBe(2 * ok);
+  });
+
   it("holds the cap under simultaneous requests: never more than the cap gets through, the rest are cancelled and their photos erased", async () => {
     const h = harness({ COLOREAR_TEST_CODE_DAILY_CAP: "2", COLOREAR_TEST_CODE_MAX_USES: "50" });
     const inputs = await Promise.all([1, 2, 3, 4, 5, 6].map(() => input({ testCode: "PROMO2026" })));

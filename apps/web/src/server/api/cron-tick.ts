@@ -1,18 +1,10 @@
-import { timingSafeEqual } from "node:crypto";
 import { getColorear } from "@/lib/colorear";
 import { getEngine } from "@/lib/engine";
-import { json } from "@/lib/request";
+import { hasCronSecret, json } from "@/lib/request";
 
 
-function secretOk(req: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  // Vercel Cron sends "Authorization: Bearer <CRON_SECRET>"; the Supabase pg_net / external ping may use x-cron-secret.
-  const given = req.headers.get("x-cron-secret") ?? req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-  const a = Buffer.from(given);
-  const b = Buffer.from(secret);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
+// Vercel Cron sends "Authorization: Bearer <CRON_SECRET>"; the Supabase pg_net / external ping may use x-cron-secret.
+const secretOk = (req: Request): boolean => hasCronSecret(req);
 
 /**
  * Scheduler for deployments without Inngest (docs/arquitectura/cron-sin-inngest.md). Vercel Hobby only allows a daily cron,

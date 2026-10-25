@@ -94,7 +94,7 @@ function RolePicker({ idx, item, lang, c, onChange }: { idx: number; item: Item;
   );
 }
 
-export function ColorearForm({ lang, countries, defaultCountry, themes, creative, codeEnabled = false, photoLimits = { main: COLOREAR.photosPerPersonDefault, other: COLOREAR.photosPerPersonDefault } }: { lang: ColorearLang; countries: Record<string, CountryLegal>; defaultCountry: string; themes: Array<{ id: string; label: string }>; creative: string; codeEnabled?: boolean; photoLimits?: { main: number; other: number } }) {
+export function ColorearForm({ lang, countries, defaultCountry, themes, creative, codeEnabled = false, inviteOnly = false, photoLimits = { main: COLOREAR.photosPerPersonDefault, other: COLOREAR.photosPerPersonDefault } }: { lang: ColorearLang; countries: Record<string, CountryLegal>; defaultCountry: string; themes: Array<{ id: string; label: string }>; creative: string; codeEnabled?: boolean; inviteOnly?: boolean; photoLimits?: { main: number; other: number } }) {
   const c = COLOREAR_COPY[lang].form;
   const [items, setItems] = useState<Item[]>(() => [blankItem(0)]);
   const [tried, setTried] = useState(false);
@@ -115,8 +115,13 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   /** Optional test code: the field exists only when the server has codes configured. It is validated on the server, never here. */
   const [code, setCode] = useState("");
-  const [codeOpen, setCodeOpen] = useState(false);
-  const usingCode = codeEnabled && code.trim().length > 0;
+  /**
+   * Invitation-only (payments closed, see colorearInviteOnly): the field is always there and open, and the form is always the "code" version
+   * (nothing is charged, so no price, no refund line, the acceptance sentence says "Al usar el código"). The server refuses an order without a code.
+   */
+  const showCode = codeEnabled || inviteOnly;
+  const [codeOpen, setCodeOpen] = useState(inviteOnly);
+  const usingCode = showCode && (inviteOnly || code.trim().length > 0);
   const [busy, setBusy] = useState(false);
   const [photoMsg, setPhotoMsg] = useState("");
   /** Batches of photos being opened and reduced right now (the pay button waits for them). */
@@ -260,6 +265,11 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
     if (!age) local.age = c.errors.age!;
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) local.email = c.errors.email!;
     if (!allChecked) local.consent = c.errors.consent!;
+    // Closed to the public: say so before spending time on the photos (the server answers the same if this page is stale).
+    if (inviteOnly && !code.trim()) {
+      local.code = c.errors.code_required!;
+      setCodeOpen(true);
+    }
     setErrors(local);
     if (Object.keys(local).length) return;
     setBusy(true);
@@ -281,7 +291,7 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
     fd.set("theme", theme.trim());
     fd.set("themeId", themeId);
     fd.set("creative", creative);
-    if (usingCode) fd.set("code", code.trim());
+    if (showCode && code.trim()) fd.set("code", code.trim());
     fd.set("checkboxIds", JSON.stringify(legal.checkboxes.filter((k) => k.id === payNotice.id || checked[k.id]).map((k) => k.id)));
     send.forEach((it, i) => {
       // photo<i> is the required photo of person i; photo<i>_2, photo<i>_3... are the optional extras of the same person
@@ -302,6 +312,7 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
         e2[k] = k === "code" ? c.errors[`code_${j.errors?.[k]}`] ?? c.errors.code_invalid!
           // a page loaded before the limit was lowered can still offer more slots than the server now accepts
           : k === "photos" && /Too many photos/.test(j.errors?.[k] ?? "") ? c.photos.maxPer(Math.min(limitOf(0), limitOf(1)))
+          : k === "photos" && /Unreadable|Invalid or too large/.test(j.errors?.[k] ?? "") ? c.errors.unreadable!
           : c.errors[k] ?? c.errors[j.errors?.[k] ?? ""] ?? c.errors.generic!;
       }
       if (e2.code) setCodeOpen(true);
@@ -394,7 +405,7 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
                   <input className={input} value={it.name} maxLength={30} autoComplete="off" onChange={(e) => patch(it.id, { name: e.target.value })} />
                 </label>
                 {idx > 0 && (
-                  <button type="button" className="mt-1 inline-flex min-h-[44px] items-center text-sm font-semibold underline underline-offset-4" aria-label={`${c.people.remove}: ${who}`} onClick={() => remove(it.id)}>{c.people.remove}</button>
+                  <button type="button" className="mt-1 inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-sm font-semibold underline underline-offset-4" aria-label={`${c.people.remove}: ${who}`} onClick={() => remove(it.id)}>{c.people.remove}</button>
                 )}
                 <RolePicker idx={idx} item={it} lang={lang} c={c.people} onChange={(p) => patch(it.id, p)} />
                 {miss.length > 0 && <p role="alert" className="mt-3 text-sm font-semibold text-lapiz-error">{c.people.missing.join(miss)}</p>}
@@ -537,9 +548,10 @@ export function ColorearForm({ lang, countries, defaultCountry, themes, creative
         {err("consent")}
       </div>
 
-      {codeEnabled && (
+      {showCode && (
         <details open={codeOpen} onToggle={(e) => setCodeOpen(e.currentTarget.open)} className="px-1">
           <summary className="flex min-h-[44px] cursor-pointer items-center text-sm font-semibold text-lapiz-muted underline underline-offset-4">{c.code.summary}</summary>
+          {inviteOnly && !errors.code && <p className="mt-1 text-sm font-semibold">{c.code.closed}</p>}
           <label className="mt-1 block text-sm font-semibold">
             {c.code.label}
             <input

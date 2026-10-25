@@ -26,7 +26,7 @@ export function colorearRewrite(pathname: string): string {
   if (/^\/(entrega|confirmacion|reembolso)\/[a-f0-9]{32}$/.test(p)) return `/colorear${p}`;
   if (p === "/colorear" || p.startsWith("/colorear/")) return p;
   if (p.startsWith("/_next/") || p.startsWith("/pintoria/")) return p;
-  if (p === "/pago-prueba" || p === "/favicon.ico" || p === "/robots.txt") return p;
+  if (p === "/favicon.ico" || p === "/robots.txt") return p;
   if (/^\/api\/(colorear\/|webhooks\/|mock-pay$|health$)/.test(p)) return p;
   return "/colorear/not-found";
 }

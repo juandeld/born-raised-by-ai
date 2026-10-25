@@ -34,7 +34,7 @@ beforeAll(async () => {
     DB_PROVIDER: "mock", MOCK_DB_FILE: join(mkdtempSync(join(tmpdir(), "lumen-code-")), "db.json"), STORAGE_PROVIDER: "memory",
     PAYMENT_PROVIDER: "mock", EMAIL_PROVIDER: "mock", IMAGE_PROVIDER: "mock", COLOREAR_COUNTRIES: "MX,ES,GB,US", PHONE_HASH_SALT: "test-salt",
     PUBLIC_BASE_URL: "http://localhost:3000", COLOREAR_PUBLIC_URL: "https://www.pintoria.app", COLOREAR_TEST_CODES: "PROMO2026",
-    COLOREAR_TEST_CODE_MAX_USES: "3", COLOREAR_TEST_CODE_DAILY_CAP: "3",
+    COLOREAR_TEST_CODE_MAX_USES: "5", COLOREAR_TEST_CODE_DAILY_CAP: "5",
   });
   delete env.VERCEL_ENV;
   // the engine asks for a new invocation of /api/colorear/run through fetch: record it instead of calling out
@@ -111,7 +111,12 @@ describe("POST /api/colorear/checkout with a test code", () => {
     expect(((await res.json()) as { errors: Record<string, string> }).errors.consent).toBeTruthy();
   });
 
-  it("answers 'exhausted' once the caps are used", async () => {
+  it("counts books, not orders: the Trio above used 3 of 5, so another Trio gets 'left_2' and a single still fits; then 'exhausted'", async () => {
+    const before = (await lib.getColorear().d.db.orders.find({ payment_provider: "test_code" })).length;
+    const tooBig = await send(await form({ code: "PROMO2026" })); // Trio = 3 books, 2 left
+    expect(tooBig.status).toBe(422);
+    expect(await tooBig.json()).toEqual({ ok: false, errors: { code: "left_2" } });
+    expect(await lib.getColorear().d.db.orders.find({ payment_provider: "test_code" })).toHaveLength(before); // nothing was stored
     for (let i = 0; i < 2; i++) expect((await send(await form({ code: "PROMO2026", variant: "single" }))).status).toBe(200);
     const res = await send(await form({ code: "PROMO2026" }));
     expect(res.status).toBe(422);

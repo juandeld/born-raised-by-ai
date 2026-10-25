@@ -64,6 +64,8 @@ export function StatusView({ token, initial }: { token: string; initial: StatusD
   const [survey, setSurvey] = useState<"" | "sent">("");
   const [refund, setRefund] = useState<"" | "busy" | "done" | "fail">("");
   const c = COLOREAR_COPY[st.lang].status;
+  /** An order that was never charged is cancelled, not refunded (st.testMode). */
+  const nc = COLOREAR_COPY[st.lang].noCharge;
   const lang = st.lang;
   const stopped = useRef(false);
   const [pick, setPick] = useState({ themeId: "", theme: "" });
@@ -216,10 +218,10 @@ export function StatusView({ token, initial }: { token: string; initial: StatusD
           </div>
           <div className="mt-5 flex flex-wrap items-center gap-4 text-sm">
             <Link href={`/colorear/${lang}`} className="font-bold underline">{c.ready.again}</Link>
-            {refund === "" && st.kind !== "credit" && <button type="button" onClick={() => void doRefund()} className="font-bold underline">{c.ready.refund}</button>}
+            {refund === "" && st.kind !== "credit" && <button type="button" onClick={() => void doRefund()} className="min-h-[44px] font-bold underline">{st.testMode ? nc.ready.cancel : c.ready.refund}</button>}
             {refund === "busy" && <span>...</span>}
-            {refund === "done" && <span className="font-bold">{c.ready.refundDone}</span>}
-            {refund === "fail" && <span className="font-bold text-lapiz-error">{c.ready.refundFail}</span>}
+            {refund === "done" && <span className="font-bold">{st.testMode ? nc.ready.cancelDone : c.ready.refundDone}</span>}
+            {refund === "fail" && <span className="font-bold text-lapiz-error">{st.testMode ? nc.ready.cancelFail : c.ready.refundFail}</span>}
           </div>
         </div>
       )}
@@ -269,8 +271,8 @@ export function StatusView({ token, initial }: { token: string; initial: StatusD
           {st.parentToken && <a href={`/colorear/entrega/${st.parentToken}`} className={`${btn} mt-4 bg-lapiz-coral text-white`}>{c.more.all}</a>}
         </div>
       )}
-      {st.phase === "failed" && st.kind !== "credit" && <div className={box}><h1 className="text-2xl font-bold">{c.failed.title}</h1><p className="mt-2">{c.failed.text}</p></div>}
-      {st.phase === "refunded" && <div className={box}><h1 className="text-2xl font-bold">{c.refunded.title}</h1><p className="mt-2">{c.refunded.text}</p></div>}
+      {st.phase === "failed" && st.kind !== "credit" && <div className={box}><h1 className="text-2xl font-bold">{c.failed.title}</h1><p className="mt-2">{st.testMode ? nc.failed.text : c.failed.text}</p></div>}
+      {st.phase === "refunded" && <div className={box}><h1 className="text-2xl font-bold">{st.testMode ? nc.refunded.title : c.refunded.title}</h1><p className="mt-2">{st.testMode ? nc.refunded.text : c.refunded.text}</p></div>}
       {st.phase === "gone" && <div className={box}><h1 className="text-2xl font-bold">{c.gone.title}</h1><p className="mt-2">{c.gone.text}</p></div>}
     </div>
   );
