@@ -92,16 +92,60 @@ describe("payment providers", () => {
     expect(await polar.parseWebhook(other, { ...headers, "webhook-signature": signStandardWebhook(Buffer.from("whs"), "m2", ts, other) })).toBeNull();
   });
 
-  it("Recurrente: charges USD only and verifies Svix signatures", async () => {
-    const fetchFn = (async () => new Response(JSON.stringify({ id: "ch_1", checkout_url: "https://rec/pay" }), { status: 200 })) as unknown as typeof fetch;
+  it("Recurrente: charges USD only, builds a card-only checkout and verifies Svix signatures (unified and legacy events)", async () => {
+    const calls: { url: string; init: RequestInit }[] = [];
+    const fetchFn = (async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response(JSON.stringify({ id: "ch_1", checkout_url: "https://rec/pay" }), { status: 200 });
+    }) as unknown as typeof fetch;
     const secret = Buffer.from("topsecret").toString("base64");
-    const rec = new RecurrentePaymentProvider({ publicKey: "pk", secretKey: "sk", webhookSecret: `whsec_${secret}` }, fetchFn);
+    const rec = new RecurrentePaymentProvider({ publicKey: "pk", secretKey: "sk_live_x", webhookSecret: `whsec_${secret}` }, fetchFn, () => new Date("2026-10-28T12:00:00Z"));
+    expect(rec.testKeys).toBe(false);
     await expect(rec.createCheckout(checkout)).rejects.toThrow(/USD only/);
-    expect((await rec.createCheckout({ ...checkout, currency: "USD", amountMinor: 1099 })).url).toBe("https://rec/pay");
-    const body = JSON.stringify({ type: "payment_intent.succeeded", id: "pi_1", checkout: { id: "ch_1" }, metadata: { order_id: "o1" } });
+    await expect(rec.createCheckout({ ...checkout, currency: "USD", amountMinor: 50 })).rejects.toThrow(/100 cents/);
+    expect((await rec.createCheckout({ ...checkout, currency: "USD", amountMinor: 1299 })).url).toBe("https://rec/pay");
+    const sent = JSON.parse(String(calls[0].init.body));
+    expect(sent.items[0]).toMatchObject({ currency: "USD", amount_in_cents: 1299, quantity: 1, charge_type: "one_time", payment_method_types: ["card"] });
+    expect(sent.metadata).toMatchObject({ order_id: "o1" });
+    expect(sent.expires_at).toBe("2026-10-28T13:30:00.000Z");
+    expect((calls[0].init.headers as Record<string, string>)["X-SECRET-KEY"]).toBe("sk_live_x");
+
     const ts = String(Math.floor(Date.now() / 1000));
-    const sig = `v1,${createHmac("sha256", Buffer.from("topsecret")).update(`s1.${ts}.${body}`).digest("base64")}`;
-    expect(await rec.parseWebhook(body, { "svix-id": "s1", "svix-timestamp": ts, "svix-signature": sig })).toMatchObject({ type: "payment_succeeded", paymentId: "pi_1", orderId: "o1" });
+    const sign = (id: string, body: string) => `v1,${createHmac("sha256", Buffer.from("topsecret")).update(`${id}.${ts}.${body}`).digest("base64")}`;
+    // Unified format (accounts created after mid-2026): event_type + checkout.metadata, id is the intent "in_...".
+    const unified = JSON.stringify({ type: "payment", event_type: "intent.succeeded", id: "in_1", legacy_id: "pa_1", status: "succeeded", checkout: { id: "ch_1", status: "paid", metadata: { order_id: "o1" } } });
+    expect(await rec.parseWebhook(unified, { "svix-id": "s1", "svix-timestamp": ts, "svix-signature": sign("s1", unified) })).toEqual({ type: "payment_succeeded", paymentId: "in_1", orderId: "o1", checkoutId: "ch_1" });
+    const failed = JSON.stringify({ type: "payment", event_type: "intent.failed", id: "in_2", checkout: { id: "ch_2" } });
+    expect(await rec.parseWebhook(failed, { "svix-id": "s2", "svix-timestamp": ts, "svix-signature": sign("s2", failed) })).toEqual({ type: "payment_failed", orderId: null, checkoutId: "ch_2" });
+    // Legacy per-method format: type only, top-level metadata.
+    const legacy = JSON.stringify({ type: "payment_intent.succeeded", id: "pa_1", checkout: { id: "ch_1" }, metadata: { order_id: "o1" } });
+    expect(await rec.parseWebhook(legacy, { "svix-id": "s3", "svix-timestamp": ts, "svix-signature": sign("s3", legacy) })).toMatchObject({ type: "payment_succeeded", paymentId: "pa_1", orderId: "o1" });
+    const other = JSON.stringify({ type: "payment", event_type: "refund.create", id: "re_1" });
+    expect(await rec.parseWebhook(other, { "svix-id": "s4", "svix-timestamp": ts, "svix-signature": sign("s4", other) })).toBeNull();
+    await expect(rec.parseWebhook(unified, { "svix-id": "s1", "svix-timestamp": ts, "svix-signature": sign("s9", unified) })).rejects.toThrow(/signature/);
+
+    // Refunds: intent_id for unified ids, payment_intent_id for legacy ones, amount only when partial, idempotent.
+    calls.length = 0;
+    const refFetch = (async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response(JSON.stringify({ id: "re_1", status: "succeeded" }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const rec2 = new RecurrentePaymentProvider({ publicKey: "pk", secretKey: "sk_test_x", webhookSecret: `whsec_${secret}` }, refFetch);
+    expect(rec2.testKeys).toBe(true);
+    expect(await rec2.refund({ paymentId: "in_1", currency: "USD", reason: "x" })).toEqual({ refundId: "re_1" });
+    expect(JSON.parse(String(calls[0].init.body))).toEqual({ intent_id: "in_1" });
+    expect((calls[0].init.headers as Record<string, string>)["Idempotency-Key"]).toBe("refund:in_1:full");
+    await rec2.refund({ paymentId: "pa_1", amountMinor: 833, currency: "USD", reason: "x" });
+    expect(JSON.parse(String(calls[1].init.body))).toEqual({ payment_intent_id: "pa_1", amount_in_cents: 833 });
+  });
+
+  it("selects the provider per engine with PAYMENT_PROVIDER_GENERATE / PAYMENT_PROVIDER_CALLS", () => {
+    const rec = { RECURRENTE_PUBLIC_KEY: "pk", RECURRENTE_SECRET_KEY: "sk", RECURRENTE_WEBHOOK_SECRET: "whsec_x" };
+    expect(createPaymentProvider({ ...rec, PAYMENT_PROVIDER: "mock", PAYMENT_PROVIDER_GENERATE: "recurrente" }, "generate").name).toBe("recurrente");
+    expect(createPaymentProvider({ ...rec, PAYMENT_PROVIDER: "mock", PAYMENT_PROVIDER_GENERATE: "recurrente" }, "calls").name).toBe("mock");
+    expect(createPaymentProvider({ ...rec, PAYMENT_PROVIDER: "mock", PAYMENT_PROVIDER_GENERATE: "recurrente" }).name).toBe("mock");
+    expect(createPaymentProvider({ ...rec, PAYMENT_PROVIDER: "recurrente", PAYMENT_PROVIDER_CALLS: "mock" }, "calls").name).toBe("mock");
+    expect(createPaymentProvider({ ...rec, PAYMENT_PROVIDER: "recurrente", PAYMENT_PROVIDER_GENERATE: "" }, "generate").name).toBe("recurrente");
   });
 
   it("converts to USD when the provider cannot charge the local currency", () => {

@@ -40,7 +40,7 @@ export function createColorearEngine(opts: CreateColorearOptions = {}): Colorear
     uploads: o.uploads ?? createUploads(env, storage, db.kind),
     delivery: o.delivery ?? createDelivery(env, { from: colorearResendFrom(env), replyTo: brand.supportEmail }),
     tracker: o.tracker ?? createTracker(env, db),
-    payments: o.payments ?? createPaymentProvider(env),
+    payments: o.payments ?? createPaymentProvider(env, "generate"),
     image: o.image ?? createImageProvider(env),
     mockImage: o.mockImage ?? new MockImageProvider(),
     story: o.story ?? new FallbackStoryProvider(AnthropicStoryProvider.fromEnv(env)),

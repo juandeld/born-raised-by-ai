@@ -92,7 +92,7 @@ export function createEngine(opts: CreateEngineOptions = {}): CallsEngine {
     telephony: opts.overrides?.telephony ?? createTelephony(env),
     delivery: opts.overrides?.delivery ?? createDelivery(env),
     whatsapp: opts.overrides?.whatsapp ?? new WhatsAppStubDeliveryProvider(),
-    payments: opts.overrides?.payments ?? createPaymentProvider(env),
+    payments: opts.overrides?.payments ?? createPaymentProvider(env, "calls"),
     storage: opts.overrides?.storage ?? createStorage(env, db),
     pdf: opts.overrides?.pdf ?? createPdf(env),
     env,

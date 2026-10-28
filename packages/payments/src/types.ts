@@ -43,6 +43,8 @@ export interface PaymentProvider {
    * Apple Pay / Google Pay are placeholders until the account is connected and tested: see docs/arquitectura/pendientes-cuentas.md.
    */
   readonly walletMethods: ReadonlyArray<"apple_pay" | "google_pay">;
+  /** True when the provider runs on test/sandbox keys: checkouts look real but no money moves, so orders are test_mode and cost-capped. */
+  readonly sandbox?: boolean;
   createCheckout(req: CheckoutRequest): Promise<CheckoutSession>;
   /** Verifies the signature and returns a normalized event, or null for events we ignore. Throws if the signature is invalid. */
   parseWebhook(rawBody: string, headers: Record<string, string | undefined>): Promise<PaymentEvent | null>;

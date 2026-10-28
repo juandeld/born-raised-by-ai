@@ -8,7 +8,7 @@ según `docs/reglas-de-decision.md`.
 1. Pago único (o pase de tiempo limitado sin renovación). Nunca suscripción en fase 1.
 2. Cero humanos en el loop del cliente: compra, creación, entrega, soporte y reembolso son automáticos.
 3. Costo variable: cada venta paga su IA, telefonía y cobro. Costo fijo del portafolio ≤ $250/mes fuera de temporada.
-4. El dinero entra a Guatemala: Polar (merchant of record) principal, Recurrente plan B, PayPal+BAM tercero. Stripe no está disponible.
+4. El dinero entra a Guatemala: Recurrente (pasarela guatemalteca, cobro en USD, no es merchant of record) principal desde D29; Polar descartado (rechazó la organización y prohíbe productos para menores); PayPal+BAM plan B. Stripe no está disponible. Cada motor elige su proveedor con `PAYMENT_PROVIDER_GENERATE` / `PAYMENT_PROVIDER_CALLS`.
 5. Dos motores, muchos productos: `engines/calls` (llamadas de personajes) y `engines/generate` (generación + PDF/MP3/MP4).
 
 ## Productos (fase 1)

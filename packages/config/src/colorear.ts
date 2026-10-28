@@ -117,7 +117,12 @@ export function colorearMockPayAllowed(env: Record<string, string | undefined> =
 
 /** Invitation-only mode: the payment provider is the mock and mock payments are closed, so the only way in is a test code. */
 export function colorearInviteOnly(env: Record<string, string | undefined> = process.env): boolean {
-  return (env.PAYMENT_PROVIDER ?? "mock").trim().toLowerCase() === "mock" && !colorearMockPayAllowed(env);
+  return colorearPaymentProviderName(env) === "mock" && !colorearMockPayAllowed(env);
+}
+
+/** The payment provider colorear runs on: PAYMENT_PROVIDER_GENERATE overrides the global PAYMENT_PROVIDER (default mock). */
+export function colorearPaymentProviderName(env: Record<string, string | undefined> = process.env): string {
+  return (env.PAYMENT_PROVIDER_GENERATE || env.PAYMENT_PROVIDER || "mock").trim().toLowerCase();
 }
 
 /** Upper-cases and removes all whitespace, so "promo 2026 " and "PROMO2026" are the same code. */

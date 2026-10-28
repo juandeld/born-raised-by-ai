@@ -9,7 +9,7 @@ import {
 import type { DeliveryProvider, Storage } from "@lumen/calls";
 import type { Db, OrderRow } from "@lumen/db";
 import { COLOREAR_DELIVERY_LEGAL, COLOREAR_LEGAL_RULES, COLOREAR_REFUND_LINE, colorearTrioRefund, resolveAllColorearCheckboxes, COLOREAR_CHECKBOX_ORDER } from "@lumen/legal";
-import { convertForProvider, type PaymentEvent, type PaymentProvider } from "@lumen/payments";
+import { convertForProvider, paymentProviderByName, type PaymentEvent, type PaymentProvider } from "@lumen/payments";
 import { composeColorearMessage, type MailVars } from "./emails";
 import { signLink, verifyLink } from "./link";
 import { TEST_CODE_PROVIDER, isTestCodeRef, matchTestCode, testCodeHash, testCodeRef } from "./test-code";
@@ -364,7 +364,7 @@ export class ColorearEngine {
       // The reference carries the code hash, which is how uses are counted in the database (no new column needed).
       checkout_id: codeHash ? testCodeRef(codeHash, id) : null,
       payment_id: null,
-      test_mode: !!codeHash || this.d.payments.name === "mock" || this.d.env.TEST_MODE === "1",
+      test_mode: !!codeHash || this.d.payments.name === "mock" || this.d.payments.sandbox === true || this.d.env.TEST_MODE === "1",
       creative: input.creative ?? "none",
       device: input.device ?? "unknown",
       paid_at: null,
@@ -667,10 +667,14 @@ export class ColorearEngine {
 
   // ------------------------------------------------------------------ generation
 
-  /** Mock payments + a real provider could burn money on fake orders: a small daily cap, or an allow-listed email, keeps it safe. */
+  /**
+   * Mock or sandbox payments + a real image provider could burn money on fake orders: a small daily cap, or an allow-listed
+   * email, keeps it safe. Real (live-key) payments always get the real images: every sale pays its own generation.
+   */
   private async imageFor(order: OrderRow): Promise<ImageProvider> {
     const real = this.d.image;
-    if (real.name === "mock" || this.d.payments.name !== "mock") return real;
+    const unpaidProvider = this.d.payments.name === "mock" || this.d.payments.sandbox === true;
+    if (real.name === "mock" || !unpaidProvider) return real;
     // Test-code orders (and the Trio adventures made from one) are always real: their cost is capped when the code is redeemed.
     if (await this.isTestCodeFamily(order)) return real;
     const allow = (this.d.env.COLOREAR_TEST_EMAILS ?? "").split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
@@ -1302,6 +1306,22 @@ export class ColorearEngine {
     for (let n = 0; n <= COLOREAR.scenes; n++) for (const ext of ["png", "svg"]) await this.d.storage.delete(pagePath(orderId, n, ext)).catch(() => undefined);
   }
 
+  /**
+   * Refunds go to the provider that charged the order, not to the active one: after switching gateways (mock -> Recurrente,
+   * Recurrente -> another) old orders still refund where the money is. Falls back to the active provider when the order's
+   * provider is unknown or not configured (same behaviour as before).
+   */
+  private paymentsFor(order: OrderRow): PaymentProvider {
+    const name = order.payment_provider;
+    if (!name || name === this.d.payments.name) return this.d.payments;
+    try {
+      return paymentProviderByName(name, this.d.env);
+    } catch (err) {
+      console.warn(`[colorear] provider ${name} of order ${order.id} is not configured; refunding through ${this.d.payments.name}`, err instanceof Error ? err.message : err);
+      return this.d.payments;
+    }
+  }
+
   async markRefunded(order: OrderRow, reason: string, automatic: boolean, callProvider = true): Promise<{ refunded: boolean; reason?: string }> {
     if (order.status === "refunded") return { refunded: true, reason: "already_refunded" };
     if (!order.payment_id) {
@@ -1311,7 +1331,7 @@ export class ColorearEngine {
       return { refunded: false, reason: "not_paid" };
     }
     // A test-code order was never charged: there is nothing to give back at the provider.
-    if (callProvider && !this.isTestCodeOrder(order)) await this.d.payments.refund({ paymentId: order.payment_id, currency: order.currency as never, reason });
+    if (callProvider && !this.isTestCodeOrder(order)) await this.paymentsFor(order).refund({ paymentId: order.payment_id, currency: order.currency as never, reason });
     const now = this.d.now();
     await this.deleteFiles(order);
     await this.cancelCreditBooks(order);
@@ -1349,7 +1369,7 @@ export class ColorearEngine {
     // Mark first: the provider's refund webhook can arrive before this method returns and must not be read as a full refund.
     await this.d.db.orders.update(order.id, { refunded_at: iso(now) });
     try {
-      await this.d.payments.refund({ paymentId: order.payment_id!, amountMinor: r.refundMinor, currency: order.currency as never, reason: "customer_request_unused_adventures" });
+      await this.paymentsFor(order).refund({ paymentId: order.payment_id!, amountMinor: r.refundMinor, currency: order.currency as never, reason: "customer_request_unused_adventures" });
     } catch (err) {
       console.error("[colorear] partial refund failed", err instanceof Error ? err.message : err);
       await this.d.db.orders.update(order.id, { refunded_at: null });

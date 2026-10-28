@@ -20,12 +20,17 @@ export function isProduction(env: Record<string, string | undefined> = process.e
   return env.VERCEL_ENV === "production" || env.PAYMENT_STRICT === "1";
 }
 
+export type PaymentEngine = "generate" | "calls";
+
 /**
  * PAYMENT_PROVIDER=polar | recurrente | mock (default mock: nothing is ever charged without an explicit switch).
- * Outside production, polar/recurrente without keys fall back to the mock with a warning, so `npm run dev` always works.
+ * Each engine can override it with PAYMENT_PROVIDER_GENERATE / PAYMENT_PROVIDER_CALLS, so Pintoria can charge for real while
+ * Jinglo stays on the mock (or vice versa). Outside production, polar/recurrente without keys fall back to the mock with a
+ * warning, so `npm run dev` always works.
  */
-export function createPaymentProvider(env: Record<string, string | undefined> = process.env): PaymentProvider {
-  const wanted = env.PAYMENT_PROVIDER ?? "mock";
+export function createPaymentProvider(env: Record<string, string | undefined> = process.env, engine?: PaymentEngine): PaymentProvider {
+  const perEngine = engine === "generate" ? env.PAYMENT_PROVIDER_GENERATE : engine === "calls" ? env.PAYMENT_PROVIDER_CALLS : undefined;
+  const wanted = perEngine || env.PAYMENT_PROVIDER || "mock";
   try {
     if (wanted === "polar") return PolarPaymentProvider.fromEnv(env);
     if (wanted === "recurrente") return RecurrentePaymentProvider.fromEnv(env);
