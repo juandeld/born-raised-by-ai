@@ -110,7 +110,7 @@ Lo que **no** debe haber como guiño: bromas que el niño de 8 o 9 años pueda e
 - **Tú o vos.** Santa habla de **tú** (neutro). En Guatemala, El Salvador, Honduras y Costa Rica muchas familias usan vos o usted con los niños, pero Santa es de afuera y el tuteo suena natural y neutro. **[H11]** Ningún papá lo reporta como raro; se mide en la prueba.
 - **Palabras a evitar en el video y en la página:** castigo, "los malos", "los traviesos", carbón, "si no te portas bien…", "pórtate bien o…" (cualquier condicional), vosotros, chaval, chavo, chamaco, güey, mola, y toda jerga local del cuadro. En la página para el adulto: "peque" **[H]** puede sonar a España o a México; probar "tu niño o niña", "tu hijo o hija" y "tu chiquito" y quedarse con lo que digan los papás.
 - **Apodos de cuerpo:** nunca se repiten ("gordito", "flaca", "negrito"); ver campo 1.
-- **Nombres:** muchos son compuestos ("Juan de Dios", "María José") o con X inicial ("Xiomara", "Ximena"). El campo 1 admite la pronunciación entre paréntesis; `video-voz-santa` decide cómo se usa.
+- **Nombres:** muchos son compuestos ("María Fernanda", "María José") o con X inicial ("Xiomara", "Ximena"). El campo 1 admite la pronunciación entre paréntesis; `video-voz-santa` decide cómo se usa.
 
 ## 6. El video gratis de 15 s
 

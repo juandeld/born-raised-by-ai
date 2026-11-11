@@ -200,7 +200,7 @@ Reglas: ninguna bandera, ningún sombrero folclórico, ningún estereotipo. Los 
 - Estilo: caligrafía a pluma, inclinada, de trazo grueso-fino, parecida a una letra de maestro de escuela antigua.
 - Candidatos de fuentes abiertas (confirmar licencia comercial y soporte de Ñ, tildes y diéresis antes de elegir): Pinyon Script, Great Vibes, Cormorant Infant Italic (para texto secundario).
 - Color del nombre: dorado cálido con brillo, #C9A24A en el trazo, #F3D88A en el brillo, borde interior más oscuro #8F6E26 para sentirse como tinta metálica sobre papel y no como etiqueta pegada.
-- Altura de las minúsculas: aprox. 0.9 cm sobre la página real (ver proporciones en 4.2). Nombre más largo esperado: 12 letras (por ejemplo "Juan de Dios" tiene 12 con espacios); la caja admite hasta 16.
+- Altura de las minúsculas: aprox. 0.9 cm sobre la página real (ver proporciones en 4.2). Nombre más largo esperado: 12 letras (por ejemplo "María Fernanda" tiene 12 con espacios); la caja admite hasta 16.
 - Animación sugerida: el nombre se "escribe" con una máscara que avanza de izquierda a derecha en 1.5 s, con un destello cálido al final.
 
 ### 3.4 Cómo se abre y en qué página aparece el nombre
