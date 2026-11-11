@@ -111,3 +111,43 @@ OpenAI `gpt-image-2.5` (ver `openai.md`) y Recraft (ver `recraft.md`). Google qu
 - Si el filtro "Child" de Vertex bloquea una foto de un niño que sube su padre, y si la lista de permitidos se concede a una cuenta pequeña.
 - Cómo trata la Gemini API la foto de un menor en el nivel de pago (la guía de imágenes no lo dice).
 - Si los modelos "Nano Banana" de la Gemini API tienen términos de modelo adicionales.
+
+---
+
+## Jinglo videos: producción de los videos base con Veo (lectura del 11-nov-2026)
+
+`legal-compliance` · 11-nov-2026 · no es asesoría de abogado.
+Uso evaluado: un adulto de Lumen Labs genera, una sola vez, las escenas de Santa (personaje de folclore, sin personas reales, sin datos de clientes) que luego se reutilizan en cada pedido. **Ningún pedido llama a Google.** El niño ve el MP4 final; nunca usa un servicio de Google.
+
+### Vía 1: Gemini API o Vertex (por segundo)
+
+- La misma cláusula de menores de 18 de arriba ("directed towards or is likely to be accessed by individuals under the age of 18") aplica a la "API Client". Aquí el cliente de la API es una herramienta interna que solo usa un adulto, pero el producto final es para niños. El texto no resuelve si eso cuenta. **Ambiguo = RIESGO ALTO** (mismo criterio que con Pintoria).
+- Versión de febrero de 2025 de los términos de la Gemini API (`terms-archive/terms_02_05_25`): "You may not use any Services identified as 'Preview' for production use." La página de precios marca Veo 3.1 como modelo "preview". Que la frase siga en la versión vigente: [no verificado].
+- Veredicto: **RIESGO ALTO**. No se abre por esta vía sin respuesta escrita de Google.
+
+### Vía 2: Google Flow (suscripción Google AI Pro o Ultra, interfaz web)
+
+| Documento | Enlace | Versión |
+|---|---|---|
+| Ayuda de Google Flow (FAQ) | https://support.google.com/flow/answer/16353333 | sin fecha visible |
+| Google Terms of Service | https://policies.google.com/terms | "Effective July 30, 2026" |
+| Generative AI Prohibited Use Policy | https://policies.google.com/terms/generative-ai/use-policy | "Last Modified: December 17, 2024" |
+
+Citas:
+- FAQ: "You must be 18 years of age or older." Juan es el usuario.
+- FAQ (uso comercial): "The Terms of Service govern how these tools may be used". Google Terms: "Some of our services allow you to generate original content. Google won't claim ownership over that content." No hay restricción de uso comercial en lo leído, pero tampoco una autorización expresa.
+- Google Terms prohíben "misleading others into thinking that generative AI content was created by a human". La revelación de IA va al adulto que compra (D13, R24); el video es ficción navideña, no se presenta como filmado por una persona.
+- FAQ: marca de agua visible solo forzada en India, Corea del Sur y Vietnam; en el resto, interruptor "Visible watermarking". SynthID invisible en todo; no se quita ni se altera.
+- FAQ: Flow "features precautions to protect minors and uploaded photos of people". No se suben fotos de nadie.
+- No encontré en estos documentos la cláusula de "servicio dirigido a menores" de la API: Flow es un producto de consumo para el creador adulto, no una API integrada en el producto.
+- Aviso de Flow (según la página de créditos citada en prensa el 7-nov-2026): Veo 3.1 Fast, Veo 3.1 Quality y Omni Flash 1.1 se retiran el 5-dic-2026 [no verificado en la fuente primaria].
+
+Veredicto: **PERMITIDO con condiciones** para producir los videos base.
+
+Condiciones:
+1. Cuenta de Juan con plan de pago (Pro o Ultra); nunca subir fotos ni datos de personas reales.
+2. Marca de agua visible apagada en el interruptor; SynthID intacto.
+3. Guardar captura de la FAQ y de los términos con fecha en `docs/legal/evidencia/` el día que se genere el primer video.
+4. La política de privacidad y los términos de Jinglo dicen que el video se crea con inteligencia artificial (D23, sin nombrar a Google).
+5. Uso comercial: la FAQ remite a los términos y estos no lo restringen. Si Google publica una restricción, se reevalúa. Confirmación escrita deseable, no bloqueante (criterio del README: silencio = permitido con condiciones).
+6. Producir antes del 5-dic-2026 o validar el modelo sucesor con `video-control-calidad`.

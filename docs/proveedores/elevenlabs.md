@@ -84,3 +84,15 @@ El resto de personajes de llamada (Reyes Magos, Ratoncito Pérez, Tooth Fairy, R
 - Plan de la cuenta (se asume Pro).
 - Si las restricciones de Google sobre menores se trasladan a los clientes de ElevenLabs.
 - Dirección vigente de soporte o de confianza y seguridad para la solicitud.
+
+---
+
+## Jinglo videos personalizados (lectura del 11-nov-2026)
+
+`legal-compliance` · 11-nov-2026 · no es asesoría de abogado.
+
+- La voz de Santa de cada video se generaría con ElevenLabs por pedido, con el nombre del niño. Es una "experience directed at individuals under 18": **el mismo bloqueo de la sección 1** que tienen las llamadas. **PROHIBIDO hasta la aprobación escrita**, igual que las llamadas.
+- La música con Eleven Music cae bajo la misma Prohibited Use Policy (las Music Terms del 9-oct-2026 la incorporan) y además tiene su tabla de derechos comerciales por plan. Mismo bloqueo. Alternativa sin este bloqueo: música compuesta por una persona o de una biblioteca con licencia comercial, fija en el video base (no es por pedido); `video-musica-sonido` la propone y `legal-compliance` revisa la licencia.
+- Mejor camino: **una sola solicitud que cubra llamadas y videos**. `docs/legal/solicitud-elevenlabs.md` se actualizó el 11-nov-2026 (v2) con la cita literal de la sección 1, la corrección sobre entrenamiento, el modelo de lenguaje y el producto de video.
+- Mientras no haya aprobación: se puede producir un piloto interno (sin venta, sin datos de clientes, nombres de prueba). No se vende ni se entrega a ningún niño real. Una prueba ciega con niños reales es una experiencia dirigida a menores: esperar la aprobación o hacer la primera prueba solo con papás.
+- Plan B si ElevenLabs dice que no: otro proveedor de voz con su revisión D27. Los videos base no dependen de ElevenLabs, así que esa inversión no se pierde.

@@ -132,3 +132,14 @@ Revisión: releer todo cada 30 días o ante cualquier aviso de cambio. Un archiv
 - No se abrió ninguna cuenta ni se envió ninguna consulta. Los textos de consulta quedan propuestos en cada archivo.
 - Lectura de proveedores de imagen del 25-oct-2026: páginas oficiales leídas con la herramienta de lectura web. Las de openai.com (políticas) devolvieron 403 y no se releyeron; Alibaba (AUP) y BytePlus exigen JavaScript (BytePlus se leyó extrayendo el texto de la propia página; la AUP de Alibaba no se pudo leer). Documentos de Ideogram con fecha de 2024. Países y medios de pago de Guatemala no verificados para varios proveedores (marcado en cada archivo).
 - Lo que una política no dice (IA, menores, llamadas) se marca como silencio y no como aprobación. Tampoco sustituye lo que firme el abogado humano.
+
+## 2c. Videos personalizados de Jinglo (lectura del 11-nov-2026)
+
+| Proveedor | Uso | Veredicto | Archivo |
+|---|---|---|---|
+| ElevenLabs (voz por pedido y música) | Voz de Santa con el nombre del niño | **PROHIBIDO** hasta aprobación escrita (mismo bloqueo que las llamadas); solicitud v2 lista, cubre llamadas y videos | `elevenlabs.md`, `docs/legal/solicitud-elevenlabs.md` |
+| Google Flow (Veo, suscripción) | Producir una vez los videos base | **PERMITIDO con condiciones** | `google.md`, sección Jinglo videos |
+| Google Gemini API / Vertex (Veo por segundo) | Misma producción por API | **RIESGO ALTO** (cláusula de menores ambigua; modelo "preview") | `google.md` |
+| Sync Labs | Labios por pedido | **PERMITIDO con condiciones** (minimizar datos, pedir exclusión de entrenamiento) | `sync-so.md` |
+| Kling | Video, alternativa | **PROHIBIDO** (app) / **RIESGO ALTO** (API) | `kling.md` |
+| Runway | Video, alternativa | **PROHIBIDO** (autoservicio) | `runway.md` |
