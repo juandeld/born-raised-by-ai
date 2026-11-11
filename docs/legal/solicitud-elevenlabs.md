@@ -1,6 +1,6 @@
 # Solicitud a ElevenLabs: confirmación escrita del caso de uso
 
-Estado: **v2, listo para enviar (11-nov-2026)**. Cambios frente a la v1 del 18-oct, pedidos en `docs/proveedores/elevenlabs.md`: cita literal de la sección 1 de la Prohibited Use Policy y petición expresa de aprobación escrita (no solo "confirmación"); corrección de la frase sobre entrenamiento (solo es cierta con el opt-out de "Data use"); pregunta por el modelo de lenguaje del agente; transparencia de IA (sección 10) frente a D13; y un segundo producto, los videos personalizados de Santa. Con una sola respuesta se desbloquean llamadas y videos. · v1: 18-oct-2026 · Autor: `legal-compliance` · Origen: `docs/investigacion/santa.md` 5.5 (la Prohibited Use Policy tiene secciones de protección de menores, engaño e impersonación y transparencia de IA; no se pudo leer completa) y brief H0.
+Estado: **v2 ENVIADA el 11-nov-2026 a las 12:10 (hora de Guatemala)** desde juandeld@gmail.com (correo de la cuenta de ElevenLabs) a support@elevenlabs.io, con copia a legal@elevenlabs.io; Gmail message id 1a1cbcba2f567b2d; plazo pedido: 18-nov-2026. El opt-out de "Data use" sigue pendiente de Juan (el correo dice que se está activando). Cambios frente a la v1 del 18-oct, pedidos en `docs/proveedores/elevenlabs.md`: cita literal de la sección 1 de la Prohibited Use Policy y petición expresa de aprobación escrita (no solo "confirmación"); corrección de la frase sobre entrenamiento (solo es cierta con el opt-out de "Data use"); pregunta por el modelo de lenguaje del agente; transparencia de IA (sección 10) frente a D13; y un segundo producto, los videos personalizados de Santa. Con una sola respuesta se desbloquean llamadas y videos. · v1: 18-oct-2026 · Autor: `legal-compliance` · Origen: `docs/investigacion/santa.md` 5.5 (la Prohibited Use Policy tiene secciones de protección de menores, engaño e impersonación y transparencia de IA; no se pudo leer completa) y brief H0.
 
 ## Instrucciones para Juan (no son parte del correo)
 
@@ -40,13 +40,13 @@ Parents or legal guardians buy a short phone call (about 2 to 3 minutes) from a 
 - Fixed topic list (greeting, the child's name and the optional details the parent entered, the holiday or birthday, good habits). It never asks for personal data, sells, mentions brands or prices, makes promises, scares the child or asks for secrets.
 - Forced call closure on safety cues (distress, abuse or self-harm language, requests for contact), personal data offered by the child, content the agent should not discuss, silence, or an adult asking to stop. A neutral note is sent to the parent when a safety cue occurs.
 - Hard time limit per call, a maximum of two attempts within the window the parent chose, and permanent opt-out on request.
-- The characters are folklore or original. We do not imitate real people or actors and we do not clone any voice, including the child's or the adult's. We plan to use [a voice from your library / a designed voice] and would like to confirm it is licensed for this use.
+- The characters are folklore or original. We do not imitate real people or actors and we do not clone any voice, including the child's or the adult's. We use a voice we designed in our account with your Voice Design tool (not a clone of anyone) and would like to confirm it is licensed for this use.
 
 **Product 2: personalized pre-rendered videos (Text to Speech)**
 Parents buy a short video (45 to 75 seconds) in which an original, AI-generated Santa Claus says the child's first name and a few details the parent enters (for example a hobby or an achievement this year). The video scenes are produced once, without any real person. For each order we would generate only Santa's lines with the child's first name using your Text to Speech API and the same designed (not cloned) Santa voice, and then synchronize Santa's lips with another provider. No child's voice, photo or likeness is ever sent to you. The disclosure that the video is AI-generated is made to the parent before payment and in the delivery email; inside the video, Santa stays in character, as in the calls. We would also like to know whether Eleven Music may be used for the background music of these videos.
 
 **Data**
-For both products we send you only the child's first name and optional details that we sanitize beforehand; for calls, also the call audio. We do not sell the data or use it for advertising. We have turned on the opt-out of training in "Data use" in our account; please confirm whether it covers Agents conversations and Text to Speech requests. We delete call recordings and transcripts 30 days after delivery (parents can download the recording and ask for earlier deletion). Calls flow through ElevenLabs Agents and Twilio. The agent uses the language model selected in Agents (currently Gemini 2.5 Flash). Markets: Central America and Mexico first; Spain, the United Kingdom and the United States later (US calls only with the parent's prior express written consent captured at checkout).
+For both products we send you only the child's first name and optional details that we sanitize beforehand; for calls, also the call audio. We do not sell the data or use it for advertising. We are turning on the opt-out of training in "Data use" in our account before any customer interaction; please confirm whether it covers Agents conversations and Text to Speech requests. We delete call recordings and transcripts 30 days after delivery (parents can download the recording and ask for earlier deletion). Calls flow through ElevenLabs Agents and Twilio. The agent uses the language model selected in Agents (currently Gemini 2.5 Flash). Markets: Central America and Mexico first; Spain, the United Kingdom and the United States later (US calls only with the parent's prior express written consent captured at checkout).
 
 **Our questions**
 1. Do you approve in writing, under Section 1 (Protection of Minors) of your Prohibited Use Policy, Product 1 (calls) and Product 2 (videos) as described? If not, what conditions would you require?
@@ -60,13 +60,13 @@ For both products we send you only the child's first name and optional details t
 7. Do you foresee any concurrency or plan limits for a seasonal peak between December 20 and 24? We will send a forecast if useful.
 8. For Product 2: may Text to Speech output with the child's first name be delivered to the parent as part of a paid video, and may Eleven Music be used for the video's background music under our plan?
 
-If it is easier, I can book a short call. A written reply to this email that references the policy sections above would be ideal, since we will keep it as part of our compliance record. Could you reply by [DATE]? We hope to start selling in the second half of November, so a reply within a few business days would help us a lot.
+If it is easier, I can book a short call. A written reply to this email that references the policy sections above would be ideal, since we will keep it as part of our compliance record. Could you reply by November 18, 2026? We hope to start selling in the second half of November, so a reply within a few business days would help us a lot.
 
 Thank you for your help.
 
 Best regards,
 Juan Lima
-Lumen Labs · [website, if live] · [phone, optional]
+Lumen Labs (Guatemala)
 
 ---
 

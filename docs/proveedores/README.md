@@ -137,9 +137,10 @@ Revisión: releer todo cada 30 días o ante cualquier aviso de cambio. Un archiv
 
 | Proveedor | Uso | Veredicto | Archivo |
 |---|---|---|---|
-| ElevenLabs (voz por pedido y música) | Voz de Santa con el nombre del niño | **PROHIBIDO** hasta aprobación escrita (mismo bloqueo que las llamadas); solicitud v2 lista, cubre llamadas y videos | `elevenlabs.md`, `docs/legal/solicitud-elevenlabs.md` |
+| ElevenLabs (voz por pedido y música) | Voz de Santa con el nombre del niño | **PROHIBIDO** hasta aprobación escrita (mismo bloqueo que las llamadas); solicitud v2 enviada el 11-nov-2026, cubre llamadas y videos | `elevenlabs.md`, `docs/legal/solicitud-elevenlabs.md` |
 | Google Flow (Veo, suscripción) | Producir una vez los videos base | **PERMITIDO con condiciones** | `google.md`, sección Jinglo videos |
 | Google Gemini API / Vertex (Veo por segundo) | Misma producción por API | **RIESGO ALTO** (cláusula de menores ambigua; modelo "preview") | `google.md` |
+| Fish Audio | Voz por pedido, plan B | **PERMITIDO con condiciones** (sin cláusula de menores; ZDR obligatoria) | `fish-audio.md` |
 | Sync Labs | Labios por pedido | **PERMITIDO con condiciones** (minimizar datos, pedir exclusión de entrenamiento) | `sync-so.md` |
 | Kling | Video, alternativa | **PROHIBIDO** (app) / **RIESGO ALTO** (API) | `kling.md` |
 | Runway | Video, alternativa | **PROHIBIDO** (autoservicio) | `runway.md` |
