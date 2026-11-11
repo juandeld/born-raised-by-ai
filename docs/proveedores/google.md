@@ -151,3 +151,83 @@ Condiciones:
 4. La política de privacidad y los términos de Jinglo dicen que el video se crea con inteligencia artificial (D23, sin nombrar a Google).
 5. Uso comercial: la FAQ remite a los términos y estos no lo restringen. Si Google publica una restricción, se reevalúa. Confirmación escrita deseable, no bloqueante (criterio del README: silencio = permitido con condiciones).
 6. Producir antes del 5-dic-2026 o validar el modelo sucesor con `video-control-calidad`.
+
+---
+
+## Omni 1.2 Flash (Flow)
+
+`legal-compliance` · 11-nov-2026 · no es asesoría de abogado. Uso evaluado: Juan, con plan Google AI Ultra, genera una sola vez en Flow (web) los videos base de Santa para Jinglo (niños de 3 a 8, compra el adulto). Santa es folclore; no se suben fotos de personas ni datos de clientes. Ningún pedido llama a Google. Reemplaza a Veo 3.1 como modelo de producción.
+
+**Veredicto: PERMITIDO CON CONDICIONES, con dos puntos sin confirmar en fuente primaria. Si la condición 1 no se cumple antes de la primera generación, pasa a RIESGO ALTO y se usa el plan B (Veo 3.1 hasta el 5-dic-2026).**
+
+### Documentos leídos
+
+| Documento | Enlace | Versión |
+|---|---|---|
+| Flow Help: modelos y funciones (Omni Flash 1.2) | https://support.google.com/flow/answer/16352836 | sin fecha visible; la página aún habla de Omni 1.1 en parte del texto |
+| Flow Help: FAQ | https://support.google.com/flow/answer/16353333 | sin fecha visible |
+| Google Terms of Service | https://policies.google.com/terms | "Effective July 30, 2026" |
+| Generative AI Prohibited Use Policy | https://policies.google.com/terms/generative-ai/use-policy | "Last Modified: December 17, 2024" |
+| Generative AI Additional Terms | https://policies.google.com/terms/generative-ai | "last modified August 9, 2023"; la página dice que ya no aplican salvo a socios con contrato que las cite |
+| Prensa: VP Land (disponibilidad, referencias, retiro de Veo) | https://www.vp-land.com/stories/google-releases-gemini-omni-1-2-flash-in-flow-with-15-second-shots-and-per-second-pricing | nov-2026, fuente secundaria |
+| Prensa: The Next Web (SynthID, disponibilidad) | https://thenextweb.com/news/google-gemini-omni-1-2-flash-video-15-seconds-price-cut | nov-2026, fuente secundaria |
+| Guía de terceros: Nereo (créditos, entradas de referencia) | https://www.nereo.io/blog/google-flow-omni | nov-2026, fuente secundaria |
+
+No se pudo leer: Android Authority y Heise (bloqueados al lector). `labs.google/fx/tools/flow/faq` (permiso no concedido). Las citas salen de la lectura de cada página con herramienta de resumen; antes del primer uso se confirman contra la captura con fecha (condición 3).
+
+### Respuestas
+
+**1. ¿Es "preview/experimental" y cambia el uso comercial?**
+- Ninguna página de Google que leí llama a Omni 1.2 Flash "preview" ni "experimental". La ayuda de Flow solo dice: "Model costs are evolving fast" y que los límites se ajustan.
+- Prensa (secundaria): el modelo está "generally available through the Gemini API, Gemini for business and Google Vids".
+- Distinto de Veo 3.1: los términos de la Gemini API de feb-2025 prohibían "Preview" en producción; esa frase aplica a la API, no a Flow, y Omni 1.2 no aparece marcado así. No encontré una cláusula equivalente en Flow.
+- Sin etiqueta "preview" en fuente primaria, no hay base para decir que cambia el uso comercial. Es ausencia de prueba, no prueba de ausencia: va a la condición 1.
+
+**2. ¿Las salidas se pueden usar comercialmente?**
+- Google Terms: "Google won't claim ownership over that content." Esto cubre la propiedad, no autoriza expresamente la venta.
+- FAQ de Flow: los términos "govern how these tools may be used". Google Terms no tiene sección propia de uso comercial; distingue "consumers" (uso personal no comercial) de usuarios de negocio, que deben representar a una organización e indemnizar a Google por infracciones.
+- Es el mismo vacío que ya tenía la sección de Veo. Se trata igual: no hay restricción, tampoco autorización expresa. Riesgo concreto: si la cuenta de Juan se considera de "consumidor", el uso comercial podría discutirse. Mitigación: la cuenta Ultra se abre y factura a nombre de la entidad que vende (a confirmar con Juan), y se pide confirmación escrita a Google (deseable, no bloqueante).
+
+**3. ¿Las imágenes de referencia de personaje tienen términos propios?**
+- Omni Flash 1.2 admite "ingredientes/referencias a video" (ayuda de Flow). La ayuda y las guías leídas no publican términos propios para esas referencias ni límites de contenido. No encontré cláusula separada.
+- Rige lo general: la Prohibited Use Policy prohíbe "using personal data or biometrics without legally-required consent". Aplicado a nosotros: las referencias serán imágenes del Santa genérico creado por nosotros, sin rostros de personas reales ni de menores. Santa = folclore (D-marcas); nada de Elf on the Shelf, Rudolph, Grinch ni personajes ajenos como referencia.
+- Condición: no subir como referencia ninguna foto de persona real, tampoco de actores o de Juan.
+
+**4. ¿Restricciones a contenido dirigido a menores?**
+- FAQ de Flow: "You must be 18 years of age or older." Juan es el usuario; el niño nunca usa Flow.
+- FAQ: Flow tiene salvaguardas para menores y para fotos de personas; algunas consultas pueden no generarse.
+- No encontré en Flow la cláusula de "sitio o aplicación dirigido o probablemente accesible a menores de 18" que sí tiene la Gemini API. Por eso, Flow (web, uso interno de un adulto) evita el riesgo alto de la vía API. La prensa dice que el mismo modelo está en la Gemini API: por esa vía, la cláusula aplicaría y sería RIESGO ALTO. No usar la API de Omni.
+- Generative AI Additional Terms: respetar "further age restrictions presented in connection with a Service". No vi restricción de edad adicional para Omni.
+
+**5. ¿Aplica la política de uso prohibido de IA generativa?**
+- Sí. Google Terms la citan. Nada de lo previsto cae en ella: no hay contenido sexual, explotación de menores, suplantación ni desinformación.
+- Dos puntos que sí tocamos: (a) "Misrepresenting the provenance of generated content" (§4.5): la revelación de IA al adulto comprador (D23, sin nombrar al proveedor) lo cubre. (b) Google Terms: no "misleading others into thinking that generative AI content was created by a human": el video se presenta como experiencia de IA, no como filmación humana.
+- Además, Google Terms prohíbe usar contenido generado "to develop machine learning models": los videos base no se usan para entrenar nada nuestro.
+- No intentar saltar filtros: si Flow bloquea un prompt sobre niños, no reformular para sortearlo.
+
+**6. ¿SynthID o la marca de agua obligan a algo?**
+- Ayuda de Flow: las salidas de Veo, Omni y Nano Banana llevan SynthID invisible; hay interruptor de marca visible, forzada solo para usuarios de India, Corea del Sur y Vietnam fuera del plan Ultra 20x.
+- Prensa: "Every video carries an invisible SynthID watermark." Es invisible y no obliga a atribución.
+- Obligación para nosotros: no quitar ni alterar SynthID. Recodificar a MP4 es normal; no usar herramientas para borrarlo. La marca visible se apaga en el interruptor (Juan está fuera de esos tres países).
+- Compatible con AI Act art. 50 (marcado legible por máquina) y con nuestra revelación en la web y el aviso del adulto.
+
+### Condiciones
+
+1. Antes de la primera generación, `legal-compliance` abre la página oficial "Omni Flash 1.2" (soporte de Flow) y la FAQ en el navegador, y guarda capturas con fecha en `docs/legal/evidencia/`. Debe verificar: (a) que no diga "preview/experimental/beta" para Omni 1.2; (b) que no haya términos propios de referencias o de uso comercial. Si aparece cualquiera de las dos, el veredicto pasa a RIESGO ALTO y se avisa a Juan.
+2. Solo Flow web con plan de pago Ultra. Nunca la Gemini API ni Vertex para Omni (cláusula de menores de 18).
+3. Cuenta a nombre de quien vende (confirmar con Juan); solicitud escrita a Google sobre uso comercial: deseable, no bloqueante.
+4. Referencias solo de Santa genérico propio. Sin fotos de personas, sin marcas ajenas.
+5. Marca visible apagada; SynthID intacto. Sin intentar eludir filtros.
+6. Revelación de IA en web, privacidad y términos de Jinglo (D23). Sin nombrar a Google ni a Omni al cliente.
+7. Producir y revisar los clips con `video-control-calidad` antes del 5-dic-2026; Omni 1.1 y Veo 3.1 se retiran ese día.
+
+### Plan B
+
+Veo 3.1 en Flow (mismo plan Ultra y mismos términos de la sección de Veo), usable hasta el 5-dic-2026. Orden: generar primero con Veo 3.1 las escenas críticas si la condición 1 no se resuelve a tiempo. Después del 5-dic, sin Omni ni Veo: reevaluar con el modelo sucesor (nueva lectura D27) o cambiar de proveedor de video.
+
+### No verificado
+
+- Texto de la página oficial de Omni 1.2 (la ayuda leída mezcla 1.1 y 1.2).
+- Si Google trata la cuenta Ultra como "consumidor" y qué implica para venta de lo generado.
+- Si hay términos adicionales de Labs o de Flow no enlazados desde la FAQ.
+- Fecha del cambio de los Generative AI Additional Terms (la página es de 2023 y dice que ya no aplican a consumidores).
