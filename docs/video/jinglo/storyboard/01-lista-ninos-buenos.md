@@ -1,7 +1,17 @@
 # Storyboard 01 · La Lista de Niños Buenos (60 s) + video gratis (15 s)
 
-Versión `storyboard-v1` · 11-nov-2026 · `video-director-creativo` · Biblia: `docs/video/jinglo/biblia.md` (manda sobre las secciones) · Guion base: `guiones/01-lista-ninos-buenos.md` y `guiones/00-video-gratis.md` (los textos de aquí son el `guion-v1.1` que `video-guionista` debe asentar) · Luz y criterios: `biblia/fotografia.md` · Aspecto y utilería: `biblia/arte.md` · Sonido: `biblia/sonido.md` · Voz: `biblia/voz.md`.
+Versión `storyboard-v1.1` · 11-nov-2026 · `video-director-creativo` · Biblia: `docs/video/jinglo/biblia.md` (manda sobre las secciones) · Guion base: `guiones/01-lista-ninos-buenos.md` y `guiones/00-video-gratis.md` (`guion-v1.2`; los textos de aquí coinciden con él) · Luz y criterios: `biblia/fotografia.md` · Aspecto y utilería: `biblia/arte.md` · Sonido: `biblia/sonido.md` · Voz: `biblia/voz.md`.
 Documento interno: nombra modelos y proveedores (D23 aplica solo a lo que ve el cliente).
+
+## Changelog
+
+**v1.1 · 11-nov-2026.** Los textos de cada toma coinciden con `guion-v1.2` y con `revision-piloto.md`.
+- **V1-06 (C1):** frase del Niño Dios "Sé que en tu casa quieren mucho al Niño Dios. ¡Qué bonito!" (sin "mucho" a 3 a 4 años). Fuera "a tu casa también llega". Fila "Ninguno" dice "estudio", no "taller".
+- **V1-07 (S1):** "Gracias por ser tú." reemplaza a "Sigue con ese gran corazón."
+- **V1-02 y V1-08:** montaje de 3 a 4 años sin V1-02 y sin el guiño (solo 1,5 s de sonrisa). Video de 53 s. Tiempos en la sección 9.
+- **Gratis, G3 (C2 y C3):** usa **V1-09**, tramo 0,0–5,5 s (manos sobre el libro cerrado), no V1-06. Texto "Tengo algo muy bonito que contarte. Tu familia me ayudó." sin susurro; sin fundido a oscuro; música en acorde consonante y abierto. La variante A/B del regalo queda solo para adultos.
+- Resumen, reutilización (sección 4) y límites de texto (sección 6) ajustados.
+- **No aplicado aquí** (pendiente del director): C4 (rehacer V1-06 y V1-06b para 3 a 4 años) y C5 (criterios de descarte, caída de 300 ms antes del nombre).
 
 ## 0. Cómo leer
 
@@ -11,7 +21,7 @@ Documento interno: nombra modelos y proveedores (D23 aplica solo a lo que ve el 
 - **Tomas:** 9:16 (master): 6 tomas por plano Quality y 4 por plano Fast, gana la mejor aprobada. 16:9 (nativo, desde la misma fija extendida y la misma instrucción ya probada): 3 tomas Quality y 4 Fast; si ninguna pasa, se usan tomas de la reserva. Es una excepción del director a la regla de 6 tomas, solo para la segunda versión de formato, porque instrucción y fija ya llegan aprobadas.
 - **Nada se genera sin su fija de arranque aprobada** por `video-fotografia-iluminacion` y `video-direccion-arte` (sección 7).
 - **Instrucción:** cada plano empieza con la descripción maestra enmendada (biblia sección 3) y el vocabulario de luz de fotografía; la línea "Acción EN" de cada plano es solo la parte específica. La instrucción completa la escribe `video-ia-generativa` en `produccion/piloto-flow.md`.
-- **Textos:** registro 5 a 6 años con el ejemplo ficticio "Sofía, 5 años, aprendió a andar en bicicleta, le encanta bailar". Las variantes por edad las recalcula el guionista con los límites de la sección 6.
+- **Textos:** registro 5 a 6 años con el ejemplo ficticio "Sofía, 5 años, aprendió a andar en bicicleta, le encanta bailar". Las variantes por edad están en `guiones/01-lista-ninos-buenos.md` (v1.2), calculadas con los límites de la sección 6.
 - **Aprobado:** además del criterio propio de cada plano, toda toma cumple fotografía 10.1 (descarte inmediato), los 12 puntos de la biblia, Flow sin marca visible y con SynthID intacto (`legal-proveedores.md`).
 
 ## 1. Resumen
@@ -23,13 +33,13 @@ Documento interno: nombra modelos y proveedores (D23 aplica solo a lo que ve el 
 | V1-03 | 0:13–0:20 | 7 s | PERS-OFF + COMP | Cenital: el dedo encuentra la línea; nombre en dorado | Quality | G2 |
 | V1-04 | 0:20–0:27 | 7 s | PERS-LABIOS | Levanta la vista: "¡Hola, {nombre}!" + 2 s de calma | Quality | — |
 | V1-05 | 0:27–0:35 | 8 s | PERS-OFF + COMP | Carta de la familia con el logro escrito | Fast | — |
-| V1-06 | 0:35–0:42,5 | 7,5 s | PERS-OFF | Ojos sonrientes sobre el libro cerrado | Quality | G3 |
+| V1-06 | 0:35–0:42,5 | 7,5 s | PERS-OFF | Ojos sonrientes sobre el libro cerrado (sujeto a C4) | Quality | — |
 | V1-07 | 0:42,5–0:50 | 7,5 s | PERS-LABIOS | A cámara: "ya estás en mi Lista" | Quality | — |
 | V1-08 | 0:50–0:52,5 | 2,5 s | FIJO | Guiño | Quality | — |
-| V1-09 | 0:52,5–1:00 | 7,5 s | PERS-OFF + COMP | Manos sobre el libro; "¡Feliz Navidad, {nombre}!" y marca | Fast | — |
+| V1-09 | 0:52,5–1:00 | 7,5 s | PERS-OFF + COMP | Manos sobre el libro; "¡Feliz Navidad, {nombre}!" y marca | Fast | G3 |
 
-Video 1: 9 planos, 60 s. Labios: 2 planos, unos 11 s procesados (límite del brief: 20 s). Nombre dicho 4 veces (V1-03, V1-04, V1-07, V1-09). Dos risas, ambas en off (V1-01, V1-09).
-Gratis: 3 planos, 15 s, todos reutilizados del video 1. Labios: 0. Nombre dicho 1 vez y escrito 1 vez. Cero créditos nuevos.
+Video 1: 9 planos, 60 s (53 s para 3 a 4 años: sin V1-02 y con V1-08 reducido a la sonrisa). Labios: 2 planos, unos 11 s procesados (límite del brief: 20 s). Nombre dicho 4 veces (V1-03, V1-04, V1-07, V1-09). Dos risas, ambas en off (V1-01, V1-09).
+Gratis: 3 planos, 15 s, todos reutilizados del video 1 (V1-01, V1-03 y V1-09). Labios: 0. Nombre dicho 1 vez y escrito 1 vez. Cero créditos nuevos.
 
 ---
 
@@ -59,6 +69,7 @@ Gratis: 3 planos, 15 s, todos reutilizados del video 1. Labios: 0. Nombre dicho 
 - **Movimiento:** fijo o empuje de 2 %.
 - **Santa dice (off, fijo):** "Aquí están los niños buenos de todo el mundo. Busco un nombre muy especial." (0:07,3–0:12,6).
 - **Audio:** páginas de papel grueso (-14 dB) como percusión; arpa y pizzicato con el tema en fragmentos; ducking -10 dB.
+- **3 a 4 años:** este plano se omite en el montaje (sugerencia S2). El nombre pasa de 0:16,7 a 0:10,7 y el video baja a 53 s con la reducción de V1-08. No cambia la generación ni los créditos.
 - **Composición:** ninguna.
 - **Fija de arranque:** F02 (= M9).
 - **Modelo y tomas:** Fast · 4 + 4. Si el pelo o la lana se ven de plástico, pasa a Quality con la reserva.
@@ -102,7 +113,7 @@ Gratis: 3 planos, 15 s, todos reutilizados del video 1. Labios: 0. Nombre dicho 
 - **Encuadre y lente:** cenital 85-90°, 50 mm; la carta ocupa unos 70 % del ancho en 9:16, centrada.
 - **Luz:** pareja, como fotografía 7; lámpara arriba a camera-right, chimenea lateral suave.
 - **Movimiento:** fijo.
-- **Santa dice (off):** "Tu familia me escribió una carta." (fijo, 0:27,3–0:29,5) · "Dice que {logro}. ¡Qué orgullo!" (personalizado, 0:29,9–0:34,9). Sin logro: "Leo la carta de tu familia. Cada línea habla del cariño que te tienen."
+- **Santa dice (off):** "Tu familia me escribió una carta." (fijo, 0:27,3–0:29,5) · "Dice que {logro}. ¡Qué orgullo!" (personalizado, 0:29,9–0:34,9). Sin logro: "Leo la carta de tu familia. Cada línea habla del cariño que te tienen." 3 a 4 años: "Dice que {logro}. ¡Qué bien!" (logro de 6 palabras o menos). 7 a 9: "Dice que {logro}. ¡Felicidades!" (guion v1.2, sección 3).
 - **Audio:** el tema completo, lento, en celesta con cuerdas muy suaves (ternura); papel que se apoya (-14 dB); ducking -12 dB.
 - **Composición:** a 0:29,2 los renglones se "revelan" con un brillo suave de 1 s y aparece, en tinta azul oscura y fuente manuscrita OFL (candidata: Caveat), lo que escribió el adulto en el campo 3, ya limpio (filtros de la sección 6 del guion, ortografía, ≤ 70 caracteres, máximo 2 renglones). Si el filtro reescribió o descartó el campo, se escribe la versión reescrita o nada. Carta quieta: no hace falta seguimiento.
 - **Fija de arranque:** F05 (= M10, con M4 para la mano).
@@ -117,12 +128,17 @@ Gratis: 3 planos, 15 s, todos reutilizados del video 1. Labios: 0. Nombre dicho 
 - **Encuadre y lente:** 85 mm, 1,05 m, de pecho arriba (el libro llena los tercios medio e inferior). No es primer plano de ojos.
 - **Luz:** key de P3 sobre los ojos con reflejo en ambos; el libro hace sombra suave en la parte baja de la cara (intencional); brillo del latón del emblema.
 - **Movimiento:** fijo.
-- **Santa dice (off, personalizado):** según el pedido:
-  - Gusto y casilla: "Me contaron que {gusto}. Sé que a tu casa también llega el Niño Dios. ¡Qué bonito!"
-  - Solo gusto: "Me contaron que {gusto}. ¡Qué divertido! Eso me hace sonreír."
-  - Solo casilla: "Sé que a tu casa también llega el Niño Dios. ¡Qué bonito! En cada casa la Navidad llega a su manera."
-  - Ninguno: "En mi taller todo huele a canela y a galletas."
-  - La frase del Niño Dios está pendiente de `desarrollo-infantil` y `legal-compliance` (biblia decisión f); si no se aprueba, se usan las otras filas sobre el mismo plano.
+- **Santa dice (off, personalizado):** según el pedido (C1). Ventana de 7,0 s, máximo 105 caracteres. Sin "mucho" a 3 a 4 años; la columna "5 a 9 años" es el texto base.
+
+  | Combinación | 3 a 4 años | 5 a 9 años |
+  |---|---|---|
+  | Gusto y casilla | "Me contaron que {gusto}. Sé que en tu casa quieren al Niño Dios. ¡Qué bonito!" | "Me contaron que {gusto}. Sé que en tu casa quieren mucho al Niño Dios. ¡Qué bonito!" (peor caso 104) |
+  | Solo casilla | "Sé que en tu casa quieren al Niño Dios. ¡Qué bonito!" | "Sé que en tu casa quieren mucho al Niño Dios. ¡Qué bonito! En cada casa la Navidad llega a su manera." (101) |
+  | Solo gusto | "Me contaron que {gusto}. ¡Qué divertido!" | "Me contaron que {gusto}. ¡Qué divertido! Eso me hace sonreír." (7 a 9: "…Eso dice mucho de ti.") |
+  | Ninguno | "En mi estudio todo huele a canela." | "En mi estudio todo huele a canela y a galletas." |
+
+  - Prohibido junto al Niño Dios: "llega", "viene", "trae", "también", "con Santa", "le mando un saludo", quién trae qué. La frase la aprobó `desarrollo-infantil` con estos cambios; falta el visto bueno escrito de `legal-compliance` (biblia, decisión f). Si no se aprueba, se usan las otras filas sobre el mismo plano.
+  - Pendiente del director: C4 (cambios del plano) y V1-06b, un plano sin Santa para 3 a 4 años mientras V1-06 no pase la prueba con niños. El texto no cambia.
 - **Audio:** el tema sigue en ternura; ducking -12 dB.
 - **Composición:** ninguna.
 - **Fija de arranque:** F06 (= M11).
@@ -137,7 +153,7 @@ Gratis: 3 planos, 15 s, todos reutilizados del video 1. Labios: 0. Nombre dicho 
 - **Encuadre y lente:** idéntico a V1-04 después del levantamiento.
 - **Luz:** idéntica a V1-04 (mismas posiciones y valores).
 - **Movimiento:** fijo.
-- **Santa dice (labios, personalizado):** "¿Sabes una cosa, {nombre}? Ya estás en mi Lista de Niños Buenos. Sigue con ese gran corazón." (hasta 6,7 s, 0:42,9–0:49,6; el nombre cae hacia el segundo 1,3 del clip).
+- **Santa dice (labios, personalizado):** "¿Sabes una cosa, {nombre}? Ya estás en mi Lista de Niños Buenos. Gracias por ser tú." (hasta 6,7 s, 0:42,9–0:49,6; el nombre cae hacia el segundo 1,3 del clip). Todas las edades igual; a 3 a 4 años, el final es "¡Un abrazo grande!".
 - **Audio:** la música crece hacia la alegría pero queda 10-12 dB bajo la voz; nada sobre el nombre.
 - **Composición:** sincronización de labios en 0,2–7,3 s del clip.
 - **Fija de arranque:** F07 (= M1).
@@ -151,6 +167,7 @@ Gratis: 3 planos, 15 s, todos reutilizados del video 1. Labios: 0. Nombre dicho 
 - **Qué se ve:** mismo encuadre que V1-07; sonrisa con boca cerrada, un guiño lento con un ojo, mejillas arriba.
 - **Encuadre, lente, luz, movimiento:** gemelo de V1-07; fijo.
 - **Santa dice:** nada.
+- **3 a 4 años:** el montaje usa solo el tramo de sonrisa con boca cerrada, 1,5 s, sin llegar al guiño (a esa edad se lee como "algo en el ojo" o como secreto). Se pierde 1 s de plano y no cuesta créditos.
 - **Audio:** la música sube un tono (alegría), sola, a -6 dB de la voz de referencia; cascabeles lejanos (-20 dB).
 - **Composición:** ninguna.
 - **Fija de arranque:** F08 (= M1).
@@ -168,6 +185,7 @@ Gratis: 3 planos, 15 s, todos reutilizados del video 1. Labios: 0. Nombre dicho 
 - **Santa dice (off, personalizado):** "¡Feliz Navidad, {nombre}! Se nota cuánto te quieren en tu casa. Jo, jo, jo…" (0:52,8–0:58,5). La risa, suave y de pecho, en off.
 - **Audio:** resolución en acorde mayor; cascabeles que se alejan; logo sonoro a 0:58,5; cola de 1,5 s y fundido.
 - **Composición:** a 0:56,8 la imagen se desenfoca y baja a un cálido oscuro (no negro); "¡Feliz Navidad, {nombre}!" se escribe en dorado (Pinyon Script) en el tercio medio en 1,5 s, con destello; de 0:58,8 a 1:00, "jinglo.app" pequeño, crema, centrado abajo dentro del margen seguro, sin animación.
+- **También sirve a G3 del gratis:** tramo 0,0–5,5 s del clip, sin esta composición (el desenfoque a cálido oscuro empieza en el segundo 4,3 del clip; el gratis no lo aplica). Ver sección 3.
 - **Fija de arranque:** F09 (= M12, con M4).
 - **Modelo y tomas:** Fast · 4 + 4.
 - **Acción EN:** `close shot at 40 degrees of a large closed green leather book with brass corners on an oak desk, Santa's two weathered bare hands rest on the cover, pat it gently twice and slowly slide away; candlelight glints on the blind-embossed star emblem; slow 2 percent push-in, 85mm`
@@ -177,17 +195,18 @@ Gratis: 3 planos, 15 s, todos reutilizados del video 1. Labios: 0. Nombre dicho 
 
 ## 3. Video gratis (15 s) · plano por plano
 
-Solo 9:16 (es para teléfono y redes). Pide solo el nombre. Marca "jinglo.app" en la esquina inferior derecha de 0:00 a 0:15: crema al 60 % de opacidad, altura de unos 2,5 % del cuadro, dentro del margen seguro del 5 %. Sin risa, sin labios, sin logo sonoro; la música nunca se resuelve.
+Solo 9:16 (es para teléfono y redes). Pide solo el nombre. Marca "jinglo.app" en la esquina inferior derecha de 0:00 a 0:15: crema al 60 % de opacidad, altura de unos 2,5 % del cuadro, dentro del margen seguro del 5 %. Sin risa, sin labios, sin logo sonoro; la música no se resuelve del todo pero termina en un acorde consonante y abierto, y la imagen termina en luz dorada, nunca en negro ni en oscuro.
 
 | Id | Tiempo | Dur. | Tipo | De dónde sale | Santa dice | Audio | Composición |
 |---|---|---|---|---|---|---|---|
 | G1 | 0:00–0:04 | 4 s | FIJO | V1-01, tramo 0,5–4,5 s del clip (abre el libro) | "Déjame buscar en mi Gran Libro…" (0:00,6–0:02,7; fijo) | Entrada desde silencio en 0,5 s; fuego; tres notas de celesta; tapa que cede | Marca |
 | G2 | 0:04–0:09,5 | 5,5 s | PERS-OFF + COMP | V1-03, tramo 0,0–5,5 s (dedo, página limpia) | "Hay un nombre que brilla…" (0:04,3–0:06,0; fijo) · silencio 0:07,2–0:07,7 · "{nombre}… ¡aquí estás!" (0:07,7–0:09,8; personalizado) | Arpa y pizzicato; corte de música a 0:07,2; voz sola en el nombre; pluma; destello 0,2 s después del nombre, con el acorde **abierto** | Nombre en dorado igual que en V1-03 (empieza a 0:07,7, clip 3,7 s); marca |
-| G3 | 0:09,5–0:15 | 5,5 s | PERS-OFF | V1-06, tramo 0,5–6,0 s (ojos sobre el libro) | **"Tengo algo más que decirte… sobre lo que escribí de ti."** (0:10,8–0:14,6, tras 1 s de pausa; susurro cómplice, fijo) | Cama de cuerdas sostenida muy suave; una nota de celesta flota y se desvanece entre 0:14,2 y 0:15; fundido de 0,5 s a cálido oscuro | Marca |
+| G3 | 0:09,5–0:15 | 5,5 s | FIJO | **V1-09, tramo 0,0–5,5 s** (dos manos sobre el libro cerrado, dos palmadas suaves, la vela en la estrella; sin cara) | **"Tengo algo muy bonito que contarte. Tu familia me ayudó."** (0:10,8–0:14,6, tras 1 s de pausa; voz suave y sonriente, `speed` 0,90, sin susurro; fijo) | Cama de cuerdas suave que termina en un acorde consonante y abierto (mayor, quinta justa o sus2); la nota de celesta se desvanece sin quedar sola más de 0,5 s; sin fundido a oscuro | Marca; sin la composición de V1-09 (ni desenfoque, ni título, ni tarjeta final) |
 
-- **Variante A/B (solo prueba ciega con adultos):** G3 con "Tengo algo más que decirte sobre tu regalo…" (y la C de `comprador.md`). Cambia solo la pieza de voz; cero créditos. Para vender gana la que salga mejor en H5b, siempre con visto bueno de `desarrollo-infantil`.
-- **Qué no revela el gratis:** Santa diciendo el nombre a cámara, el logro, la carta, el guiño y el final.
-- **Personalizado:** una sola pieza de voz por pedido ("{nombre}… ¡aquí estás!") y el nombre dorado. El resto (G1, inicio de G2, G3) es audio fijo, grabado una vez.
+- **Variante A/B (C2):** "sobre tu regalo" solo en la prueba ciega **con adultos**, nunca con niños y nunca en producción: empuja al niño a pedir un regalo que el video pagado no entrega. La variante C de `comprador.md` ("Esto es solo el principio…") no está revisada: pasa por `desarrollo-infantil` antes de usarse. Versión mínima aceptable de G3: "Tengo algo muy bonito que contarte." Cambia solo la pieza de voz; cero créditos.
+- **Prohibido en toda pieza:** "solo para ti", "es un secreto", "no se lo digas a nadie" y cualquier susurro.
+- **Qué no revela el gratis:** Santa diciendo el nombre a cámara, el logro, la carta, el guiño y el final. "Tu familia me ayudó" nombra a la familia como fuente sin contar la carta.
+- **Personalizado:** una sola pieza de voz por pedido ("{nombre}… ¡aquí estás!") y el nombre dorado. El resto (G1, inicio de G2, G3) es audio fijo, grabado una vez. Igual en todas las edades; a 3 a 4 años, voz más lenta.
 
 ## 4. Reutilización entre el video 1 y el gratis
 
@@ -195,7 +214,7 @@ Solo 9:16 (es para teléfono y redes). Pide solo el nombre. Marca "jinglo.app" e
 |---|---|---|---|
 | V1-01 | 0:00–0:07 | G1 | No se genera plano propio de apertura para el gratis |
 | V1-03 | 0:13–0:20 | G2 | El mismo nombre dorado y la misma placa limpia sirven para los dos |
-| V1-06 | 0:35–0:42,5 | G3 | El cierre de suspenso del gratis no necesita clip propio |
+| V1-09 | 0:52,5–1:00 | G3 (tramo 0,0–5,5 s, sin composición) | El cierre del gratis no necesita clip propio, y no usa ningún plano con cara |
 
 El gratis no consume créditos: sus 3 planos son tomas ya aprobadas del video 1. Sin esta reutilización costaría 1,800 créditos más (3 planos Quality x 6 tomas).
 
@@ -230,11 +249,11 @@ Voz a unos 15 caracteres por segundo, sin contar las pausas marcadas. `{nombre}`
 | V1-02 | 5,3 s | 80 | Fijo |
 | V1-03 | 3,2 s tras el silencio | 50 | "A ver, a ver…" va aparte, fijo |
 | V1-04 | 3,1 s | 48 | La calma de 2 s no se recorta; si no cabe, variante de edad más corta |
-| V1-05 | 2,2 + 5,0 s | 33 + 75 | Recalcular las variantes 7 a 9 ("¡Eso merece un gran aplauso!" ya no cabe con un logro de 50) |
+| V1-05 | 2,2 + 5,0 s | 33 + 75 | Variantes por edad recalculadas en `guion-v1.2` (7 a 9: "¡Felicidades!") |
 | V1-06 | 7,0 s | 105 | La fila "gusto y casilla" llega a unos 104 |
-| V1-07 | 6,7 s | 100 | Variante 7 a 9: cambiar "Sigue con ese gran corazón." por "Gracias por ser tú." |
+| V1-07 | 6,7 s | 100 | "Gracias por ser tú." en todas las edades (S1); 3 a 4, "¡Un abrazo grande!" |
 | V1-09 | 4,7 s + 1 s de risa | 71 + risa | El nombre no cierra la última frase |
-| G1 + G2 + G3 | 2,1 + 1,7 + 2,1 + 3,8 s | 33 + 27 + 31 + 57 | Igual para todas las edades; a los 3 y 4 años, voz más lenta y se acortan los silencios, no las palabras |
+| G1 + G2 + G3 | 2,1 + 1,7 + 2,1 + 3,8 s | 33 + 27 + 31 + 57 | Igual para todas las edades; a los 3 y 4 años, voz más lenta y se acortan los silencios, no las palabras (salvo el silencio de 0,5 s antes del nombre y la pausa de 1 s antes de G3) |
 
 Si una pieza personalizada no cabe en su ventana: primero la variante de edad más corta; después `speed` +0,02 (máx. 0,94); nunca se recorta la calma de V1-04 ni el silencio antes del nombre.
 
@@ -279,5 +298,7 @@ Meta: todas las tomas aprobadas antes del 28-nov-2026, con margen sobre el retir
 | Nombre a cámara | Labios | 0:44,2 (V1-07) | — | Campo 1 |
 | "¡Feliz Navidad, {nombre}!" dicho y escrito | Voz off y título dorado | 0:52,8 y 0:56,8 (V1-09) | — | Campo 1 |
 | Marca jinglo.app | Esquina o tarjeta final | 0:58,8–1:00 | 0:00–0:15 | Fija |
+
+**Versión 3 a 4 años (sin V1-02, V1-08 de 1,5 s, 53 s):** V1-03 0:07–0:14 · V1-04 0:14–0:21 · V1-05 0:21–0:29 · V1-06 0:29–0:36,5 · V1-07 0:36,5–0:44 · V1-08 0:44–0:45,5 · V1-09 0:45,5–0:53. Nombre dicho a 0:10,7 · 0:15,7 · 0:38,2 · 0:45,8; en dorado a 0:10,7–0:12,2 (V1-03) y a 0:49,8 (título de V1-09, 4,3 s después de su inicio). Marca final 0:51,8–0:53. Música y efectos se recolocan con estos tiempos.
 
 Las marcas de tiempo del nombre se ajustan con la transcripción de cada pieza (voz sección 4); el silencio de 0,5 s y el destello se colocan respecto al inicio y fin real del nombre, no a tiempo fijo.

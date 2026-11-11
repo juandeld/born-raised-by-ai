@@ -128,7 +128,7 @@ El nombre suelto, pegado en un hueco, suena a anuncio de aeropuerto: sin la ento
 
 ### 2.5 Video gratis de 15 s
 
-Santa dice el nombre mirando el libro, sin labios que sincronizar. La voz se siente "de cerca y para sí mismo", con 0,92 de `speed` y la misma tabla. Termina en suspenso, en susurro cómplice (sección 3). Mismo control automático del nombre (sección 4).
+Santa dice el nombre mirando el libro, sin labios que sincronizar. La voz se siente "de cerca y para sí mismo", con 0,92 de `speed` y la misma tabla. Termina con voz suave y cálida, sin susurro (v1.2: `desarrollo-infantil` retiró el susurro cómplice del cierre del gratis porque modela un secreto adulto–niño). Mismo control automático del nombre (sección 4).
 
 ## 3. Indicaciones de actuación por tipo de frase
 
