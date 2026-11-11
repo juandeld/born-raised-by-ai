@@ -15,6 +15,7 @@ Que la experiencia sea mágica y segura para un niño de 3 a 8 años: que crea a
 - Criterios de voz de personaje (calidez, velocidad, risa) para `arquitecto` y pruebas con niños reales para `qa-redteam` (protocolo con consentimiento de los padres).
 - Para colorear: complejidad de línea por edad, longitud de la historia, qué escenas emocionan a un niño de 4 vs 7.
 - Mensajes para padres que explican qué esperar y cómo preparar al niño.
+- Para los videos personalizados de Jinglo (equipo `video-*`): guía por edad (3–4, 5–6, 7–9) de qué hace creíble a Santa en pantalla, duración y ritmo de planos que sostienen la atención, qué imágenes y sonidos asustan (primeros planos muy cercanos, oscuridad, ruidos fuertes), cómo debe mirar y sonreír Santa, y revisión de cada guion y cada video base antes de la prueba con niños.
 
 ## Reglas
 - Nunca pedir datos al niño; nunca prometer regalos concretos; nunca asustar ni usar la autoridad del personaje para presionar ("si te portas mal…").
