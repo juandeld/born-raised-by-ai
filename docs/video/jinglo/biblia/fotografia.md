@@ -1,6 +1,6 @@
 # Jinglo · Biblia · Fotografía e iluminación (piloto)
 
-Autor: `video-fotografia-iluminacion` · 11-nov-2026 · Alcance: "La Lista de Niños Buenos" (~60 s) y video gratis (15 s), ambos en el estudio de Santa. Formato principal 9:16 (1080x1920), versión 16:9 (1920x1080), 24 fps.
+Autor: `video-fotografia-iluminacion` · 11-nov-2026 · versión `foto-v1.1` (ronda 2 aplicada; decorado, vestuario y hoja de color alineados con `arte.md` v1.1, sección 1.7 y lista negativa 2.6) · Alcance: "La Lista de Niños Buenos" (~60 s) y video gratis (15 s), ambos en el estudio de Santa. Formato principal 9:16 (1080x1920), versión 16:9 (1920x1080), 24 fps.
 Consumen este documento: `video-direccion-arte` (utilería y aspecto de Santa), `video-ia-generativa` (instrucciones de generación), `video-edicion-post` (color y composición), `video-director-creativo` (storyboard y corte).
 Los bloques en inglés son vocabulario para pegar o adaptar en las instrucciones de generación. En el cliente no se nombra ningún proveedor ni modelo (D23).
 
@@ -54,7 +54,7 @@ Fuentes motivadas (toda luz visible en cuadro debe tener una fuente creíble):
 | Chimenea | Camera-left, lateral, a 35-60° del eje | 1800-2200 K en la llama; la luz que llega a la piel se corrige a 2700-3000 K | Luz principal (key). Cálida, suave, parpadeo lento |
 | Lámpara de aceite y velas del escritorio | Camera-right, frente a Santa, baja | 1900-2400 K | Relleno cálido (fill) y brillo en el libro |
 | Ventana con nieve | Atrás, camera-right, alta | 6500-7500 K, azul tenue | Contraluz (rim) frío en pelo, barba y hombro; separa a Santa del fondo |
-| Guirnaldas, árbol, velas lejanas | Fondo | 2200-2700 K | Puntos de bokeh cálido. Sin luces LED de colores |
+| Velas lejanas, brasas y latón del estudio | Fondo | 2200-2700 K | Puntos de bokeh cálido. Sin luces LED de colores, sin luces de fiesta |
 
 Reglas:
 1. La chimenea nunca cambia de lado. Si un plano se toma desde atrás de Santa, la chimenea aparece camera-right porque sigue en el mismo lugar físico (no se cruza el eje).
@@ -116,11 +116,11 @@ Resumen:
 - **Lente / altura:** 24-28 mm, 1.10 m. Profundidad de campo media (f/4 look) para que el estudio se lea, con fondo apenas suave.
 - **Movimiento permitido:** dolly-in recto de 3-5 % en 8 s, o fijo. Sin paneos.
 - **Luz:** chimenea camera-left (key de ambiente), ventana azul atrás camera-right, velas y lámpara del escritorio como acentos cálidos. Santa lejos: su cara no se lee en detalle, así que aquí no hay prueba de labios.
-- **9:16:** composición vertical: techo con guirnaldas arriba, Santa y escritorio al centro-bajo. La chimenea queda en el borde izquierdo (se ve más su resplandor que el objeto).
+- **9:16:** composición vertical: vigas de pino arriba, Santa y escritorio al centro-bajo. La chimenea queda en el borde izquierdo (se ve más su resplandor que el objeto).
 - **EN:** `wide establishing shot of a cozy wooden Santa's study at night, 24mm lens, camera at child's eye height, slow dolly-in, warm tungsten glow from stone fireplace camera-left, cool blue snow-light through window back camera-right, candles and oil lamp on the desk, falling snow outside, soft haze, deep depth of field, cinematic`
 
 ### P2 · Plano medio de Santa en el escritorio
-- **Encuadre:** de la cintura hacia arriba, Santa de tres cuartos a cámara, mirando el libro abierto; escritorio y libro en el tercio inferior. Deja aire encima del sombrero.
+- **Encuadre:** de la cintura hacia arriba, Santa de tres cuartos a cámara, mirando el libro abierto; escritorio y libro en el tercio inferior. Deja aire encima de la cabeza.
 - **Lente / altura:** 50 mm, 1.05 m, desenfoque medio (f/2.8 look).
 - **Movimiento:** dolly-in de 2-3 %. Cabeza con movimientos pequeños y naturales (hojear, sonreír).
 - **Luz:** key suave de chimenea camera-left a ~45°; fill cálido de la lámpara camera-right a menos 1 paso; rim azul tenue de la ventana en el borde derecho del pelo y la barba.
@@ -128,21 +128,21 @@ Resumen:
 
 ### P3 · Primer plano a cámara (dice el nombre, con sincronización de labios)
 Es el plano más importante del producto y el más difícil de aprobar.
-- **Encuadre:** pecho hacia arriba con aire sobre el sombrero ("medium close-up", no primerísimo primer plano). Ojos en el 38-40 % superior del cuadro en 9:16; boca cerca del 46-48 %. Mirada directa al lente. Cara casi frontal (giro máximo de 10° a cada lado).
-- **Lente / altura:** 85 mm (100 mm si se ve apretado), 1.05 m, f/1.8-2.8 look: fondo muy desenfocado con bokeh cálido de velas y guirnaldas.
+- **Encuadre:** pecho hacia arriba con aire sobre la cabeza ("medium close-up", no primerísimo primer plano). Ojos en el 38-40 % superior del cuadro en 9:16; boca cerca del 46-48 %. Mirada directa al lente. Cara casi frontal (giro máximo de 10° a cada lado).
+- **Lente / altura:** 85 mm (100 mm si se ve apretado), 1.05 m, f/1.8-2.8 look: fondo muy desenfocado con bokeh cálido de velas, latón y el resplandor de la chimenea.
 - **Movimiento:** cámara fija. Si el director pide vida, empuje lineal de máximo 2 % en 8 s. Nunca paneos ni inclinaciones.
 - **Luz:**
   - Key: fuente grande y suave desde camera-left, 35-45° del eje y 10-20° sobre los ojos (motivada por la chimenea). Luz tipo "loop": sombra de la nariz pequeña, que no llega al labio superior.
   - Fill: camera-right, calidez de lámpara/velas, 1 a 1.5 pasos por debajo del key. Lo suficiente para abrir la zona de la boca y el cuello.
   - Rim: azul de ventana atrás camera-right, bajo, solo contorno de pelo y hombro.
-  - La zona de la boca queda dentro de 1/3 de paso respecto a las mejillas: sin sombra bajo el bigote, sin sombra del sombrero sobre los labios, sin sombra dura bajo el labio inferior.
-- **EN:** `medium close-up of Santa looking directly into the lens, 85mm portrait lens, f/1.8 shallow depth of field, creamy warm bokeh of candles and garlands, camera at child's eye height, locked-off static camera, large soft warm tungsten key light from fireplace camera-left slightly above eye level, warm bounce fill camera-right, faint cool blue rim light from snow window behind him, evenly lit mouth and lips, no hard shadows on face, catchlights in both eyes, calm friendly expression, natural skin texture`
+  - La zona de la boca queda dentro de 1/3 de paso respecto a las mejillas: sin sombra bajo el bigote, sin sombra de la nariz sobre los labios, sin sombra dura bajo el labio inferior.
+- **EN:** `medium close-up of Santa looking directly into the lens, 85mm portrait lens, f/1.8 shallow depth of field, creamy warm bokeh of candle flames and brass, camera at child's eye height, locked-off static camera, large soft warm tungsten key light from fireplace camera-left slightly above eye level, warm bounce fill camera-right, faint cool blue rim light from snow window behind him, evenly lit mouth and lips, no hard shadows on face, catchlights in both eyes, calm friendly expression, natural skin texture`
 
 ### P4 · Inserto del libro (aquí se compone el nombre) · ver sección 6
 ### P4b · Inserto del libro pasando páginas ("busca al niño")
 - Cámara a 30-45° sobre el escritorio, 50-65 mm, fija o con deriva de 1-2 %. Las manos pasan páginas con calma (sin gestos rápidos).
 - Luz: lámpara de aceite arriba camera-right y chimenea camera-left lateral; papel mate, sin brillos duros; polvo y partículas mínimos.
-- **EN:** `close-up of an old leather-bound ledger on a wooden desk, gloved/aged hands slowly turning cream pages, 50mm lens at 40 degrees, shallow depth of field, warm oil-lamp light from above camera-right, fireplace glow from camera-left, matte aged paper, calm slow motion of pages`
+- **EN:** `close-up of an old leather-bound ledger on a wooden desk, bare aged hands slowly turning cream pages, 50mm lens at 40 degrees, shallow depth of field, warm oil-lamp light from above camera-right, fireplace glow from camera-left, matte aged paper, calm slow motion of pages`
 
 ### P5 · Inserto de manos
 - **Encuadre:** manos de Santa y el borde del libro; un dedo recorre la lista o toca un renglón. Una sola acción por toma.
@@ -169,13 +169,13 @@ Son parte del diseño del video gratis (15 s) y de lo personalizado en el video 
 |---|---|---|---|
 | S1 · Sobre el hombro (over-the-shoulder) | Espalda y hombro de Santa en primer plano desenfocado; el libro iluminado al centro; chimenea al fondo (aparece camera-right) | 50 mm, 1.10 m, fijo o dolly-in 2 % | Chimenea contraluz lateral sobre el hombro y el libro; lámpara ilumina la página |
 | S2 · Libro con manos | Inserto cenital o a 35° del libro; el dedo baja por la lista | 50-85 mm | Lámpara arriba, luz pareja |
-| S3 · Ojos sobre el libro | Santa levanta el libro y solo se ven la frente, el sombrero y los ojos con brillo; la boca queda tapada por el libro y la barba | 85 mm, 1.05 m, fijo | Mismo key camera-left sobre los ojos; el libro hace sombra suave en la parte baja de la cara (aquí sí es intencional) |
-| S4 · Perfil bajo el sombrero (opcional) | Perfil de Santa leyendo, cara girada más de 45°, labios no legibles | 85 mm | Key de chimenea de perfil; rim azul |
+| S3 · Ojos sobre el libro | Santa levanta el libro y solo se ven la frente, el pelo blanco y los ojos con brillo; la boca queda tapada por el libro y la barba | 85 mm, 1.05 m, fijo | Mismo key camera-left sobre los ojos; el libro hace sombra suave en la parte baja de la cara (aquí sí es intencional) |
+| S4 · Perfil leyendo (opcional) | Perfil de Santa leyendo, cara girada más de 45°, labios no legibles | 85 mm | Key de chimenea de perfil; rim azul |
 
 Regla: nunca un plano donde se vea la boca moviéndose sin sincronizar. Si Santa mira al libro y la voz dice el nombre, los labios no se ven (S1-S4) o Santa permanece con la boca cerrada.
 
-**EN S1:** `over-the-shoulder shot from behind Santa's left shoulder, out-of-focus red velvet shoulder and white hair in foreground, glowing open book on the desk in sharp focus, fireplace glow in the background frame-right, 50mm lens, warm key from fireplace, oil-lamp light on the pages, shallow depth of field, locked-off`
-**EN S3:** `close-up of Santa peeking over the top edge of a large open book, only forehead, hat brim and twinkling eyes visible, lower face covered by the book, 85mm lens, shallow depth of field, warm tungsten key camera-left, catchlights in the eyes, warm friendly look`
+**EN S1:** `over-the-shoulder shot from behind Santa's left shoulder, out-of-focus shoulder of a thick felted wool coat in deep classic Christmas red and white hair in foreground, glowing open book on the desk in sharp focus, fireplace glow in the background frame-right, 50mm lens, warm key from fireplace, oil-lamp light on the pages, shallow depth of field, locked-off`
+**EN S3:** `close-up of Santa peeking over the top edge of a large open book, only forehead, white hair and twinkling eyes visible, lower face covered by the book, 85mm lens, shallow depth of field, warm tungsten key camera-left, catchlights in the eyes, warm friendly look`
 
 ---
 
@@ -184,11 +184,11 @@ Regla: nunca un plano donde se vea la boca moviéndose sin sincronizar. Si Santa
 La sincronización de labios (Sync Labs, ~20 s de los 60 s) solo funciona bien sobre una boca limpia y estable. Cada una de estas reglas es criterio de repetir.
 
 **Boca e iluminación**
-1. Boca siempre bien iluminada: sin sombra bajo el bigote, bajo el labio inferior ni bajo el sombrero. Key suave de frente-lateral a 35-45° y fill que abra la zona.
-2. **Labios visibles.** El bigote no puede tapar el labio superior: bigote recortado y levantado, con la comisura de los labios legible, barba partida bajo el labio inferior. Pedir a `video-direccion-arte` este diseño de bigote y barba; sin él el plano no aprueba.
+1. Boca siempre bien iluminada: sin sombra bajo el bigote ni bajo el labio inferior. Key suave de frente-lateral a 35-45° y fill que abra la zona.
+2. **Labios visibles.** El bigote no puede tapar el labio superior: bigote recortado justo sobre el labio superior (arte 1.3, decisión c de la biblia), con la comisura de los labios legible y la barba partida bajo el labio inferior. Si el borde rojo del labio superior no se ve en al menos el 60 % del ancho de la boca en la fija, o en el 90 % de los cuadros de habla, el plano no aprueba.
 3. Brillo estable sobre labios y dientes: sin dientes demasiado perfectos ni "de porcelana"; sin brillos que parpadeen con la llama.
 4. Sin humo, vapor, ramas, velas ni llamas entre el lente y la boca. Nada pasa delante de la cara.
-5. Sin gafas con reflejo sobre los ojos en los primeros planos (o con vidrios sin reflejo).
+5. Lentes redondos dorados con vidrio sin reflejo, bajos en la nariz: el reflejo del fuego va en la córnea, nunca en el vidrio sobre los ojos.
 
 **Cabeza y cámara**
 6. Cabeza estable: giro frontal con máximo ±10° (el modelo de labios pierde precisión pasados ~15-20°). Sin giros bruscos, sin asentir fuerte, sin inclinar la cabeza hacia abajo.
@@ -224,7 +224,7 @@ El nombre dorado lo compone FFmpeg, no la IA generativa. La toma debe ser una "p
 
 **Luz**
 - Pareja sobre toda la página: relación máxima de 1.5:1 entre un extremo y otro. Fuente grande y suave de lámpara de aceite arriba (camera-right) más relleno de chimenea camera-left.
-- Sin sombras de manos, mangas, cabeza ni sombrero sobre la zona. Las manos salen de cuadro antes de que aparezca el nombre.
+- Sin sombras de manos, mangas ni cabeza sobre la zona. Las manos salen de cuadro antes de que aparezca el nombre.
 - Sin parpadeo visible sobre la página (menos de 3 %). Sin brillos especulares en el papel.
 - Dorados del marco o del lomo fuera de la zona del nombre, para que no compitan.
 
@@ -245,7 +245,7 @@ El nombre dorado lo compone FFmpeg, no la IA generativa. La toma debe ser una "p
 
 **Cómo componer para que ambos formatos funcionen**
 - **Zona de acción 9:16:** la columna central, 31.6 % del ancho del 16:9 (≈ 608 px de 1920). Todo lo importante (cara, libro, manos, nombre) va dentro de esa columna, centrado.
-- **Alas del 16:9:** los lados llevan atmósfera: chimenea a la izquierda, ventana a la derecha, estantes y árbol. Son ambientación, nunca información que la historia necesite.
+- **Alas del 16:9:** los lados llevan atmósfera: chimenea a la izquierda, ventana a la derecha, estantes y vigas. Son ambientación, nunca información que la historia necesite.
 - **Márgenes verticales (ambos formatos):** nada importante en el 8 % superior ni en el 15 % inferior (controles del reproductor y marca "jinglo.app" del video gratis en la esquina inferior derecha).
 - **Cara:** en 9:16 la cara ocupa 45-55 % del ancho del cuadro en P3; en 16:9 ocupa ≈ 25-30 % del ancho, con el mismo tamaño relativo respecto de la altura. Misma altura de ojos (38-40 % desde arriba) en ambos formatos para que el corte entre formatos sea predecible.
 - **Libro (P4):** en 9:16 el libro ocupa ~85-90 % del ancho; en 16:9, ~45 %. La zona del nombre queda siempre centrada.
@@ -261,8 +261,8 @@ Valores orientativos (sRGB) para imágenes fijas, selección de tomas y correcci
 | Elemento | Luz alta | Tono medio | Sombra | Notas |
 |---|---|---|---|---|
 | Piel de Santa (con key de chimenea) | #E9B890 | #C98B66 | #8A5240 | Sobre la línea de piel del vectorscopio. Sin verdes ni magentas. Orejas y nariz un poco más rojizas |
-| Rojo del traje | #C8372D | #A3141C | #4A0A10 | Rojo profundo cálido, ligeramente vino. No rojo puro ni anaranjado. Terciopelo con textura |
-| Ribete blanco | #F0E6D2 | #D9CBB2 | #9A8A74 | Marfil cálido. Nunca blanco puro ni quemado |
+| Rojo del traje | #B8343A | #9C1F27 | #5C1017 | Rojo navideño clásico y profundo, de lana tupida y mate (valores de arte 1.7). No rojo puro, saturado ni anaranjado; sin brillo satinado |
+| Ribete de borrego natural | #F6F0E2 | #EFE7D6 | #A8997F | Blanco cálido de rizo irregular (valores de arte 1.7). Nunca blanco puro ni quemado |
 | Dorados (libro, ornamentos, nombre) | #F2D27A | #C9A24B | #6E5420 | Dorado mantecoso, no amarillo limón ni cobre |
 | Madera del estudio | #8A5A34 | #5A3A22 | #25160D | Nogal oscuro cálido |
 | Llama de la chimenea | #FFC76A | #FF9A3C | #B5461A | Brillo permitido hasta halo, sin recorte plano |
@@ -289,7 +289,7 @@ Se revisa primero la **imagen fija** (obligatoria antes de generar video) y lueg
 2. Luz plana o sin dirección clara; o luz principal que no viene de camera-left.
 3. Cualquier luz que viene de abajo de la cara.
 4. Parpadeo fuerte o estrobo.
-5. Sombras duras sobre la boca (bigote, sombrero, nariz).
+5. Sombras duras sobre la boca (bigote, nariz).
 6. (P3) Cabeza girando más de 10°, asintiendo o con movimiento brusco; boca tapada por bigote, mano, libro, humo o llama.
 7. (P3) Ojos sin reflejo, mirada que no va al lente, bizqueo o mirada que "se desliza".
 8. Manos con dedos de más, fundidos o deformes.
@@ -317,7 +317,7 @@ Se revisa primero la **imagen fija** (obligatoria antes de generar video) y lueg
 - Temperatura de piel igual entre tomas vecinas (±5 % de tono).
 - Utilería idéntica entre planos: libro, lámpara, velas encendidas en el mismo número, estado de la chimenea, nieve afuera.
 - Posición de Santa y altura de ojos coherentes entre planos del mismo diálogo.
-- Sombrero, bigote y barba iguales en todas las tomas.
+- Lentes, bigote y barba iguales en todas las tomas; cabeza siempre descubierta.
 - Al elegir entre tomas aprobadas, gana la que mejor empata con la toma anterior y la siguiente, no la más bonita en solitario.
 
 ### 10.4 Plantilla de registro (por toma)
@@ -339,7 +339,7 @@ Cambiar: pedir bigote recortado y levantado; bajar intensidad de la llama; key m
 `warm tungsten key light from fireplace camera-left`, `large soft key light`, `warm bounce fill from camera-right`, `cool blue rim light from snow window behind subject`, `practical lights: candles and oil lamp`, `motivated lighting`, `soft contrast`, `catchlights in the eyes`, `gentle flicker of firelight`, `evenly lit face`, `no hard shadows`, `even soft overhead lamplight`
 
 **Color y textura**
-`warm color palette`, `deep velvet red`, `buttery gold`, `lifted blacks`, `gentle highlight roll-off`, `35mm film grain`, `subtle halation around candle flames`, `subsurface scattering on skin`, `natural skin texture with pores and fine lines`, `matte aged paper`
+`warm color palette`, `deep classic red wool`, `buttery gold`, `lifted blacks`, `gentle highlight roll-off`, `35mm film grain`, `subtle halation around candle flames`, `subsurface scattering on skin`, `natural skin texture with pores and fine lines`, `matte aged paper`
 
 **Para evitar (si la herramienta acepta negative prompt; si no, expresarlo en positivo)**
 `plastic skin, waxy skin, over-smoothed skin, beauty filter, flat lighting, harsh shadows on face, light from below, strobing flicker, extra fingers, deformed hands, text, letters, watermark, logo, cartoon, CGI look, oversharpened, neon colors, handheld shake, fast zoom`
@@ -358,7 +358,7 @@ Cambiar: pedir bigote recortado y levantado; bajar intensidad de la llama; key m
 **Decido yo (sin escalar):** luz, encuadre, color, lentes, alturas y criterios de aprobación de este documento.
 
 **Pendiente con otros agentes**
-- `video-direccion-arte`: diseño de bigote y barba que deje ver el labio superior (condición de P3); gafas sí o no; guantes sí o no; papel y encuadernación del libro (matte, sin dorados dentro de la zona del nombre).
+- `video-direccion-arte`: resuelto en `arte.md` v1.1: bigote recortado sobre el labio superior (los dos labios visibles); lentes redondos dorados sin reflejo y bajos en la nariz, con el corte de seguridad de la decisión c; manos desnudas; papel y encuadernación del libro (mate, sin dorados dentro de la zona del nombre). Pendiente: confirmación de Juan entre los candidatos "2" y "4" del Santa maestro.
 - `video-ia-generativa`: confirmar si Flow permite fijar 9:16 y 16:9 nativos desde la misma imagen fija y si acepta negative prompt; si no, convertir los "evitar" a positivos.
 - `video-edicion-post`: confirmar tracking plano para la opción B del libro; recibir la hoja de color y fijar un LUT único.
 - `video-director-creativo`: si el storyboard necesita cambiar de lado la luz principal, se declara como escena nueva; decidir si el guiño (P6) y la risa van o no en el piloto.

@@ -376,3 +376,25 @@ Ningún video sale si falla una sola de estas comprobaciones:
 | Consentimiento de la fase B, texto de la revelación (Q11), agradecimiento a participantes | `legal-compliance` |
 | Protocolo de la fase B, V1-06 y G3 ("acecho") | `desarrollo-infantil` |
 | Biblia: prueba ciega de 5 a 10 adultos + 5 niños | `video-director-creativo` |
+
+---
+
+## Estado P1–P7 (11-nov-2026, tras la corrección de arte, fotografía y piloto-flow)
+
+Lo anota `video-direccion-arte` a partir de lo que cambió en `biblia/arte.md` (v1.1), `biblia/fotografia.md` (v1.1) y `produccion/piloto-flow.md` (v1.1) y de una búsqueda de términos (T-01). **El veto sigue activo y lo levanta solo `video-control-calidad`**: esta tabla dice qué quedó resuelto del lado de los documentos, no sustituye mi lectura.
+
+| # | Estado | Qué se hizo / qué falta |
+|---|---|---|
+| P1 | **Parcial: arte y fotografía resueltas; guiones sin hacer** | `arte.md` y `fotografia.md` aplican la ronda 2 (bigote recortado sobre el labio, sin nacimiento, taza sin nombrar, sin prenda de cabeza colgada, sin terciopelo, guirnaldas, árbol ni guantes, plano de planta de la biblia). Búsqueda en los tres documentos: `covers the upper lip` 0 resultados; `velvet`, `terciopelo`, `garland`, `guirnalda`, `hat`, `sombrero`, `gorro`, `glove`, `guante`, `nativity`, `nacimiento`, `punch`, `ponche`, `aurora`, `letters`, `text` solo aparecen en frases negativas ("no gloves", "no letters", "No text anywhere"), en listas "Negative" o "Restricciones" y en la lista negativa del estudio (arte 2.6). Siguen abiertos `guiones/01-…` y `guiones/00-…` (todavía con "ponche", "auroras" y "le mando un saludo"; deben pasar a `guion-v1.1`); `sonido.md` y `voz.md` no traen estos términos pero su ronda 2 (mapa emocional, parámetros de voz) no se revisó aquí |
+| P2 | **Resuelta en existencia** | `produccion/piloto-flow.md` existe con la instrucción literal de cada fija y de cada plano. Se reescribió con la descripción maestra nueva (las 6 instrucciones que la llevan y `[MASTER-A]` quedaron idénticas) y con el emblema sin brújula. Falta mi lectura de la versión corregida para cerrarla |
+| P3 | **Abierta** | La prueba de la base de labios (A frente a B) no se ha hecho; no depende de arte |
+| P4 | **Resuelta en arte y piloto-flow; falta la biblia** | Emblema: `an eight-pointed star inside a plain double ring (no compass markings)`, en relieve ciego, sin letras ni N, S, E, O (arte 3.1 y 6.1; cinco instrucciones de piloto-flow). La biblia sección 3 todavía dice "en una brújula" y el storyboard (V1-06, V1-09) "estrella de latón": los alinea `video-director-creativo` |
+| P5 | **Resuelta en arte y piloto-flow; falta el storyboard** | Arte 3.5 y 4.3 y piloto-flow V1-05 siguen la biblia 8.1: el logro tal como lo convierte el modelo (≤ 50 caracteres), en fuente manuscrita. El storyboard V1-05 todavía dice "lo que escribió el adulto, ≤ 70 caracteres"; hasta que el director lo alinee, "Biblia y storyboard dicen lo mismo" no se cumple |
+| P6 | **Abierta** | Duraciones y tramos de la sección 4: no es de arte |
+| P7 | **Abierta** | Calendario: `piloto-flow.md` sección 8 congela el 3-dic y fija la meta de aprobación el 28-nov; T-07 pide todas las tomas con cara aprobadas antes del 1-dic. Lo decide `lider-proyecto` |
+
+**Cambios de referencia que esta revisión introduce y que afectan a la rúbrica**
+1. **Santa maestro nuevo (candidato "4"; Juan confirma entre "2" y "4").** Traje clásico rojo de lana #9C1F27 (luz #B8343A, sombra #5C1017) con ribete de borrego blanco #EFE7D6, cinturón café #4A2E1B con hebilla pequeña de latón, lentes **redondos dorados** sin reflejo y bajos en la nariz, barba larga y blanca, cabeza descubierta. La rúbrica C7 dice "traje #8E1B24": pasa a #9C1F27. T-01, T-06 y C3/C4 siguen valiendo sin cambios (bigote con labio visible, lentes sin reflejo en el vidrio).
+2. **La biblia (secciones 2.6, 3 y las decisiones c y 9) y el storyboard todavía describen el traje anterior** (ladrillo #8E1B24, ribete crema, lentes ovalados de latón, "nunca rojo brillante ni piel blanca esponjosa"). Según la propia biblia, si una sección la contradice gana la biblia: hasta que `video-director-creativo` la actualice, `arte.md` y `piloto-flow.md` están por delante de ella a propósito. Sin esa actualización la revisión de M1 compararía contra dos descripciones distintas.
+3. **Revisión legal del traje clásico:** antes de generar M1, `legal-compliance` revisa el rojo, el ribete y la silueta (arte 1.10). Las diferencias de diseño son lana de rojo profundo, borrego de rizo irregular, cinturón café con hebilla pequeña, lentes redondos de alambre, lunar, nariz y manchas de tinta.
+4. **M1 no se genera todavía:** faltan la confirmación de Juan, la revisión legal y los pendientes P1, P3, P6 y P7.
