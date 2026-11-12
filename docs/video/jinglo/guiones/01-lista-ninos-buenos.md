@@ -39,7 +39,7 @@ Pendiente de otros (no se aplicó aquí): C4 y V1-06b (director creativo), C3 y 
 - **Niño Dios (C1).** Solo la frase exacta de T6, solo con casilla marcada y solo en voz en off. Prohibido aplicado al Niño Dios: "llega", "viene", "trae", "también", "con Santa", "le mando un saludo", y cualquier frase que lo ponga en el mismo plano que Santa o diga quién trae qué. "En cada casa la Navidad llega a su manera" es la frase exacta y habla de la Navidad, no del Niño Dios.
 - Sin marcas ni personajes ajenos: no Rudolph, no renos con nombre propio. No hay duendes ni taller en el piloto.
 - Sin adjetivos con género sobre el niño (nada de "bueno/buena", "contento/a"). "Lista de Niños Buenos" es nombre propio con plural genérico. Los adjetivos de Santa sobre sí mismo ("orgulloso") sí valen.
-- Guiño local: solo "tamales" en T1, dicho como tradición general ("llega el olor a…"), sin afirmar que la familia lo celebre (A-05b). Nada de bebidas: "ponche" es alcohol en Panamá. La taza de la escena puede verse; nunca se nombra.
+- Sin guiño local de comida (v1.3: Juan retiró "tamales"). Nada de bebidas: "ponche" es alcohol en Panamá. La taza de la escena puede verse; nunca se nombra.
 - Las cifras se dicen con letras ("cinco", no "5") para el motor de voz.
 
 ## 1. Huecos
