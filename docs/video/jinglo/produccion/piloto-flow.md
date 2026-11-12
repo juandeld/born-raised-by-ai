@@ -653,3 +653,8 @@ Riesgos principales: (a) rama B sin modelo para repeticiones después del 5-dic;
 - Regla de ahorro (Juan, 12-nov): tomas sin cara → 1 versión y se revisa; tomas con cara → 2 versiones; una tercera solo si ninguna sirve.
 - Generado: V1-04 ×3 (72), V1-07 ×2 + V1-08 ×2 (96), V1-06 ×2 (48, versión revisada: el libro baja y muestra la sonrisa, según desarrollo infantil), V1-01 ×1 + V1-09 ×1 (48), V1-02 + V1-03 + V1-05 ×1 (72). Total del día: 336 créditos; acumulado del proyecto ≈ 508 de 10,050.
 - Pendiente: revisión cuadro por cuadro de `video-control-calidad`, versiones 16:9, composición del nombre en el libro (V1-03) y del logro en la carta (V1-05), voz (Fish Audio, espera pago del plan Plus) y lipsync.
+
+### Voz · 12-nov-2026
+- Voz de producción: "Santa Jinglo" en Fish Audio (clon privado de la voz diseñada de ElevenLabs; decisión de Juan). Velocidad 1.0×, modelo Fish Audio Drama 3.
+- Risa: Juan eligió "¡Joo, joo, jo, joo!". Se genera **una sola vez** y se reutiliza en todos los videos (T1 y T8), fuera de cámara, sin lipsync.
+- Generada la pista completa del video 1 con nombre de prueba "Sofía, 5 años" (2 tomas, 48 s y 46 s) en el historial de Fish. Pendiente: que Juan elija toma; cortar por tramo (T1–T8); fijar las piezas fijas (risa, T1, T2, "A ver, a ver…", "Tu familia me escribió una carta."); pipeline por pedido vía API de Fish solo para las piezas con nombre.
