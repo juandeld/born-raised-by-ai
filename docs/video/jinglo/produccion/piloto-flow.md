@@ -645,3 +645,11 @@ Lo que cambia por pedido: piezas de voz, labios en V1-04 y V1-07 (~11 s), nombre
 | 9 | Créditos sobrantes antes del 11-dic (fase 2 o se pierden) | `lider-proyecto` | No |
 
 Riesgos principales: (a) rama B sin modelo para repeticiones después del 5-dic; mitigación: congelar el 3-dic con 2 respaldos por plano. (b) Texto fantasma en libro, carta o emblema; mitigación: OCR automático y fotogramas finales limpios. (c) Lentes que se deforman; mitigación: corte de la decisión c y fijas `-SL` listas desde el día 1. (d) Boca generada que pelea con los labios; mitigación: variantes A/B y prueba de labios antes de seguir.
+
+## 12. Registro de producción · 12-nov-2026
+
+- Modelo elegido: **Omni 1.2 Flash, 24 créditos por clip de 8 s** (calibración 11-nov: iguala o supera a Veo 3.1 Quality en identidad, por 1/4 del costo). Rama A.
+- Santa maestro: candidato "4" (confirmado por Juan), bigote recortado para dejar ver los labios. M1 = "Man smiling in winter setting".
+- Regla de ahorro (Juan, 12-nov): tomas sin cara → 1 versión y se revisa; tomas con cara → 2 versiones; una tercera solo si ninguna sirve.
+- Generado: V1-04 ×3 (72), V1-07 ×2 + V1-08 ×2 (96), V1-06 ×2 (48, versión revisada: el libro baja y muestra la sonrisa, según desarrollo infantil), V1-01 ×1 + V1-09 ×1 (48), V1-02 + V1-03 + V1-05 ×1 (72). Total del día: 336 créditos; acumulado del proyecto ≈ 508 de 10,050.
+- Pendiente: revisión cuadro por cuadro de `video-control-calidad`, versiones 16:9, composición del nombre en el libro (V1-03) y del logro en la carta (V1-05), voz (Fish Audio, espera pago del plan Plus) y lipsync.
