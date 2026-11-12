@@ -3,13 +3,18 @@
 Versión `guion-v1.2` · 11-nov-2026 · `video-guionista` · Para: `video-director-creativo` (storyboard), `video-voz-santa`, `video-ia-generativa`, `video-psicologia-padres` y `legal-compliance` (revisión), `video-control-calidad` (lista de palabras prohibidas).
 Brief: `docs/briefs/jinglo-video-piloto.md`. Voz y reglas de Santa alineadas con `docs/legal/textos/07-guardrails-agente-voz.md` (C-03, C-04, C-06, C-07, E-01 a E-03), la decisión D13 de `docs/decisiones.md`, `docs/video/jinglo/biblia.md` y `docs/video/jinglo/revision-piloto.md` (`desarrollo-infantil`, cambios C1 a C6 y sugerencias S1 a S3).
 
+## Changelog v1.3 (12-nov-2026, aprobado por Juan)
+- T1 sin "tamales": "¡Joo, joo, jo, joo! Qué noche tan bonita en el Polo Norte. Hoy abro mi Gran Libro." (Juan: la frase de tamales suena mal).
+- Risa única "¡Joo, joo, jo, joo!", generada una vez y reutilizada en T1 y T8.
+- Texto completo del video 1 aprobado por Juan.
+
 ## Changelog
 
 **v1.2 · 11-nov-2026.** Asienta en disco los textos `guion-v1.1` que solo estaban en el storyboard y aplica la revisión de desarrollo infantil (`revision-piloto.md`).
 
 Textos v1.1 incorporados desde el storyboard:
 - Los 8 tramos T1 a T8 quedan atados a los planos V1-01 a V1-09 (el guiño V1-08 no lleva voz). Ventanas y máximos de caracteres de storyboard sección 6.
-- T1 sin "ponche". T3 "{nombre}… ¡aquí estás! ¡Tu nombre brilla!" con "A ver, a ver…" fijo antes. T4 "¡Hola, {nombre}! Ya tienes {edad} años." más 2 s de calma. T5 "Tu familia me escribió una carta." + "Dice que {logro}. ¡Qué orgullo!". T7 abre con "¿Sabes una cosa, {nombre}?". T8 nueva: "¡Feliz Navidad, {nombre}! Se nota cuánto te quieren en tu casa. Jo, jo, jo…".
+- T1 sin "ponche". T3 "{nombre}… ¡aquí estás! ¡Tu nombre brilla!" con "A ver, a ver…" fijo antes. T4 "¡Hola, {nombre}! Ya tienes {edad} años." más 2 s de calma. T5 "Tu familia me escribió una carta." + "Dice que {logro}. ¡Qué orgullo!". T7 abre con "¿Sabes una cosa, {nombre}?". T8 nueva: "¡Feliz Navidad, {nombre}! Se nota cuánto te quieren en tu casa. ¡Joo, joo, jo, joo!".
 - `{nombre}` hasta 16 caracteres (biblia 8.1; antes 14). La edad ya no se dice en T3 sino en T4.
 
 Cambios obligatorios de `revision-piloto.md`:
@@ -55,7 +60,7 @@ Cada plano sale de un clip de 8 s y se recorta. Voz a unos 15 caracteres por seg
 
 | Tramo | Plano | Tiempo | Qué se ve | Qué dice Santa (5 a 6 años) | Tipo | Ventana | Máx. car. |
 |---|---|---|---|---|---|---|---|
-| T1 | V1-01 | 0:00–0:07 | Estudio de noche, luz de chimenea y velas, nieve tras la ventana. Santa pequeño, de frente, cabeza baja, abre el Gran Libro con las dos manos | "Jo, jo, jo… Hasta el Polo Norte llega el olor a tamales. Hoy abro mi Gran Libro." (0:00,8–0:06,3) | [FIJO] | 5,5 s | 82 (texto: 80) |
+| T1 | V1-01 | 0:00–0:07 | Estudio de noche, luz de chimenea y velas, nieve tras la ventana. Santa pequeño, de frente, cabeza baja, abre el Gran Libro con las dos manos | "¡Joo, joo, jo, joo! Qué noche tan bonita en el Polo Norte. Hoy abro mi Gran Libro." (0:00,8–0:06,3) | [FIJO] | 5,5 s | 82 (texto: 80) |
 | T2 | V1-02 | 0:07–0:13 | Sobre el hombro: pasa páginas con nombres dorados borrosos, sin letras legibles | "Aquí están los niños buenos de todo el mundo. Busco un nombre muy especial." (0:07,3–0:12,6) | [FIJO] | 5,3 s | 80 (texto: 75) |
 | T3 | V1-03 | 0:13–0:20 | Cenital del libro. El dedo de Santa se detiene en la línea 11 y se retira; la página queda limpia y el nombre se escribe en dorado (FFmpeg) | "A ver, a ver…" (fijo, 0:13,8–0:15,0) · silencio de 0,5 s con música cortada · "{nombre}… ¡aquí estás! ¡Tu nombre brilla!" (0:16,7–0:19,9) | [FIJO] + [PERSONALIZADO-OFF] | 3,2 s tras el silencio | 50 (peor caso: 49) |
 | T4 | V1-04 | 0:20–0:27 | Santa levanta la vista al lente, sonríe con boca cerrada, habla y queda 2 s de calma sonriendo | "¡Hola, {nombre}! Ya tienes {edad} años." (0:21,7–0:24,8) y calma de 2 s sin voz | [PERSONALIZADO-LABIOS] | 3,1 s | 48 (peor caso: 46) |
@@ -63,7 +68,7 @@ Cada plano sale de un clip de 8 s y se recorta. Voz a unos 15 caracteres por seg
 | T6 | V1-06 | 0:35–0:42,5 | Santa asoma los ojos sonrientes sobre el libro cerrado (plano sujeto a C4, sección 8) | Según el pedido, 4 combinaciones (sección 3) | [PERSONALIZADO-OFF] | 7,0 s | 105 (peor caso: 104) |
 | T7 | V1-07 | 0:42,5–0:50 | Santa a cámara, plano medio, sonrisa cálida | "¿Sabes una cosa, {nombre}? Ya estás en mi Lista de Niños Buenos. Gracias por ser tú." (0:42,9–0:49,6; el nombre cae hacia 0:44,2) | [PERSONALIZADO-LABIOS] | 6,7 s | 100 (peor caso: 92) |
 | (T7b) | V1-08 | 0:50–0:52,5 | Mismo encuadre: sonrisa con boca cerrada y un guiño lento | Nada | [FIJO] | — | — |
-| T8 | V1-09 | 0:52,5–1:00 | Manos sobre el libro cerrado, dos palmadas suaves, la vela brilla en la estrella. A 0:56,8 la imagen baja a cálido oscuro, título dorado "¡Feliz Navidad, {nombre}!" y "jinglo.app" | "¡Feliz Navidad, {nombre}! Se nota cuánto te quieren en tu casa. Jo, jo, jo…" (0:52,8–0:58,5; risa suave, de pecho, máximo 1,2 s) | [PERSONALIZADO-OFF] | 4,7 s + risa | 71 + risa (peor caso: 70 + risa) |
+| T8 | V1-09 | 0:52,5–1:00 | Manos sobre el libro cerrado, dos palmadas suaves, la vela brilla en la estrella. A 0:56,8 la imagen baja a cálido oscuro, título dorado "¡Feliz Navidad, {nombre}!" y "jinglo.app" | "¡Feliz Navidad, {nombre}! Se nota cuánto te quieren en tu casa. ¡Joo, joo, jo, joo!" (0:52,8–0:58,5; risa suave, de pecho, máximo 1,2 s) | [PERSONALIZADO-OFF] | 4,7 s + risa | 71 + risa (peor caso: 70 + risa) |
 
 Totales (versión 5 a 9 años):
 - Duración: 60 s, 9 planos.
@@ -131,7 +136,7 @@ Cómo se menciona al Niño Dios: solo con la frase exacta de la tabla, que refle
 
 ### T8 · despedida (OFF) · igual en todas las edades
 
-"¡Feliz Navidad, {nombre}! Se nota cuánto te quieren en tu casa. Jo, jo, jo…" Para 3 a 4 años, voz lenta y risa corta y suave. La risa nunca pasa de 1,2 s, sin caída a nota grave ni eco, y nunca con boca abierta a cámara.
+"¡Feliz Navidad, {nombre}! Se nota cuánto te quieren en tu casa. ¡Joo, joo, jo, joo!" Para 3 a 4 años, voz lenta y risa corta y suave. La risa nunca pasa de 1,2 s, sin caída a nota grave ni eco, y nunca con boca abierta a cámara.
 
 ### Ritmo por edad (para `video-voz-santa`)
 
@@ -149,14 +154,14 @@ Texto completo con casilla, 5 a 6 años, con `{gusto}`: T1, T2, T3, T4, T5, T7 y
 
 | Tramo | Tipo | Texto | Car. |
 |---|---|---|---|
-| T1 | [FIJO] | "Jo, jo, jo… Hasta el Polo Norte llega el olor a tamales. Hoy abro mi Gran Libro." | 80 |
+| T1 | [FIJO] | "¡Joo, joo, jo, joo! Qué noche tan bonita en el Polo Norte. Hoy abro mi Gran Libro." | 80 |
 | T2 | [FIJO] | "Aquí están los niños buenos de todo el mundo. Busco un nombre muy especial." | 75 |
 | T3 | [FIJO] y [PERS-OFF] | "A ver, a ver…" · "Sofía… ¡aquí estás! ¡Tu nombre brilla!" | 13 y 38 |
 | T4 | [PERS-LABIOS] | "¡Hola, Sofía! Ya tienes cinco años." | 35 |
 | T5 | [FIJO] y [PERS-OFF] | "Tu familia me escribió una carta." · "Dice que aprendiste a andar en bicicleta. ¡Qué orgullo!" | 33 y 55 |
 | T6 | [PERS-OFF] | "Me contaron que te encanta bailar. Sé que en tu casa quieren mucho al Niño Dios. ¡Qué bonito!" | 93 |
 | T7 | [PERS-LABIOS] | "¿Sabes una cosa, Sofía? Ya estás en mi Lista de Niños Buenos. Gracias por ser tú." | 81 |
-| T8 | [PERS-OFF] | "¡Feliz Navidad, Sofía! Se nota cuánto te quieren en tu casa. Jo, jo, jo…" | 59 + risa |
+| T8 | [PERS-OFF] | "¡Feliz Navidad, Sofía! Se nota cuánto te quieren en tu casa. ¡Joo, joo, jo, joo!" | 59 + risa |
 
 Nombre: 4 veces. Labios: unos 11 s. Duración: 60 s.
 
@@ -170,7 +175,7 @@ Nombre: 4 veces. Labios: unos 11 s. Duración: 60 s.
 | T5 | [FIJO] y [PERS-OFF] | "Tu familia me escribió una carta." · "Dice que terminaste tu primer libro de capítulos. ¡Felicidades!" | 33 y 63 |
 | T6 | [PERS-OFF] | "Me contaron que te encanta el fútbol. Eso dice mucho de ti." | 59 |
 | T7 | [PERS-LABIOS] | "¿Sabes una cosa, Mateo? Ya estás en mi Lista de Niños Buenos. Gracias por ser tú." | 81 |
-| T8 | [PERS-OFF] | "¡Feliz Navidad, Mateo! Se nota cuánto te quieren en tu casa. Jo, jo, jo…" | 59 + risa |
+| T8 | [PERS-OFF] | "¡Feliz Navidad, Mateo! Se nota cuánto te quieren en tu casa. ¡Joo, joo, jo, joo!" | 59 + risa |
 
 Si Mateo no trajera `{logro}` ni `{gusto}`: T5 = "Tu familia me escribió una carta. Leo la carta de tu familia. Cada línea habla del cariño que te tienen." y T6 = "En mi estudio todo huele a canela y a galletas." El video sigue completo y no queda ningún hueco vacío.
 
@@ -178,14 +183,14 @@ Si Mateo no trajera `{logro}` ni `{gusto}`: T5 = "Tu familia me escribió una ca
 
 | Tramo | Tipo | Texto | Car. | Nombre dicho |
 |---|---|---|---|---|
-| T1 | [FIJO] | "Jo, jo, jo… Hasta el Polo Norte llega el olor a tamales. Hoy abro mi Gran Libro." | 80 | — |
+| T1 | [FIJO] | "¡Joo, joo, jo, joo! Qué noche tan bonita en el Polo Norte. Hoy abro mi Gran Libro." | 80 | — |
 | T3 | [FIJO] y [PERS-OFF] | "A ver, a ver…" · "Luna… ¡aquí estás! ¡Tu nombre brilla!" | 13 y 37 | 0:10,7 |
 | T4 | [PERS-LABIOS] | "¡Hola, Luna! ¡Tienes tres años!" | 31 | 0:15,7 |
 | T5 | [FIJO] y [PERS-OFF] | "Tu familia me escribió una carta." · "Dice que diste un abrazo grande. ¡Qué bien!" | 33 y 43 | — |
 | T6 | [PERS-OFF] | "Me contaron que te encantan los dinosaurios. ¡Qué divertido!" | 60 | — |
 | T7 | [PERS-LABIOS] | "¿Sabes una cosa, Luna? Ya estás en mi Lista de Niños Buenos. ¡Un abrazo grande!" | 79 | 0:38,2 |
 | T7b | [FIJO] | (solo sonrisa, 1,5 s, sin guiño) | — | — |
-| T8 | [PERS-OFF] | "¡Feliz Navidad, Luna! Se nota cuánto te quieren en tu casa. Jo, jo, jo…" | 58 + risa | 0:45,8 |
+| T8 | [PERS-OFF] | "¡Feliz Navidad, Luna! Se nota cuánto te quieren en tu casa. ¡Joo, joo, jo, joo!" | 58 + risa | 0:45,8 |
 
 ### Ejemplos malos (y por qué)
 
