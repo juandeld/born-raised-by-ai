@@ -94,3 +94,10 @@ Mitigaciones obligatorias:
 - voz diseñada con Voice Design: nunca clonar ni usar voces de la comunidad (pueden ser clones de personas reales sin licencia);
 - se reevalúa (enterprise + ZDR) si el volumen pasa de 1,000 pedidos o se abren EE. UU. o la UE.
 ElevenLabs queda fuera para productos de niños: el riesgo es comercial (cierre de cuenta en plena temporada), no solo legal.
+
+## Decisión del dueño — 12-nov-2026 (tarde): clonar la voz diseñada de ElevenLabs
+
+El diseño de voz de Fish no convenció a Juan ("muy mala"). Juan decide clonar en Fish la voz que diseñamos en ElevenLabs ("Santa Lumen Labs (es-419)", voz sintética: no es de ninguna persona real).
+Riesgos explicados a Juan antes de decidir: los términos de ElevenLabs prohíben usar su servicio o su salida para desarrollar productos o modelos que compitan con ellos (beta.elevenlabs.io/terms), y la salida sigue sujeta a su Prohibited Use Policy, incluida la cláusula de productos dirigidos a menores. Riesgo práctico bajo a ~300 videos; el peor caso es que pidan dejar de usar la voz.
+Hecho: muestra de referencia de 67 s sin datos de niños (`santa-referencia.mp3`), subida a Fish (clon instantáneo), voz "Santa Jinglo", privada. La casilla de permiso para crear el modelo y los términos de Fish la marca Juan.
+Plan B si hay reclamo: locutor latino con consentimiento firmado para clonar (~$80–200).
