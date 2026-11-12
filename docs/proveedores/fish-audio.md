@@ -84,3 +84,13 @@ Los Terms of Use incorporan unas "Additional Terms" sin enlace: no se pudieron l
 - docs.fish.audio (privacidad, retención, exclusión de entrenamiento).
 - Precio y mínimos del contrato enterprise.
 - Calidad de la voz en español latino.
+
+## Decisión del dueño — 12-nov-2026
+
+Juan acepta el riesgo de usar Fish Audio en autoservicio (plan Plus, sin ZDR) para la temporada piloto (~300 videos). Fundamento: el comprador es adulto, los términos de Fish no prohíben productos dirigidos a menores, el volumen es bajo y el riesgo es reversible.
+Mitigaciones obligatorias:
+- al TTS solo llega el nombre de pila (sin apellido, edad, ciudad ni datos de salud);
+- el logro se elige de una lista cerrada, no se escribe libre;
+- voz diseñada con Voice Design: nunca clonar ni usar voces de la comunidad (pueden ser clones de personas reales sin licencia);
+- se reevalúa (enterprise + ZDR) si el volumen pasa de 1,000 pedidos o se abren EE. UU. o la UE.
+ElevenLabs queda fuera para productos de niños: el riesgo es comercial (cierre de cuenta en plena temporada), no solo legal.
